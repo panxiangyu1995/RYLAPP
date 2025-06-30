@@ -11,6 +11,11 @@
       <i class="search-icon" @click="loadContacts"></i>
     </div>
     
+    <!-- 测试按钮 - 已隐藏 -->
+    <!-- <div class="test-button-container">
+      <button @click="testContacts" class="test-button">测试获取联系人</button>
+    </div> -->
+    
     <!-- 联系人列表 -->
     <div class="contacts-list">
       <div v-if="loading" class="loading-spinner">加载中...</div>
@@ -50,7 +55,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getOtherContacts } from '@/api/contacts'
+import { getOtherContacts, testOtherContacts } from '@/api/contacts'
 import defaultAvatar from '@/assets/images/company-logo.png'
 
 export default {
@@ -75,30 +80,30 @@ export default {
     const loadContacts = async () => {
       loading.value = true
       try {
-        const params = {
-          page: 1,
-          size: 100, // 较大的值，确保加载全部联系人
-          keyword: searchText.value
-        }
-        console.log('请求其它联系人列表，参数:', params)
-        const res = await getOtherContacts(params)
+        console.log('请求其它联系人列表')
+        const res = await testOtherContacts()
+        console.log('API返回完整数据:', JSON.stringify(res))
         
-        if (res.code === 200) {
-          // 处理分页数据结构
-          if (res.data && res.data.list && Array.isArray(res.data.list)) {
-            contacts.value = res.data.list
-            console.log(`成功加载${contacts.value.length}个其它联系人`)
-          } else if (Array.isArray(res.data)) {
-            // 兼容直接返回数组的情况
-            contacts.value = res.data
-            console.log(`成功加载${contacts.value.length}个其它联系人`)
-          } else {
-            contacts.value = []
-            console.warn('其它联系人数据为空或格式不符合预期:', res.data)
-          }
+        if (res.code === 200 && Array.isArray(res.data)) {
+          console.log(`成功加载${res.data.length}个其它联系人`)
+          
+          // 将数据转换为联系人格式
+          const contactsList = res.data.map(user => ({
+            id: user.id,
+            workId: user.work_id,
+            name: user.name,
+            department: user.department,
+            role: user.role_code,
+            avatar: null,
+            status: 1,
+            lastActiveTime: new Date()
+          }))
+          
+          contacts.value = contactsList
+          console.log('联系人数据示例:', contacts.value.length > 0 ? JSON.stringify(contacts.value[0]) : '无数据')
         } else {
           contacts.value = []
-          console.error('获取其它联系人失败:', res.message || '未知错误')
+          console.warn('其它联系人数据为空或格式不符合预期:', res.data)
         }
       } catch (error) {
         contacts.value = []
@@ -143,6 +148,39 @@ export default {
       }
     }
     
+    // 测试获取联系人
+    const testContacts = async () => {
+      try {
+        console.log('测试获取非工程师联系人')
+        const res = await testOtherContacts()
+        console.log('测试API返回数据:', res)
+        
+        if (res.code === 200 && Array.isArray(res.data)) {
+          console.log(`测试成功，获取到${res.data.length}个非工程师用户`)
+          
+          // 将测试数据转换为联系人格式
+          const testContactsList = res.data.map(user => ({
+            id: user.id,
+            workId: user.work_id,
+            name: user.name,
+            department: user.department,
+            role: user.role_code,
+            avatar: null,
+            status: 1,
+            lastActiveTime: new Date()
+          }))
+          
+          // 显示测试数据
+          contacts.value = testContactsList
+          console.log('测试数据已加载到联系人列表')
+        } else {
+          console.error('测试API返回错误:', res.message || '未知错误')
+        }
+      } catch (error) {
+        console.error('测试API请求异常:', error)
+      }
+    }
+    
     onMounted(() => {
       loadContacts()
     })
@@ -155,7 +193,8 @@ export default {
       handleSearch,
       viewContactDetail,
       getStatusClass,
-      defaultAvatar
+      defaultAvatar,
+      testContacts
     }
   }
 }
@@ -285,5 +324,24 @@ export default {
   text-align: center;
   padding: 30px 0;
   color: #757575;
+}
+
+.test-button-container {
+  margin: 10px 0;
+  text-align: center;
+}
+
+.test-button {
+  background-color: #1976D2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.test-button:hover {
+  background-color: #1565C0;
 }
 </style> 

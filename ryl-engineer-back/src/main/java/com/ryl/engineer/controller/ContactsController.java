@@ -7,6 +7,7 @@ import com.ryl.engineer.dto.contact.ContactGroupDTO;
 import com.ryl.engineer.service.ContactsService;
 import com.ryl.engineer.utils.UserContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,9 @@ public class ContactsController {
     
     @Autowired
     private ContactsService contactsService;
+    
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
     
     /**
      * 获取联系人列表
@@ -42,14 +46,27 @@ public class ContactsController {
      * 获取非工程师角色的联系人列表
      */
     @GetMapping("/other")
-    public Result<PageResult<ContactDTO>> getOtherContactsList(
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "20") Integer size,
+    public Result<?> getOtherContactsList(
             @RequestParam(required = false) String keyword) {
-        
-        Long userId = UserContextHolder.getUserId();
-        PageResult<ContactDTO> result = contactsService.getOtherContactsList(userId, page, size, keyword);
-        return Result.success(result);
+        try {
+            // 使用JdbcTemplate直接执行SQL查询
+            String sql = "SELECT u.id, u.work_id, u.name, u.department, r.code as role_code " +
+                    "FROM [user] u " +
+                    "JOIN user_role ur ON u.id = ur.user_id " +
+                    "JOIN role r ON ur.role_id = r.id " +
+                    "WHERE r.code != 'ENGINEER'";
+            
+            // 添加关键字搜索条件
+            if (keyword != null && !keyword.isEmpty()) {
+                sql += " AND (u.name LIKE ? OR u.work_id LIKE ? OR u.department LIKE ?)";
+                String likePattern = "%" + keyword + "%";
+                return Result.success(jdbcTemplate.queryForList(sql, likePattern, likePattern, likePattern));
+            } else {
+                return Result.success(jdbcTemplate.queryForList(sql));
+            }
+        } catch (Exception e) {
+            return Result.error("查询失败: " + e.getMessage());
+        }
     }
     
     /**
@@ -129,5 +146,25 @@ public class ContactsController {
         List<Long> contactIds = (List<Long>) params.get("contactIds");
         ContactGroupDTO groupDTO = contactsService.removeContactsFromGroup(groupId, userId, contactIds);
         return Result.success(groupDTO);
+    }
+    
+    /**
+     * 测试方法 - 获取所有非工程师用户（不分页）
+     */
+    @GetMapping("/test/other")
+    public Result<List<Map<String, Object>>> testOtherContacts() {
+        try {
+            // 使用JdbcTemplate直接执行SQL查询
+            List<Map<String, Object>> users = jdbcTemplate.queryForList(
+                "SELECT u.id, u.work_id, u.name, u.department, r.code as role_code " +
+                "FROM [user] u " +
+                "JOIN user_role ur ON u.id = ur.user_id " +
+                "JOIN role r ON ur.role_id = r.id " +
+                "WHERE r.code != 'ENGINEER'"
+            );
+            return Result.success(users);
+        } catch (Exception e) {
+            return Result.error("查询失败: " + e.getMessage());
+        }
     }
 } 

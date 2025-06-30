@@ -31,10 +31,7 @@ public interface ContactsRelationMapper {
     /**
      * 获取非工程师角色的联系人列表
      */
-    List<User> selectOtherContacts(
-        @Param("userId") Long userId, 
-        @Param("keyword") String keyword
-    );
+    List<User> selectOtherContacts(@Param("keyword") String keyword);
     
     /**
      * 获取用户的联系人数量

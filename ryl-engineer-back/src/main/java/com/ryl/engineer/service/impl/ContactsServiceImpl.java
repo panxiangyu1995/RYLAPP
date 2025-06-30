@@ -64,14 +64,25 @@ public class ContactsServiceImpl implements ContactsService {
     
     @Override
     public PageResult<ContactDTO> getOtherContactsList(Long userId, Integer page, Integer size, String keyword) {
-        logger.info("获取其它联系人列表 - 用户ID: {}, 页码: {}, 每页大小: {}, 关键词: {}", userId, page, size, keyword);
+        logger.info("获取其它联系人列表 - 页码: {}, 每页大小: {}, 关键词: {}", page, size, keyword);
         
         try {
             PageHelper.startPage(page, size);
             logger.debug("执行查询前 - 已设置分页参数");
             
-            // 执行查询
-            List<User> userList = contactsRelationMapper.selectOtherContacts(userId, keyword);
+            // 执行查询，不再传递userId参数
+            List<User> userList = contactsRelationMapper.selectOtherContacts(keyword);
+            
+            // 直接输出查询结果
+            logger.info("查询结果大小: {}", userList != null ? userList.size() : 0);
+            if (userList != null && !userList.isEmpty()) {
+                logger.info("第一条记录: id={}, name={}, workId={}", 
+                    userList.get(0).getId(), 
+                    userList.get(0).getName(),
+                    userList.get(0).getWorkId());
+            } else {
+                logger.warn("查询结果为空");
+            }
             
             if (userList instanceof Page) {
                 Page<User> userPage = (Page<User>) userList;
@@ -93,7 +104,16 @@ public class ContactsServiceImpl implements ContactsService {
                 return new PageResult<>((long) contactDTOList.size(), contactDTOList);
             }
         } catch (Exception e) {
-            logger.error("获取其它联系人列表异常", e);
+            // 增强错误日志
+            if (e.getCause() instanceof java.sql.SQLException) {
+                java.sql.SQLException sqlException = (java.sql.SQLException) e.getCause();
+                logger.error("SQL异常: 错误码={}, 状态={}, 消息={}", 
+                    sqlException.getErrorCode(), 
+                    sqlException.getSQLState(), 
+                    sqlException.getMessage(), e);
+            } else {
+                logger.error("获取其它联系人列表异常", e);
+            }
             // 返回空列表而不是抛出异常
             return new PageResult<>(0L, new ArrayList<>());
         }

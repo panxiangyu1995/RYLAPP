@@ -106,4 +106,12 @@ export function addContactsToGroup(data) {
  */
 export function removeContactsFromGroup(data) {
   return http.post('/api/v1/contacts/groups/remove', data)
+}
+
+/**
+ * 测试获取非工程师联系人列表（不分页）
+ * @returns {Promise} 返回测试数据
+ */
+export function testOtherContacts() {
+  return http.get('/api/v1/contacts/test/other')
 } 
