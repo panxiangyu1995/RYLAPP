@@ -53,15 +53,14 @@
         SELECT
             <include refid="Base_Column_List" />
         FROM dbo.chat_conversation
-        WHERE conversation_id = #{conversationId} AND status = 1
+        WHERE conversation_id = #{conversationId} AND status = 'active'
     </select>
     
     <select id="selectByTaskId" resultMap="BaseResultMap">
-        SELECT
+        SELECT TOP 1
             <include refid="Base_Column_List" />
         FROM dbo.chat_conversation
-        WHERE related_task_id = #{taskId} AND status = 1
-        LIMIT 1
+        WHERE related_task_id = #{taskId} AND status = 'active'
     </select>
     
     <insert id="insert" parameterType="com.ryl.engineer.entity.ChatConversation">

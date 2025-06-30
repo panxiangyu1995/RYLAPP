@@ -51,7 +51,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getOtherContacts } from '@/api/contacts'
-import defaultAvatar from '@/assets/default-avatar.png'
+import defaultAvatar from '@/assets/images/company-logo.png'
 
 export default {
   name: 'OtherContacts',
