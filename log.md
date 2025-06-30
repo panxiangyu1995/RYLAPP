@@ -1,5 +1,35 @@
 # 研仪联工程师APP项目开发日志
 
+## 版本 0.3.5 - 2025年07月01日 16:30
+
+### 修改内容
+1. 修复了消息中心模块的数据获取错误问题
+   - 修正了ChatConversation实体类属性映射问题，将 `property="type"` 改为 `property="conversationType"`
+   - 修正了参数名不一致的问题，将SQL中的 `#{type}` 替换为 `#{conversationType}`
+   - 修正了ChatConversation相关的taskId属性，将 `property="taskId"` 改为 `property="relatedTaskId"`，并将参数 `#{taskId}` 改为 `#{relatedTaskId}`
+   - 移除了AnnouncementReadMapper.xml中对不存在的 `create_time` 列的所有引用
+   - 修改了AnnouncementRead实体类，移除了不存在的 `createTime` 属性
+   - 修改了AnnouncementServiceImpl.java，移除了对已删除的 `setCreateTime()` 方法的调用
+
+### 修复问题的经验
+1. MyBatis实体映射问题排查技巧：
+   - 仔细比对实体类的属性名与Mapper XML文件中的property名称
+   - 确保数据库表结构与实体类定义一致
+   - 检查insert语句中的参数名是否与实体类属性名匹配
+   - 通过错误堆栈和数据库错误信息定位具体问题
+
+2. 数据库表字段与实体类属性不一致的处理方法：
+   - 要么调整实体类以适应数据库结构
+   - 要么调整数据库以适应代码
+   - 或者使用注解/映射配置建立起正确的关联关系
+   - 始终优先选择最小修改方案，避免引入更多问题
+
+3. 在团队开发中处理架构不一致问题：
+   - 及时进行代码审查，确保代码质量和一致性
+   - 建立开发规范，统一命名和映射关系
+   - 编写全面的单元测试，在早期发现潜在问题
+   - 善用版本控制系统，跟踪重要修改
+
 ## 版本 0.1.0 - 2025年06月30日 10:02
 
 ### 修改内容
@@ -214,3 +244,56 @@
 1. 监控协助请求API的运行状态
 2. 为所有API接口添加统一的错误处理机制
 3. 实现协助请求功能的全面测试 
+
+## 版本 0.3.4 (2025-06-30 20:06)
+
+### 修复消息页面API返回500错误问题
+
+**修复内容**:
+1. 修复JWT认证机制问题
+   - 完善`JwtAuthenticationInterceptor`，添加专门的认证错误处理方法
+   - 对未提供token或token无效的请求返回适当的HTTP 401状态码
+   - 增加公开API路径的白名单，允许无认证访问
+   - 增加详细日志记录，便于问题追踪
+
+2. 修复数据库查询问题
+   - 修正`ChatConversationMapper.xml`中的status条件，将`c.status = 1`修改为`c.status = 'active'`
+   - 修改`AnnouncementMapper.xml`中的`create_time`引用为`update_time`，解决列名无效的问题
+   - 优化分页查询，使用SQL Server兼容的OFFSET FETCH语法
+   - 完全替换XM中会导致解析错误的+号运算符语法
+
+3. 完善Controller层错误处理
+   - 为`ChatController`和`AnnouncementController`添加全面的异常处理
+   - 添加用户身份验证检查，确保在处理请求前验证用户登录状态
+   - 使用try-catch包装所有业务逻辑，捕获并妥善处理异常
+
+4. 优化前端错误处理机制
+   - 修改`Messages.vue`中的`fetchAllMessages`方法，使用`Promise.allSettled`处理多个API请求
+   - 为每个API请求添加.catch错误处理，确保请求永远不会失败
+   - 即使部分API失败，仍能显示成功获取的数据
+   - 添加更友好的错误提示，告知用户哪些数据模块加载失败
+
+**修复经验**:
+1. 认证机制设计的最佳实践：
+   - 认证失败时应明确返回401状态码和友好错误消息
+   - 为公共访问接口设置白名单，避免不必要的认证
+   - 在拦截器中清理ThreadLocal，防止内存泄漏
+   - 添加详细日志记录，便于问题追踪
+
+2. 跨数据库平台开发注意事项：
+   - SQL Server和MySQL的函数和语法差异显著，需要专门适配
+   - 字符串和整数类型的处理方式不同（如status字段的'active' vs 1）
+   - 确保在MyBatis映射文件中使用正确的列名和类型匹配
+   - 在XML中处理特殊字符（如+号）时需要特别小心
+
+3. 前端容错设计要点：
+   - 使用Promise.allSettled替代Promise.all，允许部分失败
+   - 为每个独立的数据源添加单独的错误处理
+   - 提供降级展示策略，在部分数据缺失时仍能提供基本功能
+   - 友好的错误提示，指明具体哪个功能模块受影响
+
+4. MyBatis与SQL Server集成的注意事项：
+   - 确保实体类字段名与数据库字段名正确映射
+   - 使用正确的SQL Server兼容的分页语法（OFFSET FETCH）
+   - 避免在XML文件中出现可能被解析为特殊字符的操作符
+   - 根据数据库定义使用匹配的字段类型（varchar vs int） 

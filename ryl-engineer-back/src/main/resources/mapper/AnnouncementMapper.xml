@@ -62,18 +62,17 @@
         FROM dbo.system_announcement
         WHERE status = 'active'
         <if test="keyword != null and keyword != ''">
-            AND (title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%'))
+            AND (title LIKE '%' + #{keyword} + '%' OR content LIKE '%' + #{keyword} + '%')
         </if>
         ORDER BY start_time DESC
     </select>
     
     <select id="selectRecentList" resultMap="BaseResultMap">
-        SELECT 
+        SELECT TOP(#{limit})
             <include refid="Base_Column_List" />
         FROM dbo.system_announcement
         WHERE status = 'active'
         ORDER BY start_time DESC
-        LIMIT #{limit}
     </select>
     
     <select id="countByCondition" resultType="java.lang.Integer">
@@ -87,33 +86,55 @@
                 AND importance = #{importance}
             </if>
             <if test="keyword != null and keyword != ''">
-                AND (title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%'))
+                AND (title LIKE '%' + #{keyword} + '%' OR content LIKE '%' + #{keyword} + '%')
             </if>
         </where>
     </select>
     
     <select id="selectByCondition" resultMap="BaseResultMap">
-        SELECT 
-            <include refid="Base_Column_List" />
-        FROM dbo.system_announcement
-        <where>
-            <if test="status != null">
-                status = #{status}
-            </if>
-            <if test="importance != null and importance != ''">
-                AND importance = #{importance}
-            </if>
-            <if test="keyword != null and keyword != ''">
-                AND (title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%'))
-            </if>
-        </where>
-        ORDER BY 
-        <choose>
-            <when test="status == 'inactive'">create_time DESC</when>
-            <otherwise>start_time DESC</otherwise>
-        </choose>
         <if test="offset != null and limit != null">
-            LIMIT #{offset}, #{limit}
+            SELECT 
+                <include refid="Base_Column_List" />
+            FROM dbo.system_announcement
+            <where>
+                <if test="status != null">
+                    status = #{status}
+                </if>
+                <if test="importance != null and importance != ''">
+                    AND importance = #{importance}
+                </if>
+                <if test="keyword != null and keyword != ''">
+                    AND (title LIKE '%' + #{keyword} + '%' OR content LIKE '%' + #{keyword} + '%')
+                </if>
+            </where>
+            ORDER BY 
+            <choose>
+                <when test="status == 'inactive'">update_time DESC</when>
+                <otherwise>start_time DESC</otherwise>
+            </choose>
+            OFFSET #{offset} ROWS
+            FETCH NEXT #{limit} ROWS ONLY
+        </if>
+        <if test="offset == null or limit == null">
+            SELECT 
+                <include refid="Base_Column_List" />
+            FROM dbo.system_announcement
+            <where>
+                <if test="status != null">
+                    status = #{status}
+                </if>
+                <if test="importance != null and importance != ''">
+                    AND importance = #{importance}
+                </if>
+                <if test="keyword != null and keyword != ''">
+                    AND (title LIKE '%' + #{keyword} + '%' OR content LIKE '%' + #{keyword} + '%')
+                </if>
+            </where>
+            ORDER BY 
+            <choose>
+                <when test="status == 'inactive'">update_time DESC</when>
+                <otherwise>start_time DESC</otherwise>
+            </choose>
         </if>
     </select>
     

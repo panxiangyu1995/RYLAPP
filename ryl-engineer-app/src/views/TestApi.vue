@@ -12,6 +12,7 @@
         <h2>API连接测试</h2>
         <div class="actions">
           <button @click="testTaskList" class="test-btn">测试任务列表API</button>
+          <button @click="testAssistanceList" class="test-btn">测试协助请求API</button>
         </div>
       </div>
 
@@ -38,6 +39,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import http from '../api/http'
 import { getTaskList } from '../api/task'
+import { getAssistanceList } from '../api/assistance'
 
 export default {
   name: 'TestApiPage',
@@ -67,13 +69,31 @@ export default {
         loading.value = false
       }
     }
+    
+    const testAssistanceList = async () => {
+      loading.value = true
+      error.value = null
+      result.value = null
+
+      try {
+        const response = await getAssistanceList({ page: 1, size: 10 })
+        console.log('协助请求API响应:', response)
+        result.value = response
+      } catch (err) {
+        console.error('API测试失败:', err)
+        error.value = err.message || JSON.stringify(err)
+      } finally {
+        loading.value = false
+      }
+    }
 
     return {
       loading,
       error,
       result,
       goBack,
-      testTaskList
+      testTaskList,
+      testAssistanceList
     }
   }
 }

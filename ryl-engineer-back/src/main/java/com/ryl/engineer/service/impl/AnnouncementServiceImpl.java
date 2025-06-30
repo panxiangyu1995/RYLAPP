@@ -201,7 +201,6 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             read.setAnnouncementId(announcementId);
             read.setUserId(userId);
             read.setReadTime(new Date());
-            read.setCreateTime(new Date());
             
             // 保存已读记录
             int result = announcementReadMapper.insert(read);
@@ -243,7 +242,6 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             read.setAnnouncementId(announcement.getId());
             read.setUserId(userId);
             read.setReadTime(now);
-            read.setCreateTime(now);
             
             reads.add(read);
         }

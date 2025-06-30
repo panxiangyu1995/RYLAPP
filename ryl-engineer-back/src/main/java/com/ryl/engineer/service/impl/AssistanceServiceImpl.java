@@ -36,8 +36,27 @@ public class AssistanceServiceImpl implements AssistanceService {
     @Override
     public PageResult<AssistanceRequest> getAssistanceRequestList(Long userId, Integer page, Integer size,
                                                               String status, String keyword) {
+        // 输出调试信息
+        System.out.println("服务层查询协助请求 - 用户ID: " + userId + ", 页码: " + page + ", 大小: " + size);
+        
+        if (userId == null) {
+            System.out.println("警告: 用户ID为空，返回空列表");
+            return new PageResult<>(0, new ArrayList<>(), page, size);
+        }
+        
         // 获取用户相关的协助请求列表（包括发起的和接收的）
         List<AssistanceRequest> requests = requestMapper.selectByUserId(userId, status, keyword);
+        
+        // 输出查询结果
+        System.out.println("查询结果总数: " + (requests == null ? "null" : requests.size()));
+        if (requests != null && !requests.isEmpty()) {
+            System.out.println("第一条记录ID: " + requests.get(0).getId() + ", 请求ID: " + requests.get(0).getRequestId());
+        }
+        
+        // 防御性检查
+        if (requests == null) {
+            requests = new ArrayList<>();
+        }
         
         // 总记录数
         int total = requests.size();

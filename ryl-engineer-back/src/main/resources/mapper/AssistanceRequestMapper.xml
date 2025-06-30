@@ -40,7 +40,8 @@
         SELECT DISTINCT
             a.id, a.request_id, a.description, a.requester_id, u1.name as requester_name,
             a.engineer_id, u2.name as engineer_name, a.task_id, a.urgency, a.status, 
-            a.response, a.create_time, a.update_time, a.handle_time
+            a.response, a.create_time, a.update_time, a.handle_time,
+            a.request_id as requestId, a.urgency as type, a.description as content
         FROM dbo.assistance_request a
         LEFT JOIN dbo.[user] u1 ON a.requester_id = u1.id
         LEFT JOIN dbo.[user] u2 ON a.engineer_id = u2.id

@@ -5,11 +5,11 @@
     <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.ChatConversation">
         <id column="id" property="id" />
         <result column="conversation_id" property="conversationId" />
-        <result column="conversation_type" property="type" />
+        <result column="conversation_type" property="conversationType" />
         <result column="name" property="name" />
         <result column="creator_id" property="creatorId" />
         <result column="is_task_related" property="isTaskRelated" />
-        <result column="related_task_id" property="taskId" />
+        <result column="related_task_id" property="relatedTaskId" />
         <result column="create_time" property="createTime" />
         <result column="update_time" property="updateTime" />
         <result column="last_message_time" property="lastMessageTime" />
@@ -35,8 +35,17 @@
         SELECT
             c.*
         FROM dbo.chat_conversation c
-        JOIN dbo.chat_conversation_member m ON c.id = m.conversation_id
-        WHERE m.user_id = #{userId} AND c.status = 1
+        JOIN dbo.chat_conversation_member m ON c.conversation_id = m.conversation_id
+        WHERE m.user_id = #{userId} AND c.status = 'active'
+        <if test="type != null and type != 'all'">
+            AND c.conversation_type = #{type}
+        </if>
+        <if test="isTaskRelated != null">
+            AND c.is_task_related = #{isTaskRelated}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (c.name LIKE '%' + #{keyword} + '%' OR c.conversation_id LIKE '%' + #{keyword} + '%')
+        </if>
         ORDER BY c.last_message_time DESC
     </select>
     
@@ -61,8 +70,8 @@
             related_task_id, create_time, update_time, last_message_time,
             last_message_content, last_message_sender_id, status
         ) VALUES (
-            #{conversationId}, #{type}, #{name}, #{creatorId}, #{isTaskRelated},
-            #{taskId}, #{createTime}, #{updateTime}, #{lastMessageTime},
+            #{conversationId}, #{conversationType}, #{name}, #{creatorId}, #{isTaskRelated},
+            #{relatedTaskId}, #{createTime}, #{updateTime}, #{lastMessageTime},
             #{lastMessageContent}, #{lastMessageSenderId}, #{status}
         )
     </insert>

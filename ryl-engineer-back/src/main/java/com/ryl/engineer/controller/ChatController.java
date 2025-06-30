@@ -6,6 +6,8 @@ import com.ryl.engineer.dto.chat.ConversationDTO;
 import com.ryl.engineer.dto.chat.MessageDTO;
 import com.ryl.engineer.service.ChatService;
 import com.ryl.engineer.utils.UserContextHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +23,8 @@ import java.util.Map;
 @RequestMapping("/api/v1/chat")
 public class ChatController {
     
+    private static final Logger logger = LoggerFactory.getLogger(ChatController.class);
+    
     @Autowired
     private ChatService chatService;
     
@@ -29,54 +33,87 @@ public class ChatController {
      */
     @GetMapping("/conversation/list")
     public Result<PageResult<ConversationDTO>> getConversationList(
-            @RequestParam(defaultValue = "all") String type,
-            @RequestParam(defaultValue = "false") Boolean isTaskRelated,
+            @RequestParam(required = false, defaultValue = "all") String type,
+            @RequestParam(required = false) Boolean isTaskRelated,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "false") Boolean onlyUnread,
+            @RequestParam(required = false, defaultValue = "false") Boolean onlyUnread,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size) {
         
-        Long userId = UserContextHolder.getUserId();
-        PageResult<ConversationDTO> result = chatService.getConversationList(
-            userId, type, isTaskRelated, keyword, onlyUnread, page, size);
-        return Result.success(result);
+        try {
+            Long userId = UserContextHolder.getUserId();
+            if (userId == null) {
+                logger.warn("获取会话列表失败：用户未登录");
+                return Result.unauthorized();
+            }
+            
+            logger.info("获取用户 {} 的会话列表", userId);
+            PageResult<ConversationDTO> result = chatService.getConversationList(
+                userId, type, isTaskRelated, keyword, onlyUnread, page, size);
+            return Result.success(result);
+        } catch (Exception e) {
+            logger.error("获取会话列表失败", e);
+            return Result.error("获取会话列表失败：" + e.getMessage());
+        }
     }
     
     /**
-     * 创建聊天会话
+     * 创建会话
      */
     @PostMapping("/conversation/create")
     public Result<ConversationDTO> createConversation(@RequestBody Map<String, Object> params) {
-        Long userId = UserContextHolder.getUserId();
-        String type = (String) params.get("type");
-        String name = (String) params.get("name");
-        @SuppressWarnings("unchecked")
-        List<Long> memberIds = (List<Long>) params.get("memberIds");
-        Boolean isTaskRelated = params.get("isTaskRelated") != null ? 
-            (Boolean) params.get("isTaskRelated") : false;
-        String relatedTaskId = (String) params.get("relatedTaskId");
-        String avatar = (String) params.get("avatar");
-        
-        ConversationDTO conversationDTO = chatService.createConversation(
-            userId, type, name, memberIds, isTaskRelated, relatedTaskId, avatar);
-        return Result.success(conversationDTO);
+        try {
+            Long userId = UserContextHolder.getUserId();
+            if (userId == null) {
+                logger.warn("创建会话失败：用户未登录");
+                return Result.unauthorized();
+            }
+            
+            logger.info("用户 {} 创建新会话", userId);
+            String type = (String) params.get("type");
+            String name = (String) params.get("name");
+            @SuppressWarnings("unchecked")
+            List<Long> memberIds = (List<Long>) params.get("memberIds");
+            Boolean isTaskRelated = params.get("isTaskRelated") != null ? 
+                (Boolean) params.get("isTaskRelated") : false;
+            String relatedTaskId = (String) params.get("relatedTaskId");
+            String avatar = (String) params.get("avatar");
+            
+            ConversationDTO conversationDTO = chatService.createConversation(
+                userId, type, name, memberIds, isTaskRelated, relatedTaskId, avatar);
+            return Result.success(conversationDTO);
+        } catch (Exception e) {
+            logger.error("创建会话出错", e);
+            return Result.error("创建会话失败：" + e.getMessage());
+        }
     }
     
     /**
-     * 获取聊天消息列表
+     * 获取消息列表
      */
-    @GetMapping("/message/list/{conversationId}")
+    @GetMapping("/message/list")
     public Result<PageResult<MessageDTO>> getMessageList(
-            @PathVariable String conversationId,
+            @RequestParam String conversationId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) String startTime,
             @RequestParam(required = false) String endTime) {
         
-        Long userId = UserContextHolder.getUserId();
-        PageResult<MessageDTO> result = chatService.getMessageList(
-            userId, conversationId, page, size, startTime, endTime);
-        return Result.success(result);
+        try {
+            Long userId = UserContextHolder.getUserId();
+            if (userId == null) {
+                logger.warn("获取消息列表失败：用户未登录");
+                return Result.unauthorized();
+            }
+            
+            logger.info("获取会话 {} 的消息列表", conversationId);
+            PageResult<MessageDTO> result = chatService.getMessageList(
+                userId, conversationId, page, size, startTime, endTime);
+            return Result.success(result);
+        } catch (Exception e) {
+            logger.error("获取消息列表失败", e);
+            return Result.error("获取消息列表失败：" + e.getMessage());
+        }
     }
     
     /**
@@ -84,18 +121,29 @@ public class ChatController {
      */
     @PostMapping("/message/send")
     public Result<Map<String, Object>> sendMessage(@RequestBody Map<String, Object> params) {
-        Long userId = UserContextHolder.getUserId();
-        String conversationId = (String) params.get("conversationId");
-        String content = (String) params.get("content");
-        String messageType = params.get("messageType") != null ? 
-            (String) params.get("messageType") : "chat";
-        String contentType = params.get("contentType") != null ? 
-            (String) params.get("contentType") : "text";
-        String replyTo = (String) params.get("replyTo");
-        
-        Map<String, Object> result = chatService.sendMessage(
-            userId, conversationId, content, messageType, contentType, replyTo);
-        return Result.success(result);
+        try {
+            Long userId = UserContextHolder.getUserId();
+            if (userId == null) {
+                logger.warn("发送消息失败：用户未登录");
+                return Result.unauthorized();
+            }
+            
+            logger.info("用户 {} 发送消息到会话 {}", userId, params.get("conversationId"));
+            String conversationId = (String) params.get("conversationId");
+            String content = (String) params.get("content");
+            String messageType = params.get("messageType") != null ? 
+                (String) params.get("messageType") : "chat";
+            String contentType = params.get("contentType") != null ? 
+                (String) params.get("contentType") : "text";
+            String replyTo = (String) params.get("replyTo");
+            
+            Map<String, Object> result = chatService.sendMessage(
+                userId, conversationId, content, messageType, contentType, replyTo);
+            return Result.success(result);
+        } catch (Exception e) {
+            logger.error("发送消息失败", e);
+            return Result.error("发送消息失败：" + e.getMessage());
+        }
     }
     
     /**

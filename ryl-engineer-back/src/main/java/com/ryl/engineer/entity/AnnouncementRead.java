@@ -42,10 +42,4 @@ public class AnnouncementRead implements Serializable {
      */
     @TableField("read_time")
     private Date readTime;
-    
-    /**
-     * 创建时间
-     */
-    @TableField("create_time")
-    private Date createTime;
 } 

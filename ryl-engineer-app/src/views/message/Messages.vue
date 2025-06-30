@@ -142,28 +142,64 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        // 1. 拉取chat相关消息（只取每个会话的最后一条消息）
-        const chatPromise = getConversationList({ page: 1, size: 20 });
-        // 2. 拉取公告
-        const announcementPromise = getAnnouncementList({ page: 1, size: 20 });
-        // 3. 拉取协助请求 - 注意:目前该API返回500，临时处理
-        const assistancePromise = getAssistanceList({ page: 1, size: 20 })
-          .catch(err => {
-            console.warn('协助请求API暂时不可用:', err);
-            return { code: 200, data: { list: [] } }; // 返回空数组，不影响其他功能
-          });
-        
-        // 并行请求所有数据
-        const [chatRes, announcementRes, assistanceRes] = await Promise.all([
-          chatPromise, 
-          announcementPromise,
-          assistancePromise
+        console.log('开始获取消息数据');
+
+        // 使用Promise.allSettled保证即使部分API失败也能获取其他数据
+        const results = await Promise.allSettled([
+          getConversationList({ page: 1, size: 20 }).catch(err => {
+            console.warn('聊天数据获取失败', err);
+            return { code: 500, message: err.message || '聊天数据获取失败', data: null };
+          }),
+          getAnnouncementList({ page: 1, size: 20 }).catch(err => {
+            console.warn('公告数据获取失败', err);
+            return { code: 500, message: err.message || '公告数据获取失败', data: null };
+          }),
+          getAssistanceList({ page: 1, size: 20 }).catch(err => {
+            console.warn('协助数据获取失败', err);
+            return { code: 500, message: err.message || '协助数据获取失败', data: null };
+          })
         ]);
         
-        // 处理各类消息数据
-        const chatMessages = this.processChatMessages(chatRes);
-        const announcementMessages = this.processAnnouncementMessages(announcementRes);
-        const assistanceMessages = this.processAssistanceMessages(assistanceRes);
+        console.log('API请求完成状态:', results.map(r => r.status));
+        
+        let chatMessages = [];
+        let announcementMessages = [];
+        let assistanceMessages = [];
+        let apiErrors = [];
+        
+        // 处理会话列表结果
+        if (results[0].status === 'fulfilled' && results[0].value.code === 200) {
+          chatMessages = this.processChatMessages(results[0].value);
+        } else {
+          console.error('获取会话列表失败:', 
+            results[0].status === 'rejected' ? results[0].reason : results[0].value);
+          apiErrors.push('聊天消息');
+        }
+        
+        // 处理公告列表结果
+        if (results[1].status === 'fulfilled' && results[1].value.code === 200) {
+          announcementMessages = this.processAnnouncementMessages(results[1].value);
+        } else {
+          console.error('获取公告列表失败:', 
+            results[1].status === 'rejected' ? results[1].reason : results[1].value);
+          apiErrors.push('系统公告');
+        }
+        
+        // 处理协助请求列表结果
+        if (results[2].status === 'fulfilled' && results[2].value.code === 200) {
+          assistanceMessages = this.processAssistanceMessages(results[2].value);
+        } else {
+          console.error('获取协助请求列表失败:', 
+            results[2].status === 'rejected' ? results[2].reason : results[2].value);
+          apiErrors.push('协助请求');
+        }
+        
+        // 记录各类消息数量
+        console.log('处理后消息数量:', {
+          chat: chatMessages.length,
+          announcement: announcementMessages.length,
+          assistance: assistanceMessages.length
+        });
         
         // 合并并按时间倒序排列所有消息
         const all = [...chatMessages, ...announcementMessages, ...assistanceMessages]
@@ -171,6 +207,15 @@ export default {
         
         this.messages = all;
         this.total = all.length;
+        
+        // 如果有部分API请求失败，但仍然有消息数据，显示部分数据加载成功的提示
+        if (apiErrors.length > 0 && this.messages.length > 0) {
+          this.$toast && this.$toast.warning(`部分数据加载失败(${apiErrors.join('、')}), 显示已获取的消息`);
+        } 
+        // 如果没有任何消息数据，显示错误状态
+        else if (this.messages.length === 0) {
+          this.error = '暂无消息数据可显示，请稍后刷新重试';
+        }
       } catch (e) {
         console.error('消息聚合失败', e);
         this.error = '获取消息失败，请检查网络连接并重试';
@@ -226,25 +271,65 @@ export default {
     
     // 处理协助请求数据
     processAssistanceMessages(assistanceRes) {
+      console.log('协助请求API原始响应:', JSON.stringify(assistanceRes));
+      
       if (!assistanceRes || !assistanceRes.code || assistanceRes.code !== 200 || !assistanceRes.data) {
-        console.error('协助请求数据响应无效');
+        console.error('协助请求数据响应无效', assistanceRes);
         // 显示友好的提示，当服务端修复后可自动恢复功能
         this.$toast && this.$toast.warning('协助请求功能暂时不可用，正在修复中...');
         return [];
       }
       
-      return (assistanceRes.data?.list || []).map(a => ({
-        id: a.requestId || String(a.id),
-        type: 'assistance',
-        title: a.title || a.taskTitle || '协助请求',
-        content: a.content || a.description || '',
-        time: a.createTime || new Date().toISOString(),
-        icon: 'icon-users',
-        iconClass: 'purple',
-        isRead: a.status === 'completed',
-        sourceType: 'assistance',
-        extraData: { requestId: a.requestId || String(a.id) }
-      }));
+      console.log('协助请求数据结构:', {
+        hasData: !!assistanceRes.data,
+        hasList: assistanceRes.data && Array.isArray(assistanceRes.data.list),
+        dataKeys: assistanceRes.data ? Object.keys(assistanceRes.data) : [],
+        firstItem: assistanceRes.data && assistanceRes.data.list && assistanceRes.data.list.length > 0 
+          ? assistanceRes.data.list[0] 
+          : 'No items'
+      });
+      
+      // 后端返回的数据可能直接包含列表，或者包装在data.list中
+      let dataList = [];
+      
+      if (Array.isArray(assistanceRes.data)) {
+        // 直接是数组的情况
+        dataList = assistanceRes.data;
+      } else if (assistanceRes.data.list && Array.isArray(assistanceRes.data.list)) {
+        // 有list属性的情况
+        dataList = assistanceRes.data.list;
+      } else if (assistanceRes.data.data && Array.isArray(assistanceRes.data.data)) {
+        // 嵌套data属性的情况
+        dataList = assistanceRes.data.data;
+      } else if (assistanceRes.data.data && assistanceRes.data.data.list && Array.isArray(assistanceRes.data.data.list)) {
+        // 多层嵌套的情况
+        dataList = assistanceRes.data.data.list;
+      }
+      
+      if (dataList.length === 0) {
+        console.warn('协助请求列表为空');
+        return [];
+      }
+      
+      return dataList.map(a => {
+        console.log('处理单个协助请求项:', a);
+        return {
+          id: a.requestId || a.request_id || String(a.id),
+          type: 'assistance',
+          title: a.title || a.taskTitle || '任务' + (a.task_id || '') || '协助请求',
+          content: a.content || a.description || '',
+          time: a.createTime || a.create_time || new Date().toISOString(),
+          icon: 'icon-users',
+          iconClass: 'purple',
+          isRead: a.status === 'completed',
+          sourceType: 'assistance',
+          extraData: { 
+            requestId: a.requestId || a.request_id || String(a.id),
+            taskId: a.task_id || a.taskId,
+            status: a.status
+          }
+        };
+      });
     },
     
     // 重试加载

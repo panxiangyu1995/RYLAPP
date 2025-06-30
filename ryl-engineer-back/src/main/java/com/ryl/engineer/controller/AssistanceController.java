@@ -34,6 +34,11 @@ public class AssistanceController {
         Long userId = UserContextHolder.getUserId();
         PageResult<AssistanceRequest> result = assistanceService.getAssistanceRequestList(
             userId, page, size, status, keyword);
+        
+        // 调试信息
+        System.out.println("协助请求列表查询 - 用户ID: " + userId);
+        System.out.println("查询结果: " + (result == null ? "null" : "记录数: " + result.getList().size()));
+        
         return Result.success(result);
     }
     

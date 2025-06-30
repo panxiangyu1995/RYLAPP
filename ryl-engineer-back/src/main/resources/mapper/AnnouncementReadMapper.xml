@@ -3,23 +3,23 @@
 <mapper namespace="com.ryl.engineer.mapper.AnnouncementReadMapper">
     
     <sql id="Base_Column_List">
-        id, announcement_id, user_id, read_time, create_time
+        id, announcement_id, user_id, read_time
     </sql>
     
     <insert id="insert" parameterType="com.ryl.engineer.entity.AnnouncementRead" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO dbo.announcement_read (
-            announcement_id, user_id, read_time, create_time
+            announcement_id, user_id, read_time
         ) VALUES (
-            #{announcementId}, #{userId}, #{readTime}, #{createTime}
+            #{announcementId}, #{userId}, #{readTime}
         )
     </insert>
     
     <insert id="batchInsert" parameterType="java.util.List">
         INSERT INTO dbo.announcement_read (
-            announcement_id, user_id, read_time, create_time
+            announcement_id, user_id, read_time
         ) VALUES 
         <foreach collection="list" item="item" separator=",">
-            (#{item.announcementId}, #{item.userId}, #{item.readTime}, #{item.createTime})
+            (#{item.announcementId}, #{item.userId}, #{item.readTime})
         </foreach>
     </insert>
     
