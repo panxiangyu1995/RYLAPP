@@ -15,6 +15,8 @@ import com.ryl.engineer.mapper.ContactsGroupRelationMapper;
 import com.ryl.engineer.mapper.ContactsRelationMapper;
 import com.ryl.engineer.service.ContactsService;
 import com.ryl.engineer.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,8 @@ import java.util.stream.Collectors;
  */
 @Service
 public class ContactsServiceImpl implements ContactsService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ContactsServiceImpl.class);
 
     @Autowired
     private ContactsRelationMapper contactsRelationMapper;
@@ -60,15 +64,39 @@ public class ContactsServiceImpl implements ContactsService {
     
     @Override
     public PageResult<ContactDTO> getOtherContactsList(Long userId, Integer page, Integer size, String keyword) {
-        PageHelper.startPage(page, size);
-        Page<User> userPage = (Page<User>) contactsRelationMapper.selectOtherContacts(
-            userId, keyword);
+        logger.info("获取其它联系人列表 - 用户ID: {}, 页码: {}, 每页大小: {}, 关键词: {}", userId, page, size, keyword);
         
-        List<ContactDTO> contactDTOList = userPage.getResult().stream()
-            .map(this::convertUserToContactDTO)
-            .collect(Collectors.toList());
-        
-        return new PageResult<>(userPage.getTotal(), contactDTOList);
+        try {
+            PageHelper.startPage(page, size);
+            logger.debug("执行查询前 - 已设置分页参数");
+            
+            // 执行查询
+            List<User> userList = contactsRelationMapper.selectOtherContacts(userId, keyword);
+            
+            if (userList instanceof Page) {
+                Page<User> userPage = (Page<User>) userList;
+                logger.info("查询成功 - 总记录数: {}, 当前页记录数: {}", userPage.getTotal(), userPage.size());
+                
+                // 转换为DTO
+                List<ContactDTO> contactDTOList = userPage.getResult().stream()
+                    .map(this::convertUserToContactDTO)
+                    .collect(Collectors.toList());
+                
+                return new PageResult<>(userPage.getTotal(), contactDTOList);
+            } else {
+                // 处理非Page类型的结果（兼容性处理）
+                logger.warn("查询结果不是Page类型，无法获取总数，使用列表大小作为总数");
+                List<ContactDTO> contactDTOList = userList.stream()
+                    .map(this::convertUserToContactDTO)
+                    .collect(Collectors.toList());
+                
+                return new PageResult<>((long) contactDTOList.size(), contactDTOList);
+            }
+        } catch (Exception e) {
+            logger.error("获取其它联系人列表异常", e);
+            // 返回空列表而不是抛出异常
+            return new PageResult<>(0L, new ArrayList<>());
+        }
     }
     
     @Override
@@ -323,6 +351,13 @@ public class ContactsServiceImpl implements ContactsService {
     
     // 新增辅助方法：将User对象转换为ContactDTO
     private ContactDTO convertUserToContactDTO(User user) {
+        if (user == null) {
+            logger.warn("尝试转换null用户对象为ContactDTO");
+            return null;
+        }
+        
+        logger.debug("转换User对象为ContactDTO - 用户ID: {}, 姓名: {}", user.getId(), user.getName());
+        
         ContactDTO dto = new ContactDTO();
         // 设置用户基本信息
         dto.setId(user.getId());
@@ -332,6 +367,9 @@ public class ContactsServiceImpl implements ContactsService {
         dto.setDepartment(user.getDepartment());
         dto.setMobile(user.getMobile());
         dto.setStatus(user.getStatus());
+        
+        // 使用最后登录时间作为最后活跃时间
+        dto.setLastActiveTime(user.getLastLoginTime());
         
         // 简化角色处理，使用默认角色
         dto.setRole("其他联系人");
