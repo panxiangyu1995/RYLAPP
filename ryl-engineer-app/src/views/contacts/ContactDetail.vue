@@ -127,10 +127,13 @@ export default {
       this.error = null
       
       try {
+        console.log(`请求联系人详情，ID: ${this.contactId}`)
         const response = await getContactDetail(this.contactId)
         
         if (response.code === 200 && response.data) {
           this.contact = response.data
+          console.log('获取联系人详情成功:', this.contact)
+          
           // 如果没有role字段，根据类型设置
           const type = this.$route.query.type
           if (!this.contact.role) {
@@ -139,15 +142,36 @@ export default {
             } else if (type === 'customer') {
               this.contact.role = '客户'
             } else {
-              this.contact.role = '其它'
+              this.contact.role = '其它联系人'
             }
           }
+          
+          // 确保lastActiveTime字段格式正确
+          if (this.contact.lastActiveTime && typeof this.contact.lastActiveTime === 'string') {
+            this.contact.lastActiveTime = new Date(this.contact.lastActiveTime)
+          }
+          
+          console.log('处理后的联系人详情数据:', this.contact)
         } else {
           this.error = response.message || '获取联系人详情失败'
+          console.error('获取联系人详情失败:', response)
         }
       } catch (error) {
-        console.error('获取联系人详情出错:', error)
-        this.error = '获取联系人详情失败，请检查网络连接'
+        console.error('获取联系人详情请求异常:', error)
+        
+        // 详细错误信息记录
+        if (error.status) {
+          console.error(`HTTP错误: ${error.status}`, error.message)
+          this.error = `获取联系人详情失败: ${error.message}`
+        } else if (error.isNetworkError) {
+          console.error('网络连接错误')
+          this.error = '网络连接错误，请检查网络'
+        } else if (error.isTimeout) {
+          console.error('请求超时')
+          this.error = '请求超时，服务器响应时间过长'
+        } else {
+          this.error = '获取联系人详情失败，请稍后重试'
+        }
       } finally {
         this.loading = false
       }

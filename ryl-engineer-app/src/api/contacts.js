@@ -31,8 +31,9 @@ export function getEngineerStatusList(params) {
  * @param {Object} params 查询参数
  * @param {number} params.page 页码，默认1
  * @param {number} params.size 每页记录数，默认20
- * @param {string} params.keyword 搜索关键词(姓名/部门)
- * @returns {Promise} 返回其它联系人列表
+ * @param {string} params.keyword 搜索关键词(姓名/工号/部门)
+ * @returns {Promise} 返回分页数据，格式为{code: 200, message: "成功", data: {total: 总数, list: [联系人列表]}}
+ * @returns {Promise.data.list} 联系人列表，每项包含id, workId, name, avatar, department, mobile, status, role等字段
  */
 export function getOtherContacts(params) {
   return http.get('/api/v1/contacts/other', { params })

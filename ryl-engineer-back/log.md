@@ -1,5 +1,16 @@
 # 更新日志
 
+## 0.1.1 - 2025-06-30
+### 优化
+- 重构了联系人模块的"其它联系人"功能，移除了对不存在的contacts_relation表的依赖
+- 修改了ContactsRelationMapper.xml中的selectOtherContacts查询，直接从用户表和角色表获取数据
+- 更新了ContactsRelationMapper接口，将selectOtherContacts方法的返回类型修改为User列表
+- 调整了ContactsServiceImpl中的getOtherContactsList方法，适配新的数据查询方式
+
+### 修复
+- 解决了"其它联系人"功能返回500内部服务器错误的问题
+- 简化了联系人数据模型，符合"只要是APP的用户就在联系人列表内"的需求
+
 ## 0.1.0 - 2025-06-18
 ### 添加
 - 创建了缺失的MyBatis Mapper XML文件：

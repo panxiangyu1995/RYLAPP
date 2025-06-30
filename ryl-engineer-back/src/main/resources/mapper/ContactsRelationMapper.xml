@@ -50,35 +50,32 @@
     </select>
     
     <!-- 获取非工程师角色的联系人列表 -->
-    <select id="selectOtherContacts" resultType="com.ryl.engineer.entity.ContactsRelation">
+    <select id="selectOtherContacts" resultType="com.ryl.engineer.entity.User">
         SELECT
-            cr.*, 
-            u.work_id, 
-            u.name, 
-            u.avatar, 
-            u.department, 
+            u.id as id,
+            u.work_id,
+            u.name,
+            u.avatar,
+            u.department,
             u.mobile,
             u.status,
             u.last_active_time
         FROM
-            dbo.contacts_relation cr
-        JOIN
-            dbo.[user] u ON cr.contact_id = u.id
+            dbo.[user] u
         JOIN
             dbo.user_role ur ON u.id = ur.user_id
         JOIN
             dbo.role r ON ur.role_id = r.id
         WHERE
-            cr.user_id = #{userId}
-            AND r.role_key != 'engineer'
-        <if test="keyword != null and keyword != ''">
-            AND (u.name LIKE CONCAT('%', #{keyword}, '%')
-            OR u.work_id LIKE CONCAT('%', #{keyword}, '%')
-            OR u.department LIKE CONCAT('%', #{keyword}, '%'))
-        </if>
+            u.id != #{userId}
+            AND r.code != 'ENGINEER'
+            <if test="keyword != null and keyword != ''">
+                AND (u.name LIKE CONCAT('%', #{keyword}, '%')
+                OR u.work_id LIKE CONCAT('%', #{keyword}, '%')
+                OR u.department LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
         GROUP BY
-            cr.id, cr.user_id, cr.contact_id, cr.relation_type, cr.remark, cr.create_time, cr.update_time,
-            u.work_id, u.name, u.avatar, u.department, u.mobile, u.status, u.last_active_time
+            u.id, u.work_id, u.name, u.avatar, u.department, u.mobile, u.status, u.last_active_time
         ORDER BY
             u.last_active_time DESC
     </select>

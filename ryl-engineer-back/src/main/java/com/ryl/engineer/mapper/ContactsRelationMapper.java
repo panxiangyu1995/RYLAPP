@@ -1,6 +1,7 @@
 package com.ryl.engineer.mapper;
 
 import com.ryl.engineer.entity.ContactsRelation;
+import com.ryl.engineer.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -30,7 +31,7 @@ public interface ContactsRelationMapper {
     /**
      * 获取非工程师角色的联系人列表
      */
-    List<ContactsRelation> selectOtherContacts(
+    List<User> selectOtherContacts(
         @Param("userId") Long userId, 
         @Param("keyword") String keyword
     );

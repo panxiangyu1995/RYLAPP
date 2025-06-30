@@ -61,14 +61,14 @@ public class ContactsServiceImpl implements ContactsService {
     @Override
     public PageResult<ContactDTO> getOtherContactsList(Long userId, Integer page, Integer size, String keyword) {
         PageHelper.startPage(page, size);
-        Page<ContactsRelation> relationPage = (Page<ContactsRelation>) contactsRelationMapper.selectOtherContacts(
+        Page<User> userPage = (Page<User>) contactsRelationMapper.selectOtherContacts(
             userId, keyword);
         
-        List<ContactDTO> contactDTOList = relationPage.getResult().stream()
-            .map(this::convertToContactDTO)
+        List<ContactDTO> contactDTOList = userPage.getResult().stream()
+            .map(this::convertUserToContactDTO)
             .collect(Collectors.toList());
         
-        return new PageResult<>(relationPage.getTotal(), contactDTOList);
+        return new PageResult<>(userPage.getTotal(), contactDTOList);
     }
     
     @Override
@@ -319,5 +319,23 @@ public class ContactsServiceImpl implements ContactsService {
             throw new ServiceException("分组不存在");
         }
         return convertToContactGroupDTO(group);
+    }
+    
+    // 新增辅助方法：将User对象转换为ContactDTO
+    private ContactDTO convertUserToContactDTO(User user) {
+        ContactDTO dto = new ContactDTO();
+        // 设置用户基本信息
+        dto.setId(user.getId());
+        dto.setWorkId(user.getWorkId());
+        dto.setName(user.getName());
+        dto.setAvatar(user.getAvatar());
+        dto.setDepartment(user.getDepartment());
+        dto.setMobile(user.getMobile());
+        dto.setStatus(user.getStatus());
+        
+        // 简化角色处理，使用默认角色
+        dto.setRole("其他联系人");
+        
+        return dto;
     }
 } 

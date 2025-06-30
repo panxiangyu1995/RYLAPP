@@ -21,7 +21,7 @@
         <!-- 联系人卡片 -->
         <div 
           v-for="contact in filteredContacts" 
-          :key="contact.userId" 
+          :key="contact.id" 
           class="contact-card"
           @click="viewContactDetail(contact)"
         >
@@ -80,22 +80,38 @@ export default {
           size: 100, // 较大的值，确保加载全部联系人
           keyword: searchText.value
         }
+        console.log('请求其它联系人列表，参数:', params)
         const res = await getOtherContacts(params)
-        if (res.code === 200 && res.data) {
-          // 检查返回结果结构
-          if (Array.isArray(res.data)) {
-            contacts.value = res.data || []
-          } else if (res.data.list && Array.isArray(res.data.list)) {
-            contacts.value = res.data.list || []
+        
+        if (res.code === 200) {
+          // 处理分页数据结构
+          if (res.data && res.data.list && Array.isArray(res.data.list)) {
+            contacts.value = res.data.list
+            console.log(`成功加载${contacts.value.length}个其它联系人`)
+          } else if (Array.isArray(res.data)) {
+            // 兼容直接返回数组的情况
+            contacts.value = res.data
+            console.log(`成功加载${contacts.value.length}个其它联系人`)
           } else {
             contacts.value = []
-            console.error('获取其它联系人数据结构不符合预期:', res.data)
+            console.warn('其它联系人数据为空或格式不符合预期:', res.data)
           }
         } else {
           contacts.value = []
+          console.error('获取其它联系人失败:', res.message || '未知错误')
         }
       } catch (error) {
-        console.error('获取其它联系人失败:', error)
+        contacts.value = []
+        console.error('获取其它联系人请求异常:', error)
+        
+        // 详细错误信息记录
+        if (error.status) {
+          console.error(`HTTP错误: ${error.status}`, error.message)
+        } else if (error.isNetworkError) {
+          console.error('网络连接错误，请检查网络')
+        } else if (error.isTimeout) {
+          console.error('请求超时，服务器响应时间过长')
+        }
       } finally {
         loading.value = false
       }
