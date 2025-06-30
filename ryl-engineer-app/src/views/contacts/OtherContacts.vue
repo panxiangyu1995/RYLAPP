@@ -55,7 +55,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getOtherContacts, testOtherContacts } from '@/api/contacts'
+import { getOtherContacts } from '@/api/contacts'
 import defaultAvatar from '@/assets/images/company-logo.png'
 
 export default {
@@ -81,7 +81,9 @@ export default {
       loading.value = true
       try {
         console.log('请求其它联系人列表')
-        const res = await testOtherContacts()
+        const res = await getOtherContacts({
+          keyword: searchText.value
+        })
         console.log('API返回完整数据:', JSON.stringify(res))
         
         if (res.code === 200 && Array.isArray(res.data)) {
@@ -148,37 +150,10 @@ export default {
       }
     }
     
-    // 测试获取联系人
-    const testContacts = async () => {
-      try {
-        console.log('测试获取非工程师联系人')
-        const res = await testOtherContacts()
-        console.log('测试API返回数据:', res)
-        
-        if (res.code === 200 && Array.isArray(res.data)) {
-          console.log(`测试成功，获取到${res.data.length}个非工程师用户`)
-          
-          // 将测试数据转换为联系人格式
-          const testContactsList = res.data.map(user => ({
-            id: user.id,
-            workId: user.work_id,
-            name: user.name,
-            department: user.department,
-            role: user.role_code,
-            avatar: null,
-            status: 1,
-            lastActiveTime: new Date()
-          }))
-          
-          // 显示测试数据
-          contacts.value = testContactsList
-          console.log('测试数据已加载到联系人列表')
-        } else {
-          console.error('测试API返回错误:', res.message || '未知错误')
-        }
-      } catch (error) {
-        console.error('测试API请求异常:', error)
-      }
+    // 测试获取联系人（现在用于刷新联系人列表）
+    const testContacts = () => {
+      console.log('刷新联系人列表')
+      loadContacts()
     }
     
     onMounted(() => {

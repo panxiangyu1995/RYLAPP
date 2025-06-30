@@ -147,24 +147,4 @@ public class ContactsController {
         ContactGroupDTO groupDTO = contactsService.removeContactsFromGroup(groupId, userId, contactIds);
         return Result.success(groupDTO);
     }
-    
-    /**
-     * 测试方法 - 获取所有非工程师用户（不分页）
-     */
-    @GetMapping("/test/other")
-    public Result<List<Map<String, Object>>> testOtherContacts() {
-        try {
-            // 使用JdbcTemplate直接执行SQL查询
-            List<Map<String, Object>> users = jdbcTemplate.queryForList(
-                "SELECT u.id, u.work_id, u.name, u.department, r.code as role_code " +
-                "FROM [user] u " +
-                "JOIN user_role ur ON u.id = ur.user_id " +
-                "JOIN role r ON ur.role_id = r.id " +
-                "WHERE r.code != 'ENGINEER'"
-            );
-            return Result.success(users);
-        } catch (Exception e) {
-            return Result.error("查询失败: " + e.getMessage());
-        }
-    }
 } 
