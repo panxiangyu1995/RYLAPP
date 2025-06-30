@@ -143,8 +143,28 @@ export default {
         // 使用props传入的类型，或者使用查询参数中的类型，或者默认为普通消息
         const messageType = this.type || this.$route.query.type;
         
+        // 尝试从路由参数中获取已经传递的消息数据
+        const messageDataStr = this.$route.query.messageData;
+        if (messageDataStr) {
+          try {
+            const passedMessage = JSON.parse(messageDataStr);
+            if (passedMessage) {
+              console.log('使用传递的消息数据:', passedMessage);
+              
+              // 将传递过来的数据转换为组件内部格式
+              this.formatMessageFromPassed(passedMessage);
+              this.loading = false;
+              return; // 已有数据，不再请求API
+            }
+          } catch (e) {
+            console.error('解析传递的消息数据失败:', e);
+            // 解析失败，继续使用API请求
+          }
+        }
+        
         console.log('获取消息详情', { id, messageType });
         
+        // 如果没有传递消息数据或解析失败，才使用API请求
         if (messageType === 'announcement') {
           await this.fetchAnnouncementDetail(id);
         } else if (messageType === 'assistance') {
@@ -179,9 +199,7 @@ export default {
               { label: '发布人', value: a.sender?.name || a.senderName },
               { label: '状态', value: a.status }
             ],
-            actions: [
-              { label: a.isRead ? '已读' : '标记为已读', type: 'mark-read', primary: !a.isRead }
-            ]
+            actions: []
           };
         } else {
           this.message = null;
@@ -284,6 +302,67 @@ export default {
     },
     viewTask(taskId) {
       this.$router.push(`/task/${taskId}`);
+    },
+    // 格式化从消息列表传递过来的消息数据
+    formatMessageFromPassed(passedMessage) {
+      const m = passedMessage;
+      
+      // 根据消息类型进行不同的处理
+      if (m.type === 'announcement') {
+        this.message = {
+          id: m.id,
+          type: 'announcement',
+          title: m.title,
+          content: m.content,
+          time: m.time,
+          icon: m.icon || 'icon-bell',
+          iconClass: m.iconClass || 'blue',
+          details: [
+            { label: '发布时间', value: this.formatTime(m.time) },
+            { label: '发布人', value: m.extraData?.senderName || '系统' },
+            { label: '状态', value: m.isRead ? '已读' : '未读' }
+          ],
+          actions: []
+        };
+      } else if (m.type === 'assistance') {
+        this.message = {
+          id: m.id,
+          type: 'assistance',
+          title: m.title,
+          content: m.content,
+          time: m.time,
+          icon: m.icon || 'icon-users',
+          iconClass: m.iconClass || 'purple',
+          details: [
+            { label: '请求人', value: m.extraData?.requesterName || '未知' },
+            { label: '工程师', value: m.extraData?.engineerName || '未知' },
+            { label: '状态', value: m.extraData?.status || '处理中' },
+            { label: '紧急程度', value: m.extraData?.urgency || '普通' }
+          ],
+          actions: [
+            { label: '查看协作会话', type: 'view-conv', primary: true }
+          ]
+        };
+      } else {
+        // 默认消息格式
+        this.message = {
+          id: m.id,
+          type: m.type || 'chat',
+          title: m.title,
+          content: m.content,
+          time: m.time,
+          icon: m.icon || 'icon-user-circle',
+          iconClass: m.iconClass || 'teal',
+          details: [
+            { label: '发送人', value: m.extraData?.senderName || m.title },
+            { label: '时间', value: this.formatTime(m.time) },
+            { label: '状态', value: m.isRead ? '已读' : '未读' }
+          ],
+          actions: [
+            { label: '标记为已读', type: 'mark-read', primary: true }
+          ]
+        };
+      }
     }
   },
   created() {

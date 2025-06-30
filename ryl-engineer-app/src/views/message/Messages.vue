@@ -298,22 +298,37 @@ export default {
     },
     
     viewMessageDetail(messageId, messageType) {
-      // 根据消息类型跳转到不同页面
+      // 找到当前点击的消息对象
+      const clickedMessage = this.messages.find(m => m.id === messageId);
+      
+      // 根据消息类型跳转到不同页面，并传递完整消息数据
       switch (messageType) {
         case 'chat':
-          this.$router.push(`/chat/${messageId}`);
+          this.$router.push({
+            path: `/chat/${messageId}`,
+            query: { messageData: clickedMessage ? JSON.stringify(clickedMessage) : null }
+          });
           break;
         case 'announcement':
-          this.$router.push(`/announcement/${messageId}`);
+          this.$router.push({
+            path: `/announcement/${messageId}`,
+            query: { messageData: clickedMessage ? JSON.stringify(clickedMessage) : null }
+          });
           break;
         case 'assistance':
-          this.$router.push(`/assistance/${messageId}`);
+          this.$router.push({
+            path: `/assistance/${messageId}`,
+            query: { messageData: clickedMessage ? JSON.stringify(clickedMessage) : null }
+          });
           break;
         default:
           // 默认行为
           this.$router.push({
             path: `/message/${messageId}`,
-            query: { type: messageType }
+            query: { 
+              type: messageType,
+              messageData: clickedMessage ? JSON.stringify(clickedMessage) : null 
+            }
           });
       }
     },
