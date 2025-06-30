@@ -86,7 +86,7 @@
     <!-- 标记请求为已读 -->
     <update id="markAsRead">
         UPDATE dbo.assistance_request_recipient
-        SET is_read = 1, read_time = NOW(), update_time = NOW()
+        SET is_read = 1, read_time = GETDATE(), update_time = GETDATE()
         WHERE request_id = #{requestId} AND recipient_id = #{recipientId}
     </update>
     

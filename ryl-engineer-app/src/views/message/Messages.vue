@@ -116,7 +116,6 @@ export default {
       selectedMessageType: 'all',
       messageTypes: [
         { label: '全部', value: 'all' },
-        { label: '系统通知', value: 'system' },
         { label: '任务消息', value: 'task' },
         { label: '聊天消息', value: 'chat' },
         { label: '公告', value: 'announcement' },
@@ -229,6 +228,8 @@ export default {
     processAssistanceMessages(assistanceRes) {
       if (!assistanceRes || !assistanceRes.code || assistanceRes.code !== 200 || !assistanceRes.data) {
         console.error('协助请求数据响应无效');
+        // 显示友好的提示，当服务端修复后可自动恢复功能
+        this.$toast && this.$toast.warning('协助请求功能暂时不可用，正在修复中...');
         return [];
       }
       

@@ -37,7 +37,7 @@
     </select>
     
     <select id="selectByUserId" resultMap="BaseResultMap">
-        SELECT 
+        SELECT DISTINCT
             a.id, a.request_id, a.description, a.requester_id, u1.name as requester_name,
             a.engineer_id, u2.name as engineer_name, a.task_id, a.urgency, a.status, 
             a.response, a.create_time, a.update_time, a.handle_time
@@ -56,7 +56,6 @@
                 a.task_id LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
-        GROUP BY a.id
         ORDER BY a.create_time DESC
     </select>
     

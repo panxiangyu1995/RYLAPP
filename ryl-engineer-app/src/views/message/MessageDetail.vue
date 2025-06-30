@@ -196,8 +196,7 @@ export default {
             iconClass: 'blue',
             details: [
               { label: '发布时间', value: this.formatTime(a.startTime) },
-              { label: '发布人', value: a.sender?.name || a.senderName },
-              { label: '状态', value: a.status }
+              { label: '发布人', value: a.sender?.name || a.senderName }
             ],
             actions: []
           };
@@ -319,8 +318,7 @@ export default {
           iconClass: m.iconClass || 'blue',
           details: [
             { label: '发布时间', value: this.formatTime(m.time) },
-            { label: '发布人', value: m.extraData?.senderName || '系统' },
-            { label: '状态', value: m.isRead ? '已读' : '未读' }
+            { label: '发布人', value: m.extraData?.senderName || '系统' }
           ],
           actions: []
         };
