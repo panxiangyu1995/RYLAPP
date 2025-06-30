@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.AnnouncementReadMapper">
+    
+    <sql id="Base_Column_List">
+        id, announcement_id, user_id, read_time, create_time
+    </sql>
+    
+    <insert id="insert" parameterType="com.ryl.engineer.entity.AnnouncementRead" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dbo.announcement_read (
+            announcement_id, user_id, read_time, create_time
+        ) VALUES (
+            #{announcementId}, #{userId}, #{readTime}, #{createTime}
+        )
+    </insert>
+    
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO dbo.announcement_read (
+            announcement_id, user_id, read_time, create_time
+        ) VALUES 
+        <foreach collection="list" item="item" separator=",">
+            (#{item.announcementId}, #{item.userId}, #{item.readTime}, #{item.createTime})
+        </foreach>
+    </insert>
+    
+    <select id="selectByUserIdAndAnnouncementId" resultType="com.ryl.engineer.entity.AnnouncementRead">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.announcement_read
+        WHERE announcement_id = #{announcementId} AND user_id = #{userId}
+    </select>
+    
+    <select id="selectReadAnnouncementIdsByUserId" resultType="java.lang.Long">
+        SELECT 
+            announcement_id
+        FROM dbo.announcement_read
+        WHERE user_id = #{userId}
+    </select>
+    
+    <select id="selectReadUserIdsByAnnouncementId" resultType="java.lang.Long">
+        SELECT 
+            user_id
+        FROM dbo.announcement_read
+        WHERE announcement_id = #{announcementId}
+    </select>
+    
+    <select id="isAnnouncementRead" resultType="java.lang.Boolean">
+        SELECT 
+            COUNT(1) > 0
+        FROM dbo.announcement_read
+        WHERE announcement_id = #{announcementId} AND user_id = #{userId}
+    </select>
+    
+    <select id="countUnreadByUserId" resultType="java.lang.Integer">
+        SELECT 
+            COUNT(1)
+        FROM dbo.system_announcement a
+        WHERE NOT EXISTS (
+            SELECT 1 FROM dbo.announcement_read ar 
+            WHERE ar.announcement_id = a.id AND ar.user_id = #{userId}
+        )
+    </select>
+    
+    <delete id="deleteByUserIdAndAnnouncementId">
+        DELETE FROM dbo.announcement_read
+        WHERE announcement_id = #{announcementId} AND user_id = #{userId}
+    </delete>
+    
+    <delete id="deleteByUserId">
+        DELETE FROM dbo.announcement_read
+        WHERE user_id = #{userId}
+    </delete>
+    
+    <delete id="deleteByAnnouncementId">
+        DELETE FROM dbo.announcement_read
+        WHERE announcement_id = #{announcementId}
+    </delete>
+</mapper> 

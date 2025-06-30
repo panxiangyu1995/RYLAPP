@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.ContactsRelationMapper">
+    
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, user_id, contact_id, relation_type, remark, create_time, update_time
+    </sql>
+    
+    <!-- 获取用户的联系人列表 -->
+    <select id="selectByUserId" resultType="com.ryl.engineer.entity.ContactsRelation">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM
+            dbo.contacts_relation
+        WHERE
+            user_id = #{userId}
+    </select>
+    
+    <!-- 根据条件分页查询联系人 -->
+    <select id="selectByCondition" resultType="com.ryl.engineer.entity.ContactsRelation">
+        SELECT
+            cr.*, 
+            u.work_id, 
+            u.name, 
+            u.avatar, 
+            u.department, 
+            u.mobile,
+            u.status,
+            u.last_active_time
+        FROM
+            dbo.contacts_relation cr
+        JOIN
+            dbo.[user] u ON cr.contact_id = u.id
+        WHERE
+            cr.user_id = #{userId}
+        <if test="keyword != null and keyword != ''">
+            AND (u.name LIKE CONCAT('%', #{keyword}, '%')
+            OR u.work_id LIKE CONCAT('%', #{keyword}, '%')
+            OR u.department LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="department != null and department != ''">
+            AND u.department = #{department}
+        </if>
+        <if test="status != null">
+            AND u.status = #{status}
+        </if>
+        ORDER BY
+            u.last_active_time DESC
+    </select>
+    
+    <!-- 获取非工程师角色的联系人列表 -->
+    <select id="selectOtherContacts" resultType="com.ryl.engineer.entity.ContactsRelation">
+        SELECT
+            cr.*, 
+            u.work_id, 
+            u.name, 
+            u.avatar, 
+            u.department, 
+            u.mobile,
+            u.status,
+            u.last_active_time
+        FROM
+            dbo.contacts_relation cr
+        JOIN
+            dbo.[user] u ON cr.contact_id = u.id
+        JOIN
+            dbo.user_role ur ON u.id = ur.user_id
+        JOIN
+            dbo.role r ON ur.role_id = r.id
+        WHERE
+            cr.user_id = #{userId}
+            AND r.role_key != 'engineer'
+        <if test="keyword != null and keyword != ''">
+            AND (u.name LIKE CONCAT('%', #{keyword}, '%')
+            OR u.work_id LIKE CONCAT('%', #{keyword}, '%')
+            OR u.department LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        GROUP BY
+            cr.id, cr.user_id, cr.contact_id, cr.relation_type, cr.remark, cr.create_time, cr.update_time,
+            u.work_id, u.name, u.avatar, u.department, u.mobile, u.status, u.last_active_time
+        ORDER BY
+            u.last_active_time DESC
+    </select>
+    
+    <!-- 获取用户的联系人数量 -->
+    <select id="countByCondition" resultType="int">
+        SELECT
+            COUNT(*)
+        FROM
+            dbo.contacts_relation cr
+        JOIN
+            dbo.[user] u ON cr.contact_id = u.id
+        WHERE
+            cr.user_id = #{userId}
+        <if test="keyword != null and keyword != ''">
+            AND (u.name LIKE CONCAT('%', #{keyword}, '%')
+            OR u.work_id LIKE CONCAT('%', #{keyword}, '%')
+            OR u.department LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="department != null and department != ''">
+            AND u.department = #{department}
+        </if>
+        <if test="status != null">
+            AND u.status = #{status}
+        </if>
+    </select>
+    
+    <!-- 检查是否已存在联系人关系 -->
+    <select id="selectByUserIdAndContactId" resultType="com.ryl.engineer.entity.ContactsRelation">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM
+            dbo.contacts_relation
+        WHERE
+            user_id = #{userId} AND contact_id = #{contactId}
+    </select>
+    
+    <!-- 根据ID获取联系人关系 -->
+    <select id="selectById" resultType="com.ryl.engineer.entity.ContactsRelation">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM
+            dbo.contacts_relation
+        WHERE
+            id = #{id}
+    </select>
+    
+    <!-- 新增联系人关系 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dbo.contacts_relation (
+            user_id, contact_id, relation_type, remark, create_time, update_time
+        ) VALUES (
+            #{userId}, #{contactId}, #{relationType}, #{remark}, #{createTime}, #{updateTime}
+        )
+    </insert>
+    
+    <!-- 更新联系人关系 -->
+    <update id="update">
+        UPDATE dbo.contacts_relation
+        SET
+            relation_type = #{relationType},
+            remark = #{remark},
+            update_time = #{updateTime}
+        WHERE
+            id = #{id}
+    </update>
+    
+    <!-- 删除联系人关系 -->
+    <delete id="deleteById">
+        DELETE FROM dbo.contacts_relation
+        WHERE
+            id = #{id}
+    </delete>
+    
+    <!-- 删除用户与联系人的关系 -->
+    <delete id="deleteByUserIdAndContactId">
+        DELETE FROM dbo.contacts_relation
+        WHERE
+            user_id = #{userId} AND contact_id = #{contactId}
+    </delete>
+    
+</mapper> 

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.AnnouncementMapper">
+    
+    <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.SystemAnnouncement">
+        <id column="id" property="id" />
+        <result column="title" property="title" />
+        <result column="content" property="content" />
+        <result column="sender_id" property="senderId" />
+        <result column="sender_name" property="senderName" />
+        <result column="importance" property="importance" />
+        <result column="status" property="status" />
+        <result column="start_time" property="startTime" />
+        <result column="end_time" property="endTime" />
+        <result column="is_popup" property="isPopup" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, title, content, sender_id, sender_name, importance, status, 
+        start_time, end_time, is_popup, create_time, update_time
+    </sql>
+    
+    <insert id="insert" parameterType="com.ryl.engineer.entity.SystemAnnouncement" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dbo.system_announcement (
+            title, content, sender_id, sender_name, importance, status, 
+            start_time, end_time, is_popup, create_time, update_time
+        ) VALUES (
+            #{title}, #{content}, #{senderId}, #{senderName}, #{importance}, #{status}, 
+            #{startTime}, #{endTime}, #{isPopup}, #{createTime}, #{updateTime}
+        )
+    </insert>
+    
+    <update id="update" parameterType="com.ryl.engineer.entity.SystemAnnouncement">
+        UPDATE dbo.system_announcement
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="senderId != null">sender_id = #{senderId},</if>
+            <if test="senderName != null">sender_name = #{senderName},</if>
+            <if test="importance != null">importance = #{importance},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="isPopup != null">is_popup = #{isPopup},</if>
+            <if test="updateTime != null">update_time = #{updateTime}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    
+    <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.system_announcement
+        WHERE id = #{id}
+    </select>
+    
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.system_announcement
+        WHERE status = 'active'
+        <if test="keyword != null and keyword != ''">
+            AND (title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY start_time DESC
+    </select>
+    
+    <select id="selectRecentList" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.system_announcement
+        WHERE status = 'active'
+        ORDER BY start_time DESC
+        LIMIT #{limit}
+    </select>
+    
+    <select id="countByCondition" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM dbo.system_announcement
+        <where>
+            <if test="status != null">
+                status = #{status}
+            </if>
+            <if test="importance != null and importance != ''">
+                AND importance = #{importance}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
+    
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.system_announcement
+        <where>
+            <if test="status != null">
+                status = #{status}
+            </if>
+            <if test="importance != null and importance != ''">
+                AND importance = #{importance}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY 
+        <choose>
+            <when test="status == 'inactive'">create_time DESC</when>
+            <otherwise>start_time DESC</otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+    
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM dbo.system_announcement
+        WHERE id = #{id}
+    </delete>
+</mapper> 

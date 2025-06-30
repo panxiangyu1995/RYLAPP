@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.ContactsGroupMapper">
+    
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, user_id, name, sort_order, create_time, update_time
+    </sql>
+    
+    <!-- 获取用户的所有分组 -->
+    <select id="selectByUserId" resultType="com.ryl.engineer.entity.ContactsGroup">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM
+            dbo.contacts_group
+        WHERE
+            user_id = #{userId}
+        ORDER BY
+            sort_order, id
+    </select>
+    
+    <!-- 根据ID获取分组 -->
+    <select id="selectById" resultType="com.ryl.engineer.entity.ContactsGroup">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM
+            dbo.contacts_group
+        WHERE
+            id = #{id}
+    </select>
+    
+    <!-- 添加分组 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dbo.contacts_group (
+            user_id, name, sort_order, create_time, update_time
+        ) VALUES (
+            #{userId}, #{name}, #{sortOrder}, #{createTime}, #{updateTime}
+        )
+    </insert>
+    
+    <!-- 更新分组 -->
+    <update id="update">
+        UPDATE dbo.contacts_group
+        SET
+            name = #{name},
+            update_time = #{updateTime}
+        WHERE
+            id = #{id}
+    </update>
+    
+    <!-- 删除分组 -->
+    <delete id="deleteById">
+        DELETE FROM dbo.contacts_group
+        WHERE
+            id = #{id}
+    </delete>
+    
+    <!-- 更新分组排序 -->
+    <update id="updateSortOrder">
+        UPDATE dbo.contacts_group
+        SET
+            sort_order = #{sortOrder}
+        WHERE
+            id = #{id}
+    </update>
+    
+</mapper> 

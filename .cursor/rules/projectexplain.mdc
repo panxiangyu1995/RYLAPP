@@ -1,0 +1,23 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## 项目说明
+- 因为本项目在开发中总是因为研究模式时你没有参考到项目的实际情况而产生了许多额外的情形，导致需要花费更多的时间进行处理这些特殊情形，为避免类似的事情再次发生，故而设立如下项目说明。请严格参考。特别是修复报错的时候更要注意！
+- 本项目是在科研仪器维修公司内部工程师、销售、仓库管理员等在公司内部使用的移动端APP高保真原型基础上进行APP工程开发。
+
+
+### 具体要求如下
+- 前后服务的端口设置都是8089
+- 前后端数据字段不要使用任何数据库没有的字段，比如：邮箱、职位等
+- 因为APP使用者都是公司内部员工，所以每个用户的联系人列表默认是所有用户
+- 前后端不要使用模拟数据，也不要使用示例，按实际项目进行代码的编写。且后端数据库已经使用D:\Android\app\RYLAPP\接口文件\仓库模块数据库初始化_sqlserver.sql
+D:\Android\app\RYLAPP\接口文件\联系人模块数据库初始化_sqlserver.sql
+D:\Android\app\RYLAPP\接口文件\任务模块数据库初始化_sqlserver.sql
+D:\Android\app\RYLAPP\接口文件\消息模块数据库初始化_sqlserver.sql
+D:\Android\app\RYLAPP\接口文件\用户模块数据库初始化_sqlserver.sql
+D:\Android\app\RYLAPP\接口文件\combined_tables_sqlserver.sql
+这6个sql文件初始化了
+
+

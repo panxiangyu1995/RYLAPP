@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.TaskMapper">
+    
+    <!-- 查询所有任务 -->
+    <select id="findAllTasks" resultType="java.util.HashMap">
+        SELECT 
+            id,
+            task_id AS taskId,
+            title,
+            task_type AS taskType,
+            status,
+            priority,
+            progress,
+            creator_id AS creatorId,
+            creator_name AS creatorName,
+            assignee_id AS assigneeId,
+            assignee_name AS assigneeName,
+            create_time AS createTime,
+            update_time AS updateTime
+        FROM 
+            dbo.task
+        ORDER BY 
+            id
+    </select>
+    
+    <!-- 根据ID查询任务 -->
+    <select id="findTaskById" parameterType="java.util.Map" resultType="java.util.HashMap">
+        SELECT 
+            id,
+            task_id AS taskId,
+            task_type AS taskType,
+            title,
+            description,
+            customer_id AS customerId,
+            customer_name AS customerName,
+            customer_contact AS customerContact,
+            customer_phone AS customerPhone,
+            customer_address AS customerAddress,
+            device_name AS deviceName,
+            device_model AS deviceModel,
+            device_sn AS deviceSn,
+            priority,
+            expected_start_time AS expectedStartTime,
+            expected_end_time AS expectedEndTime,
+            actual_start_time AS actualStartTime,
+            actual_end_time AS actualEndTime,
+            status,
+            progress,
+            creator_id AS creatorId,
+            creator_name AS creatorName,
+            assignee_id AS assigneeId,
+            assignee_name AS assigneeName,
+            create_time AS createTime,
+            update_time AS updateTime
+        FROM 
+            dbo.task
+        WHERE 
+            id = #{id}
+    </select>
+    
+</mapper> 

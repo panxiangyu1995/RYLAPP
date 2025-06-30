@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.VehicleRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.VehicleRecord">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="task_id" property="taskId" />
+        <result column="task_name" property="taskName" />
+        <result column="type" property="type" />
+        <result column="check_in_time" property="checkInTime" />
+        <result column="location" property="location" />
+        <result column="longitude" property="longitude" />
+        <result column="latitude" property="latitude" />
+        <result column="photos" property="photos" />
+        <result column="distance" property="distance" />
+        <result column="transport_type" property="transportType" />
+        <result column="remark" property="remark" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, user_id, task_id, task_name, type, check_in_time, location, longitude, latitude, 
+        photos, distance, transport_type, remark, create_time, update_time
+    </sql>
+    
+    <insert id="insert" parameterType="com.ryl.engineer.entity.VehicleRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into dbo.vehicle_record (
+            user_id, task_id, task_name, type, check_in_time, location, longitude, latitude,
+            photos, distance, transport_type, remark, create_time, update_time
+        ) values (
+            #{userId}, #{taskId}, #{taskName}, #{type}, #{checkInTime}, #{location}, #{longitude}, #{latitude},
+            #{photos}, #{distance}, #{transportType}, #{remark}, now(), now()
+        )
+    </insert>
+    
+    <select id="selectById" resultMap="BaseResultMap">
+        select 
+        <include refid="Base_Column_List" />
+        from dbo.vehicle_record
+        where id = #{id}
+    </select>
+    
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        select 
+        <include refid="Base_Column_List" />
+        from dbo.vehicle_record
+        where user_id = #{userId}
+        order by check_in_time desc
+    </select>
+    
+    <select id="selectByTaskId" resultMap="BaseResultMap">
+        select 
+        <include refid="Base_Column_List" />
+        from dbo.vehicle_record
+        where task_id = #{taskId}
+        order by check_in_time asc
+    </select>
+    
+    <select id="selectByUserIdAndTimeRange" resultMap="BaseResultMap">
+        select 
+        <include refid="Base_Column_List" />
+        from dbo.vehicle_record
+        where user_id = #{userId}
+        and check_in_time between #{startTime} and #{endTime}
+        order by check_in_time desc
+    </select>
+    
+    <select id="countByUserIdAndTimeRange" resultType="int">
+        select count(*)
+        from dbo.vehicle_record
+        where user_id = #{userId}
+        and check_in_time between #{startTime} and #{endTime}
+    </select>
+    
+    <select id="countTasksByUserIdAndTimeRange" resultType="int">
+        select count(distinct task_id)
+        from dbo.vehicle_record
+        where user_id = #{userId}
+        and check_in_time between #{startTime} and #{endTime}
+    </select>
+    
+    <select id="sumDistanceByUserIdAndTimeRange" resultType="double">
+        select COALESCE(sum(distance), 0)
+        from dbo.vehicle_record
+        where user_id = #{userId}
+        and check_in_time between #{startTime} and #{endTime}
+        and distance is not null
+    </select>
+</mapper> 

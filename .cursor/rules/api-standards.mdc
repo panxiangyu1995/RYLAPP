@@ -1,0 +1,226 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 研仪联工程师APP API规范文档
+
+## 1. 基础路径与版本控制
+
+### 1.1 基础路径格式
+- 所有API路径必须遵循以下格式：`/api/v{版本号}/{模块}/{功能}`
+- 例如：`/api/v1/user/login`、`/api/v1/task/list`
+
+### 1.2 版本控制
+- 主版本号在URL中表示：`v1`、`v2`等
+- 当API发生不兼容的变化时，应增加主版本号
+- 次要更新和bug修复不需要更改API版本
+
+## 2. HTTP方法使用规范
+
+| HTTP方法 | 用途 | 示例 |
+|---------|------|------|
+| GET | 获取资源，不应有副作用 | `GET /api/v1/user/profile` |
+| POST | 创建资源 | `POST /api/v1/task/create` |
+| PUT | 全量更新资源 | `PUT /api/v1/user/profile` |
+| PATCH | 部分更新资源 | `PATCH /api/v1/task/1/status` |
+| DELETE | 删除资源 | `DELETE /api/v1/vehicle/1` |
+
+### 2.1 方法选择原则
+- 获取数据时使用GET
+- 创建新资源时使用POST
+- 完整替换资源时使用PUT
+- 部分更新资源时使用PATCH
+- 删除资源时使用DELETE
+
+## 3. 命名规范
+
+### 3.1 URL路径命名
+- 使用小写字母和连字符（kebab-case）
+- 正确示例：`/api/v1/user/forgot-password`
+- 错误示例：`/api/v1/user/forgotPassword`或`/api/v1/user/forgot_password`
+
+### 3.2 参数命名
+- 请求和响应参数使用驼峰命名法（camelCase）
+- 正确示例：`workId`、`tokenExpire`、`userName`
+- 错误示例：`work_id`、`token-expire`、`user_name`
+
+### 3.3 一致性要求
+- 前后端必须使用相同的字段命名
+- 同一概念在不同API中应使用相同的命名
+
+## 4. 请求与响应格式
+
+### 4.1 统一响应格式
+```json
+{
+  "code": 200,       // 状态码，200表示成功，非200表示失败
+  "message": "操作成功", // 响应消息
+  "data": {}         // 响应数据，根据接口不同而变化
+}
+```
+
+### 4.2 请求格式
+- GET请求：参数通过URL查询字符串传递
+- POST/PUT/PATCH请求：参数通过请求体传递，格式为JSON
+- 文件上传：使用multipart/form-data格式
+
+### 4.3 内容类型
+- 请求头：`Content-Type: application/json`（除文件上传外）
+- 响应头：`Content-Type: application/json`
+
+## 5. 错误处理规范
+
+### 5.1 HTTP状态码
+API应返回适当的HTTP状态码，但在响应体中始终使用统一的格式。
+
+### 5.2 错误码定义
+| 错误码 | 描述 |
+|-------|------|
+| 200 | 成功 |
+| 400 | 请求参数错误 |
+| 401 | 未授权（未登录或token无效） |
+| 403 | 权限不足 |
+| 404 | 资源不存在 |
+| 409 | 资源冲突 |
+| 500 | 服务器内部错误 |
+
+### 5.3 错误响应格式
+```json
+{
+  "code": 400,
+  "message": "请求参数错误",
+  "data": {
+    "errors": [
+      {
+        "field": "email",
+        "message": "邮箱格式不正确"
+      }
+    ]
+  }
+}
+```
+
+## 6. 分页查询规范
+
+### 6.1 请求参数
+| 参数名 | 类型 | 描述 |
+|-------|------|------|
+| page | number | 页码，从1开始 |
+| size | number | 每页记录数 |
+| sort | string | 排序字段 |
+| direction | string | 排序方向（asc/desc） |
+
+### 6.2 响应格式
+```json
+{
+  "code": 200,
+  "message": "获取成功",
+  "data": {
+    "total": 100,     // 总记录数
+    "pages": 10,      // 总页数
+    "current": 1,     // 当前页码
+    "size": 10,       // 每页记录数
+    "list": []        // 数据列表
+  }
+}
+```
+
+## 7. 文件上传规范
+
+### 7.1 请求格式
+- 请求方法：POST
+- Content-Type: multipart/form-data
+- 文件参数名统一为"file"
+
+### 7.2 响应格式
+```json
+{
+  "code": 200,
+  "message": "上传成功",
+  "data": {
+    "url": "https://example.com/uploads/file.jpg",
+    "filename": "file.jpg",
+    "size": 1024,
+    "contentType": "image/jpeg"
+  }
+}
+```
+
+## 8. 认证与授权
+
+### 8.1 认证方式
+- 使用Bearer Token认证
+- 请求头格式：`Authorization: Bearer {token}`
+
+### 8.2 Token刷新
+- 提供专门的token刷新接口：`POST /api/v1/user/token/refresh`
+- 在token过期前，客户端应主动刷新token
+
+## 9. API文档规范
+
+每个API文档应包含以下内容：
+
+### 9.1 基本信息
+- 接口说明
+- 请求方式
+- 请求路径
+- 是否需要认证
+
+### 9.2 请求参数
+| 参数名 | 类型 | 必填 | 描述 |
+|-------|------|------|------|
+| param1 | string | 是 | 参数1描述 |
+| param2 | number | 否 | 参数2描述 |
+
+### 9.3 响应参数
+| 参数名 | 类型 | 描述 |
+|-------|------|------|
+| field1 | string | 字段1描述 |
+| field2 | number | 字段2描述 |
+
+### 9.4 示例
+- 请求示例
+- 响应示例
+- 错误示例
+
+## 10. 安全性考虑
+
+### 10.1 输入验证
+- 所有用户输入必须进行验证
+- 使用白名单方式验证输入
+- 防止SQL注入和XSS攻击
+
+### 10.2 敏感数据处理
+- 不在URL中传输敏感数据
+- 敏感数据传输时应加密
+- 密码等敏感数据不应明文存储
+
+### 10.3 CORS配置
+- 正确配置跨域资源共享(CORS)
+- 只允许必要的源访问API
+
+## 11. 性能优化
+
+### 11.1 响应压缩
+- 启用gzip或deflate压缩
+
+### 11.2 缓存策略
+- 使用适当的Cache-Control头
+- 实现ETag机制
+
+### 11.3 批量操作
+- 提供批量创建、更新、删除的API
+- 减少网络请求次数
+
+## 12. API变更管理
+
+### 12.1 向后兼容
+- 尽量保持API向后兼容
+- 添加新字段而不是修改或删除现有字段
+
+### 12.2 废弃流程
+- 使用@deprecated标记废弃的API
+- 提供合理的过渡期
+
+- 在文档中明确标注替代方案 

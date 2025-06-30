@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@playwright/mcp": "^0.0.28",
+    "@playwright/test": "^1.52.0",
+    "@stagewise/toolbar-vue": "^0.4.8",
+    "vant": "^4.9.19",
+    "zod-to-json-schema": "^3.24.5"
+  },
+  "devDependencies": {
+    "playwright": "^1.52.0"
+  }
+}

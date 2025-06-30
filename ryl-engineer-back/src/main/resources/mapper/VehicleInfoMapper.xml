@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.VehicleInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.VehicleInfo">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="plate_number" property="plateNumber" />
+        <result column="vehicle_type" property="vehicleType" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, user_id, plate_number, vehicle_type, create_time, update_time
+    </sql>
+    
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        select 
+        <include refid="Base_Column_List" />
+        from dbo.vehicle_info
+        where user_id = #{userId}
+    </select>
+    
+    <select id="selectById" resultMap="BaseResultMap">
+        select 
+        <include refid="Base_Column_List" />
+        from dbo.vehicle_info
+        where id = #{id}
+    </select>
+    
+    <insert id="insert" parameterType="com.ryl.engineer.entity.VehicleInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into dbo.vehicle_info (
+            user_id, plate_number, vehicle_type, create_time, update_time
+        ) values (
+            #{userId}, #{plateNumber}, #{vehicleType}, now(), now()
+        )
+    </insert>
+    
+    <update id="update" parameterType="com.ryl.engineer.entity.VehicleInfo">
+        update dbo.vehicle_info
+        <set>
+            <if test="plateNumber != null">plate_number = #{plateNumber},</if>
+            <if test="vehicleType != null">vehicle_type = #{vehicleType},</if>
+            update_time = now()
+        </set>
+        where id = #{id}
+    </update>
+    
+    <delete id="deleteById">
+        delete from dbo.vehicle_info
+        where id = #{id}
+    </delete>
+</mapper> 

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.ChatMessageReadMapper">
+    
+    <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.ChatMessageRead">
+        <id column="id" property="id" />
+        <result column="conversation_id" property="conversationId" />
+        <result column="message_id" property="messageId" />
+        <result column="user_id" property="userId" />
+        <result column="read_time" property="readTime" />
+        <result column="status" property="status" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, conversation_id, message_id, user_id, read_time, status
+    </sql>
+    
+    <select id="selectByUserIdAndMessageId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.chat_message_read
+        WHERE user_id = #{userId} AND message_id = #{messageId}
+        LIMIT 1
+    </select>
+    
+    <select id="selectByUserIdAndConversationId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.chat_message_read
+        WHERE user_id = #{userId} AND conversation_id = #{conversationId}
+    </select>
+    
+    <select id="selectByMessageId" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.chat_message_read
+        WHERE message_id = #{messageId}
+    </select>
+    
+    <select id="countUnreadByUserIdAndConversationId" resultType="java.lang.Integer">
+        SELECT COUNT(m.id)
+        FROM dbo.chat_message m
+        LEFT JOIN dbo.chat_message_read r ON m.id = r.message_id AND r.user_id = #{userId}
+        WHERE m.conversation_id = #{conversationId} 
+        AND m.status = 1
+        AND (r.id IS NULL OR r.status = 0)
+    </select>
+    
+    <insert id="insert" parameterType="com.ryl.engineer.entity.ChatMessageRead" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dbo.chat_message_read (
+            conversation_id, message_id, user_id, read_time, status
+        ) VALUES (
+            #{conversationId}, #{messageId}, #{userId}, #{readTime}, #{status}
+        )
+    </insert>
+    
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO dbo.chat_message_read (
+            conversation_id, message_id, user_id, read_time, status
+        ) VALUES 
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.conversationId}, #{item.messageId}, #{item.userId}, 
+                #{item.readTime}, #{item.status}
+            )
+        </foreach>
+    </insert>
+    
+    <update id="update" parameterType="com.ryl.engineer.entity.ChatMessageRead">
+        UPDATE dbo.chat_message_read
+        <set>
+            <if test="readTime != null">read_time = #{readTime},</if>
+            <if test="status != null">status = #{status}</if>
+        </set>
+        WHERE user_id = #{userId} AND message_id = #{messageId}
+    </update>
+    
+    <delete id="deleteByUserIdAndMessageId">
+        DELETE FROM dbo.chat_message_read
+        WHERE user_id = #{userId} AND message_id = #{messageId}
+    </delete>
+    
+    <delete id="deleteByUserIdAndConversationId">
+        DELETE FROM dbo.chat_message_read
+        WHERE user_id = #{userId} AND conversation_id = #{conversationId}
+    </delete>
+    
+    <delete id="deleteByMessageId" parameterType="java.lang.String">
+        DELETE FROM dbo.chat_message_read
+        WHERE message_id = #{messageId}
+    </delete>
+</mapper> 

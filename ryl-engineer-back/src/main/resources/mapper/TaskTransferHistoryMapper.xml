@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.TaskTransferHistoryMapper">
+    
+    <!-- 基础列映射 -->
+    <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.TaskTransferHistory">
+        <id column="id" property="id" />
+        <result column="task_id" property="taskId" />
+        <result column="from_engineer_id" property="fromEngineerId" />
+        <result column="to_engineer_id" property="toEngineerId" />
+        <result column="transfer_time" property="transferTime" />
+        <result column="note" property="note" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+    
+    <!-- 所有列 -->
+    <sql id="Base_Column_List">
+        id, task_id, from_engineer_id, to_engineer_id, transfer_time, note, create_time
+    </sql>
+    
+</mapper> 

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.AssistanceRequestMapper">
+    
+    <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.AssistanceRequest">
+        <id column="id" property="id" />
+        <result column="request_id" property="requestId" />
+        <result column="description" property="content" />
+        <result column="requester_id" property="requesterId" />
+        <result column="requester_name" property="requesterName" />
+        <result column="engineer_id" property="responderId" />
+        <result column="engineer_name" property="responderName" />
+        <result column="task_id" property="taskId" />
+        <result column="urgency" property="type" />
+        <result column="status" property="status" />
+        <result column="response" property="responseContent" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="handle_time" property="responseTime" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, request_id, description, requester_id, requester_name, 
+        engineer_id, engineer_name, task_id, urgency, status, 
+        response, create_time, update_time, handle_time
+    </sql>
+    
+    <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT 
+            a.id, a.request_id, a.description, a.requester_id, u1.name as requester_name,
+            a.engineer_id, u2.name as engineer_name, a.task_id, a.urgency, a.status, 
+            a.response, a.create_time, a.update_time, a.handle_time
+        FROM dbo.assistance_request a
+        LEFT JOIN dbo.[user] u1 ON a.requester_id = u1.id
+        LEFT JOIN dbo.[user] u2 ON a.engineer_id = u2.id
+        WHERE a.id = #{id}
+    </select>
+    
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT 
+            a.id, a.request_id, a.description, a.requester_id, u1.name as requester_name,
+            a.engineer_id, u2.name as engineer_name, a.task_id, a.urgency, a.status, 
+            a.response, a.create_time, a.update_time, a.handle_time
+        FROM dbo.assistance_request a
+        LEFT JOIN dbo.[user] u1 ON a.requester_id = u1.id
+        LEFT JOIN dbo.[user] u2 ON a.engineer_id = u2.id
+        LEFT JOIN dbo.assistance_request_recipient rec ON a.id = rec.request_id
+        WHERE (a.requester_id = #{userId} OR a.engineer_id = #{userId} OR rec.recipient_id = #{userId})
+        <if test="status != null and status != ''">
+            AND a.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (
+                a.description LIKE CONCAT('%', #{keyword}, '%') OR 
+                a.request_id LIKE CONCAT('%', #{keyword}, '%') OR
+                a.task_id LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        GROUP BY a.id
+        ORDER BY a.create_time DESC
+    </select>
+    
+    <select id="selectByTaskId" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT 
+            a.id, a.request_id, a.description, a.requester_id, u1.name as requester_name,
+            a.engineer_id, u2.name as engineer_name, a.task_id, a.urgency, a.status, 
+            a.response, a.create_time, a.update_time, a.handle_time
+        FROM dbo.assistance_request a
+        LEFT JOIN dbo.[user] u1 ON a.requester_id = u1.id
+        LEFT JOIN dbo.[user] u2 ON a.engineer_id = u2.id
+        WHERE a.task_id = #{taskId}
+        ORDER BY a.create_time DESC
+    </select>
+    
+    <insert id="insert" parameterType="com.ryl.engineer.entity.AssistanceRequest" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dbo.assistance_request (
+            request_id, description, requester_id, requester_name, engineer_id, 
+            task_id, urgency, status, response, create_time, update_time, handle_time
+        ) VALUES (
+            #{requestId}, #{content}, #{requesterId}, #{requesterName}, #{responderId}, 
+            #{taskId}, #{type}, #{status}, #{responseContent}, #{createTime}, #{updateTime}, #{responseTime}
+        )
+    </insert>
+    
+    <update id="update" parameterType="com.ryl.engineer.entity.AssistanceRequest">
+        UPDATE dbo.assistance_request
+        <set>
+            <if test="content != null">description = #{content},</if>
+            <if test="requesterName != null">requester_name = #{requesterName},</if>
+            <if test="responderId != null">engineer_id = #{responderId},</if>
+            <if test="responderName != null">engineer_name = #{responderName},</if>
+            <if test="type != null">urgency = #{type},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="responseContent != null">response = #{responseContent},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="responseTime != null">handle_time = #{responseTime}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    
+    <update id="updateStatus">
+        UPDATE dbo.assistance_request
+        SET 
+            status = #{status}, 
+            update_time = #{updateTime}
+            <if test="reason != null">, response = #{reason}</if>
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM dbo.assistance_request
+        WHERE id = #{id}
+    </delete>
+</mapper> 

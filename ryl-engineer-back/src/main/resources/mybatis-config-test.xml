@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!-- 设置 -->
+    <settings>
+        <!-- 开启驼峰命名自动映射 -->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!-- 打印SQL语句 -->
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+    </settings>
+    
+    <!-- 环境配置 -->
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+                <property name="url" value="jdbc:sqlserver://DESKTOP-SOU1KQ1;databaseName=ryl_engineer;encrypt=true;trustServerCertificate=true"/>
+                <property name="username" value="sa"/>
+                <property name="password" value="zxcv1234"/>
+            </dataSource>
+        </environment>
+    </environments>
+    
+    <!-- 映射器 -->
+    <mappers>
+        <!-- 用户映射 -->
+        <mapper resource="mapper/test/UserTestMapper.xml"/>
+        <!-- 任务映射 -->
+        <mapper resource="mapper/test/TaskTestMapper.xml"/>
+    </mappers>
+</configuration> 

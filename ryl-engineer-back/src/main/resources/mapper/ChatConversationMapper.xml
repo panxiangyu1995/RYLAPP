@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.ChatConversationMapper">
+    
+    <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.ChatConversation">
+        <id column="id" property="id" />
+        <result column="conversation_id" property="conversationId" />
+        <result column="conversation_type" property="type" />
+        <result column="name" property="name" />
+        <result column="creator_id" property="creatorId" />
+        <result column="is_task_related" property="isTaskRelated" />
+        <result column="related_task_id" property="taskId" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="last_message_time" property="lastMessageTime" />
+        <result column="last_message_content" property="lastMessageContent" />
+        <result column="last_message_sender_id" property="lastMessageSenderId" />
+        <result column="status" property="status" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, conversation_id, conversation_type, name, creator_id, is_task_related,
+        related_task_id, create_time, update_time, last_message_time,
+        last_message_content, last_message_sender_id, status
+    </sql>
+    
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM dbo.chat_conversation
+        WHERE id = #{id}
+    </select>
+    
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT
+            c.*
+        FROM dbo.chat_conversation c
+        JOIN dbo.chat_conversation_member m ON c.id = m.conversation_id
+        WHERE m.user_id = #{userId} AND c.status = 1
+        ORDER BY c.last_message_time DESC
+    </select>
+    
+    <select id="selectByConversationId" resultMap="BaseResultMap">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM dbo.chat_conversation
+        WHERE conversation_id = #{conversationId} AND status = 1
+    </select>
+    
+    <select id="selectByTaskId" resultMap="BaseResultMap">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM dbo.chat_conversation
+        WHERE related_task_id = #{taskId} AND status = 1
+        LIMIT 1
+    </select>
+    
+    <insert id="insert" parameterType="com.ryl.engineer.entity.ChatConversation">
+        INSERT INTO dbo.chat_conversation (
+            conversation_id, conversation_type, name, creator_id, is_task_related,
+            related_task_id, create_time, update_time, last_message_time,
+            last_message_content, last_message_sender_id, status
+        ) VALUES (
+            #{conversationId}, #{type}, #{name}, #{creatorId}, #{isTaskRelated},
+            #{taskId}, #{createTime}, #{updateTime}, #{lastMessageTime},
+            #{lastMessageContent}, #{lastMessageSenderId}, #{status}
+        )
+    </insert>
+    
+    <update id="update" parameterType="com.ryl.engineer.entity.ChatConversation">
+        UPDATE dbo.chat_conversation
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="lastMessageTime != null">last_message_time = #{lastMessageTime},</if>
+            <if test="lastMessageContent != null">last_message_content = #{lastMessageContent},</if>
+            <if test="lastMessageSenderId != null">last_message_sender_id = #{lastMessageSenderId},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    
+    <update id="updateStatus">
+        UPDATE dbo.chat_conversation
+        SET status = #{status}, update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+</mapper> 

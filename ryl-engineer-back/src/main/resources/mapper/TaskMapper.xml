@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.TaskMapper">
+    <select id="findByEngineerId" resultType="com.ryl.engineer.entity.Task">
+        SELECT t.*
+        FROM dbo.task t
+        INNER JOIN dbo.task_engineer te ON t.task_id = te.task_id
+        WHERE te.engineer_id = #{engineerId}
+    </select>
+    
+    <select id="findByCustomerId" resultType="com.ryl.engineer.entity.Task">
+        SELECT *
+        FROM dbo.task
+        WHERE customer_id = #{customerId}
+    </select>
+    
+    <select id="findBySalesId" resultType="com.ryl.engineer.entity.Task">
+        SELECT *
+        FROM dbo.task
+        WHERE sales_id = #{salesId}
+    </select>
+    
+    <select id="getTaskStatusHistory" resultType="java.util.Map">
+        SELECT 
+            id,
+            task_id AS taskId,
+            status,
+            comment,
+            updated_by AS updatedBy,
+            updated_by_name AS updatedByName,
+            timestamp
+        FROM 
+            dbo.task_status_history
+        WHERE 
+            task_id = #{taskId}
+        ORDER BY 
+            timestamp DESC
+    </select>
+</mapper> 

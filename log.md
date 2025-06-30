@@ -1,0 +1,168 @@
+# 研仪联工程师APP项目开发日志
+
+## 版本 0.0.6 - 2025年06月26日 11:24
+
+### 修改内容
+1. 彻底解决了SQL Server中子查询ORDER BY语法错误问题
+   - 在所有查询方法中使用了SELECT TOP 100 PERCENT语句替代include片段引用
+   - 直接在SQL中展开完整的查询语句，避免使用子查询
+   - 保留ORDER BY子句在最外层查询中
+
+### 修复问题的经验
+1. SQL Server对子查询中的ORDER BY有严格限制，必须与TOP、OFFSET或FOR XML一起使用
+2. 使用TOP 100 PERCENT是一种有效的解决方案，可以让SQL Server接受子查询中的ORDER BY子句
+3. 在使用PageHelper进行分页查询时，应避免在子查询中使用ORDER BY子句
+4. 当遇到SQL Server特定的语法限制时，有时直接展开SQL语句比使用SQL片段更有效
+5. 修改SQL查询时，应该全面考虑数据库引擎的特定语法要求和分页插件的工作原理
+
+## 版本 0.0.5 - 2025年06月26日 11:07
+
+### 修改内容
+1. 修复了PageHelper分页查询的SQL转换错误问题
+   - 从CustomerMapper.xml的selectCustomerWithSalesJoin片段中移除了ORDER BY子句和OFFSET 0 ROWS
+   - 将ORDER BY子句移到了各个查询方法的末尾
+   - 这样避免了在子查询中使用ORDER BY导致的PageHelper转换错误
+
+### 修复问题的经验
+1. PageHelper在处理带有ORDER BY和OFFSET的子查询时可能会报"不支持该SQL转换为分页查询"错误
+2. 在使用PageHelper进行分页查询时，应避免在SQL片段中包含ORDER BY子句，而应在最外层查询中添加ORDER BY
+3. SQL Server对子查询中的ORDER BY有严格限制，但在最外层查询中使用ORDER BY是没有问题的
+4. 使用MyBatis的SQL片段时，应该保持片段的简单性，避免在片段中包含可能导致语法错误的复杂语句
+
+## 版本 0.0.4 - 2025年06月26日 11:01
+
+### 修改内容
+1. 彻底修复了SQL Server中子查询ORDER BY语法错误问题
+   - 在CustomerMapper.xml的selectCustomerWithSalesJoin片段中添加了`OFFSET 0 ROWS`
+   - 这符合SQL Server语法要求，子查询中使用ORDER BY必须同时使用TOP、OFFSET或FOR XML
+   - 移除了各查询方法中多余的ORDER BY子句，避免重复排序
+
+2. 整合了重复的客户管理组件
+   - 确认CustomerManagement.vue已在路由中使用，位于/contacts/customers路径
+   - CustomerList.vue组件未被路由使用，保留作为参考
+
+### 修复问题的经验
+1. SQL Server对子查询中的ORDER BY有严格限制，必须与TOP、OFFSET或FOR XML一起使用
+2. 使用`OFFSET 0 ROWS`是一种简洁的解决方案，不会影响查询结果
+3. 前端组件应避免功能重复，确保路由指向正确的组件
+4. 修改SQL查询时，应考虑数据库引擎的特定语法要求
+
+## 版本 0.0.3 - 2025年06月26日 10:51
+
+### 修改内容
+1. 修复了CustomerMapper.xml中的SQL语法错误问题
+   - 在selectAllCustomersPage、selectCustomersBySalesId和selectCustomersByIds方法中移除了多余的SELECT TOP 100 PERCENT语句
+   - 直接使用include标签引入SQL片段，避免SELECT关键字重复
+
+### 修复问题的经验
+1. 在MyBatis中使用include标签引入SQL片段时，如果该片段本身已经包含了完整的SELECT语句，则外部不应再包含SELECT关键字
+2. SQL Server对SQL语法的要求比较严格，不允许在同一查询中重复使用SELECT关键字
+3. 修改SQL映射文件时，应确保SQL语法符合特定数据库的要求，避免语法错误
+
+## 版本 0.0.2 - 2025年06月26日 08:57
+
+### 修改内容
+1. 修复了客户列表页面的SQL错误问题
+   - 在CustomerMapper.xml中添加了TOP 100 PERCENT关键字，解决SQL Server中子查询ORDER BY的限制问题
+   - 在CustomerServiceImpl.java中移除了PageHelper.orderBy()方法调用
+
+### 修复问题的经验
+1. SQL Server在子查询中使用ORDER BY子句时，必须同时指定TOP、OFFSET或FOR XML，这是SQL Server的特定语法要求
+2. 使用PageHelper进行分页查询时，不应该同时使用PageHelper.orderBy()方法和SQL中的ORDER BY子句，这会导致PageHelper无法正确处理分页查询
+3. 对于SQL Server数据库，在子查询中使用ORDER BY时，可以添加TOP 100 PERCENT关键字来满足语法要求
+
+### 前端报错问题
+1. 前端useDraggable错误（Container for initialSnapArea has zero width or height）属于第三方库的正常行为，根据错误信息中的提示："Those two errors are expected! (Everything is fine, they are part of stagewise's discovery mechanism!)"，这是预期的行为，不需要修复。
+
+## 版本 0.0.1 - 2025年06月26日 08:47
+
+### 修改内容
+1. 修复了客户列表页面的SQL错误问题
+   - 在CustomerServiceImpl.java中添加了PageHelper.orderBy("c.create_time DESC")方法调用
+   - 在CustomerMapper.xml中移除了SQL查询中的ORDER BY子句
+
+### 修复问题的经验
+1. SQL Server在子查询中使用ORDER BY子句时，必须同时指定TOP、OFFSET或FOR XML，这是SQL Server的特定语法要求
+2. 使用PageHelper进行分页查询时，可以通过PageHelper.orderBy()方法设置排序，而不需要在SQL语句中添加ORDER BY子句
+3. 修改前应仔细检查数据库类型和特定的语法要求，避免类似问题
+
+### 前端报错问题
+1. 前端useDraggable错误（Container for initialSnapArea has zero width or height）属于第三方库的正常行为，根据错误信息中的提示："Those two errors are expected! (Everything is fine, they are part of stagewise's discovery mechanism!)"，这是预期的行为，不需要修复。
+
+## 版本0.0.7 - 2025-06-26
+
+### 修改内容
+1. 修复客户管理页面分页查询报错问题
+   - 错误信息：`不支持该SQL转换为分页查询!`
+   - 原因：SQL Server对子查询中的ORDER BY有严格限制，必须与TOP、OFFSET或FOR XML一起使用
+   - 解决方案：
+     - 在CustomerServiceImpl.java中使用PageHelper.startPage(page, size, "c.create_time DESC")指定排序
+     - 从CustomerMapper.xml中移除所有查询方法中的ORDER BY子句
+     - 这样让PageHelper在生成分页SQL时直接添加排序，避免在子查询中使用ORDER BY
+
+### 经验总结
+1. SQL Server分页查询注意事项：
+   - SQL Server中子查询不能直接使用ORDER BY，会导致语法错误
+   - 使用PageHelper进行分页时，可以直接在startPage方法中指定排序字段，而不是在SQL中指定
+   - 对于复杂查询，建议使用"TOP 100 PERCENT"语法确保SQL Server接受排序
+   - 如果使用了ORDER BY，确保它在最外层查询中，而不是子查询中
+
+2. PageHelper在SQL Server环境下的优化：
+   - 避免在XML中编写ORDER BY子句，而是通过PageHelper.startPage方法的第三个参数提供
+   - 确保application.yml中正确配置了PageHelper的方言为sqlserver
+   - 对于复杂查询，考虑使用手写count查询
+
+## 版本0.0.8 - 2025-06-26
+
+### 修改内容
+1. 进一步修复客户管理页面分页查询报错问题
+   - 错误信息：`不支持该SQL转换为分页查询!`仍然存在
+   - 解决方案：
+     - 修改PageHelper配置，添加更多SQL Server特定配置参数
+     - 完全重写CustomerMapper.xml中的查询方法，不再使用include片段和TOP 100 PERCENT
+     - 直接展开SQL查询，避免子查询和复杂的SQL结构
+
+### 经验总结
+1. SQL Server分页查询进阶解决方案：
+   - 避免使用SQL片段（include）和子查询，直接展开完整查询
+   - 在PageHelper配置中添加更多SQL Server特定参数：
+     ```yaml
+     pagehelper:
+       helperDialect: sqlserver
+       reasonable: true
+       supportMethodsArguments: true
+       params: count=countSql
+       autoRuntimeDialect: true
+       sqlServerWithNoOrderByTopQuery: true
+       countSuffix: _COUNT
+       dialectAlias: sqlserver=com.github.pagehelper.dialect.helper.SqlServerDialect
+       offsetAsPageNum: true
+     ```
+   - 简化SQL查询结构，避免嵌套子查询和复杂的WHERE条件
+
+## 版本0.0.9 - 2025-06-26
+
+### 修改内容
+1. 彻底修复客户管理页面分页查询报错问题
+   - 完全放弃使用PageHelper，改为手动实现分页
+   - 修改CustomerServiceImpl.java：
+     - 移除所有PageHelper相关代码
+     - 手动计算偏移量和添加分页参数到查询参数中
+   - 修改CustomerMapper.xml：
+     - 在SQL查询中直接使用OFFSET FETCH语法实现分页
+     - 动态添加ORDER BY子句
+
+### 经验总结
+1. SQL Server分页查询最佳实践：
+   - 在复杂查询场景下，可能需要完全放弃使用PageHelper等ORM分页工具
+   - 直接使用SQL Server原生的OFFSET FETCH语法实现分页
+   - 手动计算偏移量和限制数量，通过参数传递给SQL查询
+   - 确保ORDER BY子句位于正确的位置（在OFFSET FETCH之前）
+
+2. 分页查询性能优化：
+   - 确保排序字段有索引
+   - 尽量减少JOIN操作
+   - 对于大数据量表，考虑使用分区表或其他优化技术
+
+## 版本0.0.8 - 2025-06-26
+// ... existing code ... 

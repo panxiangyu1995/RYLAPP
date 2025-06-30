@@ -1,0 +1,343 @@
+---
+description: 涉及到数据库规范问题时参考
+globs: 
+alwaysApply: false
+---
+# 研仪联工程师APP - SQL Server数据库开发规范
+
+## 1. 数据库设计规范
+
+### 1.1 命名规范
+
+#### 1.1.1 表命名
+- 表名使用小写字母，单词间使用下划线(`_`)分隔
+- 表名应明确表达表的用途，可理解且精炼
+- 不要使用SQL Server保留字作为表名，必要时使用方括号`[]`进行转义
+- 不使用复数形式，例如使用`user`而不是`users`
+- 对于可能与SQL Server关键字冲突的表名，使用方括号，如`[user]`、`[order]`等
+
+#### 1.1.2 字段命名
+- 字段名使用小写字母，单词间使用下划线(`_`)分隔
+- 字段名应明确表达字段的用途
+- 布尔类型字段应以`is_`开头，例如`is_deleted`，`is_active`
+- 日期时间类型字段统一使用以下命名：
+  - `create_time`: 创建时间
+  - `update_time`: 更新时间
+  - `delete_time`: 删除时间（如果使用逻辑删除）
+
+#### 1.1.3 主外键命名
+- 主键命名为`id`
+- 外键命名为`<表名>_id`，例如`user_id`，`role_id`
+- 外键约束命名为`FK_<当前表名>_<引用表名>`，例如`FK_task_user`
+
+#### 1.1.4 索引命名
+- 索引名称格式：`idx_<字段名>`，例如`idx_user_id`
+- 唯一索引名称格式：`uk_<字段名>`，例如`uk_username`
+- 主键索引名称为`PRIMARY KEY`
+- 复合索引按字段顺序命名，例如`idx_user_id_role_id`
+
+### 1.2 数据类型规范
+
+#### 1.2.1 整数类型
+- 自增ID：`BIGINT IDENTITY(1,1)`
+- 普通整数：`INT`
+- 小范围整数：`SMALLINT`（-32,768 到 32,767）
+- 布尔值：`SMALLINT`，0表示false，1表示true（SQL Server没有原生布尔类型）
+- 超小范围整数：`TINYINT`（0 到 255，注意与MySQL的TINYINT不同）
+
+#### 1.2.2 字符串类型
+- 短文本：`VARCHAR(长度)`，最大8000字符
+- 长文本：`NVARCHAR(MAX)`（支持Unicode，推荐用于存储可能包含多语言的文本）
+- 固定长度文本：`CHAR(长度)`（适用于长度固定的字段，如邮政编码）
+- Unicode短文本：`NVARCHAR(长度)`（支持Unicode字符）
+
+#### 1.2.3 日期时间类型
+- 统一使用`DATETIME2`，精度更高，范围更广
+- 不使用`DATETIME`，除非需要兼容旧系统
+- 日期：`DATE`
+- 时间：`TIME`
+
+#### 1.2.4 数值类型
+- 精确小数：`DECIMAL(总位数, 小数位数)`，例如`DECIMAL(10, 2)`
+- 货币：`MONEY`（适用于货币计算）
+
+#### 1.2.5 其他类型
+- 二进制数据：`VARBINARY(MAX)`
+- XML数据：`XML`
+- JSON数据：在SQL Server 2016及以上版本使用`NVARCHAR(MAX)`并配合JSON函数
+
+### 1.3 索引规范
+- 为经常用于查询条件的字段创建索引
+- 为外键字段创建索引
+- 避免在频繁更新的字段上创建索引
+- 复合索引中的字段顺序应考虑查询条件的使用频率和选择性
+- 索引不宜过多，通常单表索引数量控制在5个以内
+- 对于大表，考虑使用分区表和分区索引
+
+### 1.4 约束规范
+- 每个表必须有主键，优先使用`BIGINT IDENTITY(1,1)`类型
+- 外键关系应使用`CONSTRAINT`显式命名
+- 使用`CHECK`约束确保数据符合业务规则
+- 使用`DEFAULT`约束为字段提供默认值
+- 使用`UNIQUE`约束确保字段值唯一
+
+## 2. SQL编写规范
+
+### 2.1 基本规范
+- SQL关键字统一使用大写，例如：`SELECT`、`INSERT INTO`、`UPDATE`等
+- 表名和字段名统一使用小写，保持与数据库定义一致
+- 使用缩进和换行提高SQL可读性
+- 复杂SQL语句应添加注释说明其目的和逻辑
+
+### 2.2 查询优化
+- 避免使用`SELECT *`，明确指定需要的字段
+- 避免在WHERE子句中对字段进行函数运算，会导致索引失效
+- 大数据量分页查询使用`OFFSET-FETCH`语法（SQL Server 2012及以上版本）
+- 对于复杂查询，考虑使用临时表或表变量
+- 使用适当的表连接类型（INNER JOIN、LEFT JOIN等）
+- 对于大型数据处理，考虑使用表分区或分区视图
+
+### 2.3 事务处理
+- 显式开启和提交事务，使用`BEGIN TRANSACTION`、`COMMIT`和`ROLLBACK`
+- 事务应尽可能简短，避免长时间持有锁
+- 使用适当的隔离级别，默认为`READ COMMITTED`
+- 对于并发高的场景，考虑使用`READ COMMITTED SNAPSHOT`隔离级别
+- 使用`TRY-CATCH`块进行错误处理和事务回滚
+
+### 2.4 批处理分隔
+- 使用`GO`语句分隔批处理，特别是在创建存储过程、触发器等对象时
+- 每个对象创建后使用`GO`分隔，避免批处理错误影响后续语句执行
+
+### 2.5 存储过程和函数
+- 存储过程名使用`sp_`前缀，例如`sp_get_user_by_id`
+- 函数名使用`fn_`前缀，例如`fn_calculate_age`
+- 参数名使用`@`前缀，例如`@user_id`
+- 存储过程和函数应有明确的注释说明其用途、参数和返回值
+
+## 3. SQL Server特性使用规范
+
+### 3.1 条件判断
+- 使用`IF EXISTS`和`IF NOT EXISTS`进行对象存在性检查
+- 表创建前检查：
+  ```sql
+  IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[表名]') AND type in (N'U'))
+  BEGIN
+      CREATE TABLE 表名 (...)
+  END
+  ```
+
+### 3.2 身份列（自增列）
+- 使用`IDENTITY(1,1)`定义自增列
+- 插入数据时，不指定自增列的值
+- 需要指定自增列值时，使用`SET IDENTITY_INSERT 表名 ON/OFF`
+
+### 3.3 默认值
+- 使用`DEFAULT`约束定义默认值
+- 日期时间默认值使用`DEFAULT GETDATE()`
+- 不要使用`DEFAULT CURRENT_TIMESTAMP`（MySQL语法）
+
+### 3.4 注释
+- 使用`/* 注释内容 */`添加多行注释
+- 使用`-- 注释内容`添加单行注释
+- 表和字段的注释直接写在定义后面，例如：`column_name INT /* 这是列的注释 */`
+
+### 3.5 分区表
+- 对于大型表（超过100万行），考虑使用表分区
+- 分区策略应基于业务访问模式，常见的分区键有日期、ID范围等
+- 分区函数和分区方案应有明确的命名规则
+
+## 4. 数据库维护规范
+
+### 4.1 备份策略
+- 生产环境数据库应有完整的备份计划
+- 完整备份：每日进行
+- 差异备份：每4小时进行
+- 事务日志备份：每小时进行
+- 备份文件应存储在与数据库服务器不同的物理位置
+
+### 4.2 索引维护
+- 定期重建或重组碎片率高的索引
+- 碎片率>30%时重建索引
+- 碎片率在5%-30%之间时重组索引
+- 使用以下查询检查索引碎片：
+  ```sql
+  SELECT OBJECT_NAME(ind.OBJECT_ID) AS TableName,
+         ind.name AS IndexName,
+         indexstats.avg_fragmentation_in_percent
+  FROM sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL, NULL) indexstats
+  INNER JOIN sys.indexes ind ON ind.object_id = indexstats.object_id
+                             AND ind.index_id = indexstats.index_id
+  WHERE indexstats.avg_fragmentation_in_percent > 5
+  ORDER BY indexstats.avg_fragmentation_in_percent DESC
+  ```
+
+### 4.3 统计信息更新
+- 确保自动更新统计信息选项开启
+- 对于频繁变化的大型表，考虑手动更新统计信息
+- 使用`UPDATE STATISTICS`命令更新统计信息
+
+### 4.4 数据库文件管理
+- 数据文件和日志文件应放在不同的物理磁盘上
+- 预先分配足够的文件大小，避免频繁自动增长
+- 设置合理的文件增长大小，使用固定MB而非百分比
+
+## 5. 安全规范
+
+### 5.1 权限管理
+- 遵循最小权限原则
+- 使用角色管理权限，避免直接授予用户权限
+- 应用程序连接数据库应使用专用账号，而非sa账号
+- 定期审查数据库用户和权限
+
+### 5.2 敏感数据保护
+- 敏感数据应加密存储，使用SQL Server提供的加密功能
+- 考虑使用列级加密、透明数据加密(TDE)或Always Encrypted
+- 避免在查询中直接使用敏感数据作为明文参数
+
+### 5.3 SQL注入防护
+- 使用参数化查询或存储过程，避免直接拼接SQL
+- 验证和过滤用户输入
+- 使用最小权限账号连接数据库
+
+## 6. 与Java实体类映射规范
+
+### 6.1 命名映射
+- 数据库表名使用下划线命名法，Java实体类使用驼峰命名法
+  - 表名：`user_info` → 类名：`UserInfo`
+  - 字段：`user_name` → 属性：`userName`
+
+### 6.2 类型映射
+- SQL Server与Java类型映射参考：
+  | SQL Server类型 | Java类型 |
+  |--------------|---------|
+  | BIGINT | Long |
+  | INT | Integer |
+  | SMALLINT | Short |
+  | TINYINT | Byte |
+  | BIT | Boolean |
+  | DECIMAL | BigDecimal |
+  | MONEY | BigDecimal |
+  | FLOAT/REAL | Double/Float |
+  | VARCHAR/NVARCHAR | String |
+  | CHAR/NCHAR | String |
+  | TEXT/NTEXT | String |
+  | DATETIME2 | java.util.Date 或 java.time.LocalDateTime |
+  | DATE | java.util.Date 或 java.time.LocalDate |
+  | TIME | java.util.Date 或 java.time.LocalTime |
+  | VARBINARY | byte[] |
+
+### 6.3 MyBatis映射规范
+- 使用`<resultMap>`映射复杂对象关系
+- 为提高性能，查询时只选择必要的字段
+- 使用`<cache>`配置二级缓存
+- 复杂查询考虑使用存储过程
+
+## 7. 版本控制与变更管理
+
+### 7.1 数据库脚本版本控制
+- 所有数据库脚本应纳入版本控制系统
+- 脚本文件命名应包含版本号和简要说明
+- 脚本应具有幂等性，可重复执行而不产生错误
+
+### 7.2 数据库变更流程
+- 所有数据库变更应通过脚本执行，避免直接在生产环境手动修改
+- 变更脚本应先在开发和测试环境验证
+- 重要变更应有回滚脚本
+- 变更执行前应进行数据库备份
+
+### 7.3 脚本组织结构
+- 按模块组织脚本文件，如用户模块、任务模块等
+- 每个模块包含：
+  - 表结构创建脚本
+  - 初始数据脚本
+  - 索引和约束脚本
+  - 存储过程和函数脚本
+
+## 8. SQL Server特定优化建议
+
+### 8.1 查询优化
+- 使用执行计划分析查询性能
+- 适当使用查询提示（Query Hints）
+- 考虑使用索引提示（Index Hints）
+- 大数据集分页使用`OFFSET-FETCH`而非`TOP`
+
+### 8.2 临时表使用
+- 优先使用表变量（@表名）处理小数据集
+- 使用临时表（#表名）处理大数据集
+- 避免过度使用全局临时表（##表名）
+
+### 8.3 并发处理
+- 适当使用乐观并发控制
+- 考虑使用`READ_COMMITTED_SNAPSHOT`隔离级别
+- 长事务拆分为多个小事务
+
+## 9. 示例
+
+### 9.1 表创建示例
+```sql
+-- 用户表
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[user]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [user] (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    username VARCHAR(50) NOT NULL, /* 用户名 */
+    password VARCHAR(100) NOT NULL, /* 密码（加密存储） */
+    real_name VARCHAR(50) NOT NULL, /* 真实姓名 */
+    gender VARCHAR(10), /* 性别（male-男, female-女, other-其他） */
+    phone VARCHAR(20), /* 手机号 */
+    avatar VARCHAR(255), /* 头像URL */
+    department VARCHAR(50), /* 部门 */
+    role VARCHAR(20) NOT NULL, /* 角色（admin-管理员, engineer-工程师, sales-销售, warehouse-仓库管理员） */
+    status SMALLINT DEFAULT 1, /* 状态（0-禁用，1-启用） */
+    last_login_time DATETIME2, /* 最后登录时间 */
+    create_time DATETIME2 DEFAULT GETDATE(), /* 创建时间 */
+    update_time DATETIME2 DEFAULT GETDATE(), /* 更新时间 */
+    CONSTRAINT uk_username UNIQUE (username)
+);
+
+CREATE INDEX idx_role ON [user](role);
+CREATE INDEX idx_status ON [user](status);
+END
+GO
+```
+
+### 9.2 存储过程示例
+```sql
+-- 获取用户信息存储过程
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[sp_get_user_by_username]') AND type in (N'P'))
+    DROP PROCEDURE [dbo].[sp_get_user_by_username]
+GO
+
+CREATE PROCEDURE [dbo].[sp_get_user_by_username]
+    @username VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SELECT id, username, real_name, gender, phone, avatar, department, role, status, last_login_time
+    FROM [user]
+    WHERE username = @username AND status = 1;
+END
+GO
+```
+
+### 9.3 查询示例
+```sql
+-- 分页查询任务列表
+DECLARE @PageNumber INT = 1;
+DECLARE @PageSize INT = 10;
+DECLARE @Status VARCHAR(20) = 'pending';
+
+SELECT task_id, title, customer_name, device_name, priority, status, create_time
+FROM task
+WHERE status = @Status
+ORDER BY create_time DESC
+OFFSET (@PageNumber - 1) * @PageSize ROWS
+FETCH NEXT @PageSize ROWS ONLY;
+```
+
+## 10. 参考资料
+
+- [SQL Server官方文档](https://docs.microsoft.com/zh-cn/sql/sql-server)
+- [SQL Server性能优化指南](https://docs.microsoft.com/zh-cn/sql/relational-databases/performance/performance-center-for-sql-server-database-engine-and-azure-sql-database)
+- [SQL Server安全最佳实践](https://docs.microsoft.com/zh-cn/sql/relational-databases/security/securing-sql-server) 

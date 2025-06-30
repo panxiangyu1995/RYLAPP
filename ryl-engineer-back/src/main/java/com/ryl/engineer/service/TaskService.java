@@ -1,0 +1,141 @@
+package com.ryl.engineer.service;
+
+import com.ryl.engineer.common.PageResult;
+import com.ryl.engineer.dto.TaskDTO;
+import com.ryl.engineer.dto.TaskFlowDTO;
+import com.ryl.engineer.dto.request.CreateTaskRequest;
+import com.ryl.engineer.dto.request.TaskFlowStatusRequest;
+import com.ryl.engineer.dto.request.TaskQueryRequest;
+import com.ryl.engineer.dto.request.TaskStepUpdateRequest;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 任务服务接口
+ */
+public interface TaskService {
+    
+    /**
+     * 创建任务
+     * @param request 创建任务请求
+     * @return 任务ID
+     */
+    String createTask(CreateTaskRequest request);
+    
+    /**
+     * 分页查询任务列表
+     * @param request 查询条件
+     * @return 任务分页列表
+     */
+    PageResult<TaskDTO> getTaskPage(TaskQueryRequest request);
+    
+    /**
+     * 获取任务详情
+     * @param taskId 任务ID
+     * @return 任务详情
+     */
+    TaskDTO getTaskDetail(String taskId);
+    
+    /**
+     * 获取任务流程
+     * @param taskId 任务ID
+     * @return 任务流程
+     */
+    TaskFlowDTO getTaskFlow(String taskId);
+    
+    /**
+     * 获取任务状态历史
+     * @param taskId 任务ID
+     * @return 状态历史列表
+     */
+    List<Map<String, Object>> getTaskStatusHistory(String taskId);
+    
+    /**
+     * 更新任务步骤
+     * @param request 更新步骤请求
+     * @return 是否成功
+     */
+    boolean updateTaskStep(TaskStepUpdateRequest request);
+    
+    /**
+     * 更新任务流程状态
+     * @param request 流程状态更新请求
+     * @return 是否成功
+     */
+    boolean updateTaskFlowStatus(TaskFlowStatusRequest request);
+    
+    /**
+     * 上传任务图片
+     * @param taskId 任务ID
+     * @param file 图片文件
+     * @return 图片URL
+     */
+    String uploadTaskImage(String taskId, MultipartFile file);
+    
+    /**
+     * 批量上传任务图片
+     * @param taskId 任务ID
+     * @param files 图片文件列表
+     * @return 图片URL列表
+     */
+    List<String> batchUploadTaskImages(String taskId, List<MultipartFile> files);
+    
+    /**
+     * 更新任务
+     * @param taskId 任务ID
+     * @param taskDTO 任务信息
+     * @return 是否成功
+     */
+    boolean updateTask(String taskId, TaskDTO taskDTO);
+    
+    /**
+     * 取消任务
+     * @param taskId 任务ID
+     * @param reason 取消原因
+     * @return 是否成功
+     */
+    boolean cancelTask(String taskId, String reason);
+    
+    /**
+     * 分配工程师
+     * @param taskId 任务ID
+     * @param engineerIds 工程师ID列表
+     * @return 是否成功
+     */
+    boolean assignEngineers(String taskId, List<Long> engineerIds);
+    
+    /**
+     * 获取任务统计信息
+     * @return 统计信息
+     */
+    Map<String, Object> getTaskStatistics();
+    
+    /**
+     * 更新任务上门决策
+     * @param taskId 任务ID
+     * @param stepIndex 步骤索引
+     * @param requiresVisit 是否需要上门
+     * @return 是否成功
+     */
+    boolean updateTaskSiteVisitDecision(String taskId, Integer stepIndex, Boolean requiresVisit);
+    
+    /**
+     * 转出任务
+     * @param taskId 任务ID
+     * @param engineerId 接收任务的工程师ID
+     * @param note 转出备注
+     * @return 是否成功
+     */
+    boolean transferTask(String taskId, Long engineerId, String note);
+    
+    /**
+     * 更新任务状态
+     * @param taskId 任务ID
+     * @param status 新状态
+     * @param note 状态变更说明
+     * @return 是否成功
+     */
+    boolean updateTaskStatus(String taskId, String status, String note);
+} 

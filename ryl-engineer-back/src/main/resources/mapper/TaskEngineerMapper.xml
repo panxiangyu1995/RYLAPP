@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.TaskEngineerMapper">
+    <select id="findByTaskId" resultType="com.ryl.engineer.entity.TaskEngineer">
+        SELECT *
+        FROM dbo.task_engineer
+        WHERE task_id = #{taskId}
+    </select>
+    
+    <select id="findByEngineerId" resultType="com.ryl.engineer.entity.TaskEngineer">
+        SELECT *
+        FROM dbo.task_engineer
+        WHERE engineer_id = #{engineerId}
+    </select>
+    
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO dbo.task_engineer (task_id, engineer_id, is_owner, create_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.taskId}, #{item.engineerId}, #{item.isOwner}, #{item.createTime})
+        </foreach>
+    </insert>
+</mapper> 

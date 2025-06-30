@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.AssistanceRequestRecipientMapper">
+    
+    <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.AssistanceRequestRecipient">
+        <id column="id" property="id" />
+        <result column="request_id" property="requestId" />
+        <result column="recipient_id" property="recipientId" />
+        <result column="is_read" property="isRead" />
+        <result column="read_time" property="readTime" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, request_id, recipient_id, is_read, read_time, create_time, update_time
+    </sql>
+    
+    <!-- 根据请求ID获取所有接收者 -->
+    <select id="selectByRequestId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.assistance_request_recipient
+        WHERE request_id = #{requestId}
+    </select>
+    
+    <!-- 根据接收者ID获取协助请求 -->
+    <select id="selectByRecipientId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.assistance_request_recipient
+        WHERE recipient_id = #{recipientId}
+    </select>
+    
+    <!-- 根据请求ID和接收者ID获取关系 -->
+    <select id="selectByRequestIdAndRecipientId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.assistance_request_recipient
+        WHERE request_id = #{requestId} AND recipient_id = #{recipientId}
+    </select>
+    
+    <!-- 新增接收者关系 -->
+    <insert id="insert" parameterType="com.ryl.engineer.entity.AssistanceRequestRecipient"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dbo.assistance_request_recipient (
+            request_id, recipient_id, is_read, read_time, create_time, update_time
+        ) VALUES (
+            #{requestId}, #{recipientId}, #{isRead}, #{readTime}, #{createTime}, #{updateTime}
+        )
+    </insert>
+    
+    <!-- 批量新增接收者关系 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO dbo.assistance_request_recipient (
+            request_id, recipient_id, is_read, read_time, create_time, update_time
+        ) VALUES 
+        <foreach collection="list" item="item" separator=",">
+            (#{item.requestId}, #{item.recipientId}, #{item.isRead}, #{item.readTime}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+    </insert>
+    
+    <!-- 更新接收者关系 -->
+    <update id="update" parameterType="com.ryl.engineer.entity.AssistanceRequestRecipient">
+        UPDATE dbo.assistance_request_recipient
+        <set>
+            <if test="isRead != null">is_read = #{isRead},</if>
+            <if test="readTime != null">read_time = #{readTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 根据请求ID删除所有接收者关系 -->
+    <delete id="deleteByRequestId">
+        DELETE FROM dbo.assistance_request_recipient
+        WHERE request_id = #{requestId}
+    </delete>
+    
+    <!-- 根据请求ID和接收者ID删除关系 -->
+    <delete id="deleteByRequestIdAndRecipientId">
+        DELETE FROM dbo.assistance_request_recipient
+        WHERE request_id = #{requestId} AND recipient_id = #{recipientId}
+    </delete>
+    
+    <!-- 标记请求为已读 -->
+    <update id="markAsRead">
+        UPDATE dbo.assistance_request_recipient
+        SET is_read = 1, read_time = NOW(), update_time = NOW()
+        WHERE request_id = #{requestId} AND recipient_id = #{recipientId}
+    </update>
+    
+    <!-- 获取未读请求数量 -->
+    <select id="countUnreadByRecipientId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM dbo.assistance_request_recipient
+        WHERE recipient_id = #{recipientId} AND is_read = 0
+    </select>
+    
+</mapper> 

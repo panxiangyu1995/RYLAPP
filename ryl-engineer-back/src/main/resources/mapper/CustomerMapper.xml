@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.CustomerMapper">
+
+    <!-- 基础查询列 -->
+    <sql id="Base_Column_List">
+        id, name, level, contact, phone, address, email, department, position, 
+        sales_id, create_time, update_time
+    </sql>
+
+    <sql id="selectCustomerWithSalesJoin">
+        SELECT 
+            c.id,
+            c.name,
+            c.level,
+            c.contact,
+            c.phone,
+            c.address,
+            c.email,
+            c.department,
+            c.position,
+            c.sales_id,
+            u.name as sales_name,
+            c.create_time as createTime,
+            c.update_time as updateTime
+        FROM
+            dbo.customer c
+        LEFT JOIN
+            dbo.[user] u ON c.sales_id = u.id
+    </sql>
+
+    <!-- 查询条件 -->
+    <sql id="whereClause">
+        <where>
+            <if test="params != null">
+                <if test="params.keyword != null and params.keyword != ''">
+                    AND (
+                        c.name LIKE '%' + #{params.keyword} + '%' 
+                        OR c.contact LIKE '%' + #{params.keyword} + '%'
+                        OR c.phone LIKE '%' + #{params.keyword} + '%'
+                        OR c.address LIKE '%' + #{params.keyword} + '%'
+                    )
+                </if>
+                <if test="params.level != null and params.level != ''">
+                    AND c.level = #{params.level}
+                </if>
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectAllCustomers" resultType="java.util.Map">
+        SELECT TOP 100 PERCENT
+            c.id,
+            c.name,
+            c.level,
+            c.contact,
+            c.phone,
+            c.address,
+            c.email,
+            c.department,
+            c.position,
+            c.sales_id,
+            u.name as sales_name,
+            c.create_time as createTime,
+            c.update_time as updateTime
+        FROM
+            dbo.customer c
+        LEFT JOIN
+            dbo.[user] u ON c.sales_id = u.id
+        ORDER BY c.create_time DESC
+    </select>
+    
+    <select id="selectAllCustomersPage" resultType="java.util.Map">
+        SELECT 
+            c.id,
+            c.name,
+            c.level,
+            c.contact,
+            c.phone,
+            c.address,
+            c.email,
+            c.department,
+            c.position,
+            c.sales_id,
+            u.name as sales_name,
+            c.create_time as createTime,
+            c.update_time as updateTime
+        FROM
+            dbo.customer c
+        LEFT JOIN
+            dbo.[user] u ON c.sales_id = u.id
+        <where>
+            <if test="params != null">
+                <if test="params.keyword != null and params.keyword != ''">
+                    AND (
+                        c.name LIKE '%' + #{params.keyword} + '%' 
+                        OR c.contact LIKE '%' + #{params.keyword} + '%'
+                        OR c.phone LIKE '%' + #{params.keyword} + '%'
+                        OR c.address LIKE '%' + #{params.keyword} + '%'
+                    )
+                </if>
+                <if test="params.level != null and params.level != ''">
+                    AND c.level = #{params.level}
+                </if>
+            </if>
+        </where>
+        <if test="params != null and params.orderBy != null">
+            ORDER BY ${params.orderBy}
+        </if>
+        <if test="params != null and params.offset != null and params.limit != null">
+            OFFSET #{params.offset} ROWS
+            FETCH NEXT #{params.limit} ROWS ONLY
+        </if>
+    </select>
+    
+    <select id="selectCustomersBySalesId" resultType="java.util.Map">
+        SELECT 
+            c.id,
+            c.name,
+            c.level,
+            c.contact,
+            c.phone,
+            c.address,
+            c.email,
+            c.department,
+            c.position,
+            c.sales_id,
+            u.name as sales_name,
+            c.create_time as createTime,
+            c.update_time as updateTime
+        FROM
+            dbo.customer c
+        LEFT JOIN
+            dbo.[user] u ON c.sales_id = u.id
+        WHERE c.sales_id = #{salesId}
+        <if test="params != null">
+            <if test="params.keyword != null and params.keyword != ''">
+                AND (
+                    c.name LIKE '%' + #{params.keyword} + '%' 
+                    OR c.contact LIKE '%' + #{params.keyword} + '%'
+                    OR c.phone LIKE '%' + #{params.keyword} + '%'
+                    OR c.address LIKE '%' + #{params.keyword} + '%'
+                )
+            </if>
+            <if test="params.level != null and params.level != ''">
+                AND c.level = #{params.level}
+            </if>
+        </if>
+        <if test="params != null and params.orderBy != null">
+            ORDER BY ${params.orderBy}
+        </if>
+        <if test="params != null and params.offset != null and params.limit != null">
+            OFFSET #{params.offset} ROWS
+            FETCH NEXT #{params.limit} ROWS ONLY
+        </if>
+    </select>
+    
+    <select id="selectCustomersByIds" resultType="java.util.Map">
+        SELECT 
+            c.id,
+            c.name,
+            c.level,
+            c.contact,
+            c.phone,
+            c.address,
+            c.email,
+            c.department,
+            c.position,
+            c.sales_id,
+            u.name as sales_name,
+            c.create_time as createTime,
+            c.update_time as updateTime
+        FROM
+            dbo.customer c
+        LEFT JOIN
+            dbo.[user] u ON c.sales_id = u.id
+        WHERE c.id IN 
+        <foreach collection="customerIds" item="customerId" open="(" separator="," close=")">
+            #{customerId}
+        </foreach>
+        <if test="params != null">
+            <if test="params.keyword != null and params.keyword != ''">
+                AND (
+                    c.name LIKE '%' + #{params.keyword} + '%' 
+                    OR c.contact LIKE '%' + #{params.keyword} + '%'
+                    OR c.phone LIKE '%' + #{params.keyword} + '%'
+                    OR c.address LIKE '%' + #{params.keyword} + '%'
+                )
+            </if>
+            <if test="params.level != null and params.level != ''">
+                AND c.level = #{params.level}
+            </if>
+        </if>
+        <if test="params != null and params.orderBy != null">
+            ORDER BY ${params.orderBy}
+        </if>
+        <if test="params != null and params.offset != null and params.limit != null">
+            OFFSET #{params.offset} ROWS
+            FETCH NEXT #{params.limit} ROWS ONLY
+        </if>
+    </select>
+    
+    <select id="selectCustomerById" resultType="java.util.Map">
+        SELECT TOP 100 PERCENT
+            c.id,
+            c.name,
+            c.level,
+            c.contact,
+            c.phone,
+            c.address,
+            c.email,
+            c.department,
+            c.position,
+            c.sales_id,
+            u.name as sales_name,
+            c.create_time as createTime,
+            c.update_time as updateTime
+        FROM
+            dbo.customer c
+        LEFT JOIN
+            dbo.[user] u ON c.sales_id = u.id
+        WHERE c.id = #{id}
+        ORDER BY c.create_time DESC
+    </select>
+    
+    <select id="selectCustomerDevices" resultType="java.util.Map">
+        SELECT 
+            id,
+            customer_id as customerId,
+            device_name as deviceName,
+            device_type as deviceType,
+            brand,
+            model,
+            serial_number as serialNumber,
+            quantity,
+            fault_description as faultDescription,
+            fault_images as faultImages,
+            accessories,
+            appointment_time as appointmentTime,
+            verification_type as verificationType,
+            verification_images as verificationImages,
+            purpose,
+            requirement_description as requirementDescription,
+            installation_images as installationImages,
+            note,
+            note_editor as noteEditor,
+            note_update_time as noteUpdateTime,
+            create_time as createTime,
+            update_time as updateTime
+        FROM
+            dbo.device
+        WHERE
+            customer_id = #{customerId}
+        ORDER BY
+            create_time DESC
+    </select>
+    
+    <insert id="insertCustomer" parameterType="map" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dbo.customer (
+            name,
+            level,
+            contact,
+            phone,
+            address,
+            email,
+            department,
+            position,
+            sales_id
+        ) VALUES (
+            #{name},
+            #{level},
+            #{contact},
+            #{phone},
+            #{address},
+            #{email},
+            #{department},
+            #{position},
+            #{salesId}
+        )
+    </insert>
+    
+    <update id="updateCustomer" parameterType="map">
+        UPDATE dbo.customer
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="level != null">level = #{level},</if>
+            <if test="contact != null">contact = #{contact},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="department != null">department = #{department},</if>
+            <if test="position != null">position = #{position},</if>
+            <if test="salesId != null">sales_id = #{salesId},</if>
+            update_time = GETDATE()
+        </set>
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="deleteCustomer" parameterType="java.lang.Long">
+        DELETE FROM dbo.customer
+        WHERE id = #{id}
+    </delete>
+    
+    <select id="countAllCustomers" resultType="int">
+        SELECT COUNT(*) FROM dbo.customer c
+        <include refid="whereClause" />
+    </select>
+    
+    <select id="countCustomersBySalesId" resultType="int">
+        SELECT COUNT(*) FROM dbo.customer c
+        WHERE c.sales_id = #{salesId}
+        <include refid="whereClause" />
+    </select>
+    
+    <select id="countCustomersByIds" resultType="int">
+        SELECT COUNT(*) FROM dbo.customer c
+        WHERE c.id IN 
+        <foreach collection="customerIds" item="customerId" open="(" separator="," close=")">
+            #{customerId}
+        </foreach>
+        <include refid="whereClause" />
+    </select>
+</mapper> 

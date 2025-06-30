@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.ContactsGroupRelationMapper">
+    
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, group_id, contact_id, create_time
+    </sql>
+    
+    <!-- 获取分组中的所有联系人关系 -->
+    <select id="selectByGroupId" resultType="com.ryl.engineer.entity.ContactsGroupRelation">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM
+            dbo.contacts_group_relation
+        WHERE
+            group_id = #{groupId}
+    </select>
+    
+    <!-- 获取指定联系人所在的分组关系 -->
+    <select id="selectByContactId" resultType="com.ryl.engineer.entity.ContactsGroupRelation">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM
+            dbo.contacts_group_relation
+        WHERE
+            contact_id = #{contactId}
+    </select>
+    
+    <!-- 检查联系人是否在分组中 -->
+    <select id="selectByGroupIdAndContactId" resultType="com.ryl.engineer.entity.ContactsGroupRelation">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM
+            dbo.contacts_group_relation
+        WHERE
+            group_id = #{groupId} AND contact_id = #{contactId}
+    </select>
+    
+    <!-- 添加联系人到分组 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dbo.contacts_group_relation (
+            group_id, contact_id, create_time
+        ) VALUES (
+            #{groupId}, #{contactId}, #{createTime}
+        )
+    </insert>
+    
+    <!-- 批量添加联系人到分组 -->
+    <insert id="batchInsert">
+        INSERT INTO dbo.contacts_group_relation (
+            group_id, contact_id, create_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.groupId}, #{item.contactId}, #{item.createTime})
+        </foreach>
+    </insert>
+    
+    <!-- 从分组中移除联系人 -->
+    <delete id="deleteByGroupIdAndContactId">
+        DELETE FROM dbo.contacts_group_relation
+        WHERE
+            group_id = #{groupId} AND contact_id = #{contactId}
+    </delete>
+    
+    <!-- 批量从分组中移除联系人 -->
+    <delete id="batchDeleteByGroupIdAndContactIds">
+        DELETE FROM dbo.contacts_group_relation
+        WHERE
+            group_id = #{groupId}
+            AND contact_id IN
+            <foreach collection="contactIds" item="contactId" open="(" separator="," close=")">
+                #{contactId}
+            </foreach>
+    </delete>
+    
+    <!-- 删除分组的所有关联 -->
+    <delete id="deleteByGroupId">
+        DELETE FROM dbo.contacts_group_relation
+        WHERE
+            group_id = #{groupId}
+    </delete>
+    
+</mapper> 

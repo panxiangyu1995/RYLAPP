@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.ChatConversationMemberMapper">
+    
+    <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.ChatConversationMember">
+        <id column="id" property="id" />
+        <result column="conversation_id" property="conversationId" />
+        <result column="user_id" property="userId" />
+        <result column="user_name" property="userName" />
+        <result column="user_avatar" property="userAvatar" />
+        <result column="nickname" property="nickname" />
+        <result column="join_time" property="joinTime" />
+        <result column="mute_notification" property="muteNotification" />
+        <result column="status" property="status" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, conversation_id, user_id, user_name, user_avatar, nickname, join_time, mute_notification, status
+    </sql>
+    
+    <select id="selectByConversationId" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.chat_conversation_member
+        WHERE conversation_id = #{conversationId} AND status = 1
+    </select>
+    
+    <select id="selectByUserIdAndConversationId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM dbo.chat_conversation_member
+        WHERE user_id = #{userId} AND conversation_id = #{conversationId} AND status = 1
+        LIMIT 1
+    </select>
+    
+    <select id="selectConversationIdsByUserId" parameterType="java.lang.Long" resultType="java.lang.String">
+        SELECT conversation_id
+        FROM dbo.chat_conversation_member
+        WHERE user_id = #{userId} AND status = 1
+    </select>
+    
+    <select id="countByConversationId" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM dbo.chat_conversation_member
+        WHERE conversation_id = #{conversationId} AND status = 1
+    </select>
+    
+    <insert id="insert" parameterType="com.ryl.engineer.entity.ChatConversationMember" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dbo.chat_conversation_member (
+            conversation_id, user_id, user_name, user_avatar, nickname, join_time, mute_notification, status
+        ) VALUES (
+            #{conversationId}, #{userId}, #{userName}, #{userAvatar}, #{nickname}, #{joinTime}, #{muteNotification}, #{status}
+        )
+    </insert>
+    
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO dbo.chat_conversation_member (
+            conversation_id, user_id, user_name, user_avatar, nickname, join_time, mute_notification, status
+        ) VALUES 
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.conversationId}, #{item.userId}, #{item.userName}, #{item.userAvatar}, 
+                #{item.nickname}, #{item.joinTime}, #{item.muteNotification}, #{item.status}
+            )
+        </foreach>
+    </insert>
+    
+    <update id="update" parameterType="com.ryl.engineer.entity.ChatConversationMember">
+        UPDATE dbo.chat_conversation_member
+        <set>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="userAvatar != null">user_avatar = #{userAvatar},</if>
+            <if test="userName != null">user_name = #{userName},</if>
+            <if test="muteNotification != null">mute_notification = #{muteNotification},</if>
+            <if test="status != null">status = #{status}</if>
+        </set>
+        WHERE user_id = #{userId} AND conversation_id = #{conversationId}
+    </update>
+    
+    <delete id="deleteByUserIdAndConversationId">
+        UPDATE dbo.chat_conversation_member
+        SET status = 0
+        WHERE user_id = #{userId} AND conversation_id = #{conversationId}
+    </delete>
+    
+    <delete id="batchDeleteByUserIdsAndConversationId">
+        UPDATE dbo.chat_conversation_member
+        SET status = 0
+        WHERE conversation_id = #{conversationId} AND user_id IN 
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+    
+    <delete id="deleteByConversationId" parameterType="java.lang.String">
+        UPDATE dbo.chat_conversation_member
+        SET status = 0
+        WHERE conversation_id = #{conversationId}
+    </delete>
+</mapper> 

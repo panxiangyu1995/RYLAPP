@@ -1,0 +1,28 @@
+{
+  "name": "ryl-engineer-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.1.8",
+    "axios": "^1.9.0",
+    "bootstrap": "^5.3.6",
+    "date-fns": "^4.1.0",
+    "pinia": "^2.3.1",
+    "vant": "^4.9.20",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.1",
+    "vue-toastification": "^2.0.0-rc.5"
+  },
+  "devDependencies": {
+    "@stagewise-plugins/vue": "^0.4.6",
+    "@stagewise/toolbar-vue": "^0.4.8",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "vite": "^6.3.5"
+  }
+}

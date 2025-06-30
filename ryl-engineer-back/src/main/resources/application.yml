@@ -1,0 +1,110 @@
+server:
+  port: 8089
+  servlet:
+    context-path: /
+  tomcat:
+    uri-encoding: UTF-8
+
+spring:
+  datasource:
+    # 使用Microsoft JDBC驱动 + SQL Server身份验证
+    driverClassName: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    url: jdbc:sqlserver://DESKTOP-SOU1KQ1;databaseName=ryl_engineer;encrypt=true;trustServerCertificate=true
+    username: sa
+    password: zxcv1234
+  mvc:
+    pathmatch:
+      matching-strategy: ant-path-matcher
+  security:
+    user:
+      name: disabled
+      password: none
+  # Flyway配置
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: false
+    out-of-order: true
+    clean-disabled: true
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.ryl.engineer.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  # SQL Server特定配置
+  config-location: classpath:mybatis-config.xml
+
+pagehelper:
+  helperDialect: sqlserver
+  reasonable: true
+  supportMethodsArguments: true
+  params: count=countSql
+  autoRuntimeDialect: true
+  sqlServerWithNoOrderByTopQuery: true
+  countSuffix: _COUNT
+  dialectAlias: sqlserver=com.github.pagehelper.dialect.helper.SqlServerDialect
+  offsetAsPageNum: true
+
+logging:
+  level:
+    com.ryl.engineer: debug
+    org.springframework.security: debug
+    org.springframework.web: debug
+    org.springframework.http.converter.json: debug
+    org.hibernate.type: trace
+    com.fasterxml.jackson: debug
+    com.ryl.engineer.controller: debug
+    com.ryl.engineer.service: debug
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/application.log
+
+# JWT配置
+jwt:
+  # 密钥
+  secret: ryl-engineer-secret-key
+  # 过期时间（秒）
+  expiration: 86400
+
+# 文件上传配置
+file:
+  upload:
+    path: D:/uploads
+    url-prefix: http://localhost:8089
+
+# 应用配置
+app:
+  upload:
+    # 是否使用绝对路径
+    use-absolute-path: true
+    # 上传文件基础路径，为空则使用系统工作目录下的uploads文件夹
+    base-path: D:/uploads
+    # 头像路径
+    avatar-path: avatars
+    # 头像访问URL前缀
+    avatar-url-prefix: http://localhost:8089/api/v1/uploads/avatars
+    # 任务图片路径
+    task-image-path: task/images
+    # 任务图片访问URL前缀
+    task-image-url-prefix: http://localhost:8089/api/v1/uploads/task/images
+
+# SpringDoc OpenAPI配置
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  show-actuator: true
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  paths-to-match:
+    - /api/**
+

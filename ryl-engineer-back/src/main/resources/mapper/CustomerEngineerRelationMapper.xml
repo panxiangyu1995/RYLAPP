@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.CustomerEngineerRelationMapper">
+    
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, customer_id, engineer_id, relation_type, create_time, update_time
+    </sql>
+    
+    <!-- 添加工程师-客户关系 -->
+    <insert id="insert" parameterType="com.ryl.engineer.entity.CustomerEngineerRelation" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO customer_engineer_relation (
+            customer_id, 
+            engineer_id, 
+            relation_type
+        ) VALUES (
+            #{customerId}, 
+            #{engineerId}, 
+            #{relationType}
+        )
+    </insert>
+    
+    <!-- 删除工程师-客户关系 -->
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM customer_engineer_relation 
+        WHERE id = #{id}
+    </delete>
+    
+    <!-- 删除指定客户的所有工程师关系 -->
+    <delete id="deleteByCustomerId">
+        DELETE FROM customer_engineer_relation 
+        WHERE customer_id = #{customerId}
+    </delete>
+    
+    <!-- 查询工程师关联的客户ID列表 -->
+    <select id="selectCustomerIdsByEngineerId" resultType="java.lang.Long">
+        SELECT DISTINCT customer_id
+        FROM customer_engineer_relation
+        WHERE engineer_id = #{engineerId}
+    </select>
+    
+    <!-- 查询工程师关联的客户列表 -->
+    <select id="selectCustomersByEngineerId" resultType="java.util.Map">
+        SELECT 
+            c.id,
+            c.name,
+            c.level,
+            c.contact,
+            c.phone,
+            c.address,
+            c.email,
+            c.department,
+            c.position,
+            c.sales_id,
+            u.name as sales_name,
+            c.create_time as createTime,
+            c.update_time as updateTime
+        FROM 
+            customer c
+        LEFT JOIN 
+            [user] u ON c.sales_id = u.id
+        INNER JOIN 
+            customer_engineer_relation cer ON c.id = cer.customer_id
+        WHERE 
+            cer.engineer_id = #{engineerId}
+        <if test="params != null">
+            <if test="params.keyword != null and params.keyword != ''">
+                AND (
+                    c.name LIKE '%' + #{params.keyword} + '%' 
+                    OR c.contact LIKE '%' + #{params.keyword} + '%'
+                    OR c.phone LIKE '%' + #{params.keyword} + '%'
+                    OR c.address LIKE '%' + #{params.keyword} + '%'
+                )
+            </if>
+            <if test="params.level != null and params.level != ''">
+                AND c.level = #{params.level}
+            </if>
+        </if>
+        ORDER BY c.create_time DESC
+    </select>
+    
+    <!-- 查询与客户相关联的工程师ID列表 -->
+    <select id="selectEngineerIdsByCustomerId" resultType="java.lang.Long">
+        SELECT DISTINCT engineer_id
+        FROM customer_engineer_relation
+        WHERE customer_id = #{customerId}
+    </select>
+    
+    <!-- 检查工程师和客户之间是否存在关联 -->
+    <select id="checkRelationExists" resultType="java.lang.Long">
+        SELECT id
+        FROM customer_engineer_relation
+        WHERE engineer_id = #{engineerId} AND customer_id = #{customerId}
+        LIMIT 1
+    </select>
+</mapper> 

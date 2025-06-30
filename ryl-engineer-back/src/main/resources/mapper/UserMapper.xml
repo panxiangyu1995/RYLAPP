@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.engineer.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.User">
+        <id column="id" property="id" />
+        <result column="work_id" property="workId" />
+        <result column="name" property="name" />
+        <result column="mobile" property="mobile" />
+        <result column="password" property="password" />
+        <result column="department" property="department" />
+        <result column="location" property="location" />
+        <result column="avatar" property="avatar" />
+        <result column="status" property="status" />
+        <result column="token" property="token" />
+        <result column="token_expire" property="tokenExpire" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="last_login_time" property="lastLoginTime" />
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, work_id, name, mobile, password, department, location, avatar, status, token, token_expire, create_time, update_time, last_login_time
+    </sql>
+    
+    <sql id="User_Column_List_With_Alias">
+        u.id, u.work_id, u.name, u.mobile, u.password, u.department, u.location, u.avatar, u.status, u.token, u.token_expire, u.create_time, u.update_time, u.last_login_time
+    </sql>
+    
+    <select id="selectByWorkId" resultMap="BaseResultMap">
+        select 
+        <include refid="Base_Column_List" />
+        from dbo.[user]
+        where work_id = #{workId}
+    </select>
+    
+    <select id="selectByMobile" resultMap="BaseResultMap">
+        select 
+        <include refid="Base_Column_List" />
+        from dbo.[user]
+        where mobile = #{mobile}
+    </select>
+    
+    <select id="selectById" resultMap="BaseResultMap">
+        select 
+        <include refid="Base_Column_List" />
+        from dbo.[user]
+        where id = #{id}
+    </select>
+    
+    <insert id="insert" parameterType="com.ryl.engineer.entity.User" useGeneratedKeys="true" keyProperty="id">
+        insert into dbo.[user] (
+            work_id, name, mobile, password, department, location, avatar, status, token, token_expire, create_time, update_time
+        ) values (
+            #{workId}, #{name}, #{mobile}, #{password}, #{department}, #{location}, #{avatar}, #{status}, #{token}, #{tokenExpire}, GETDATE(), GETDATE()
+        )
+    </insert>
+    
+    <update id="update" parameterType="com.ryl.engineer.entity.User">
+        update dbo.[user]
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="mobile != null">mobile = #{mobile},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="department != null">department = #{department},</if>
+            <if test="location != null">location = #{location},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="token != null">token = #{token},</if>
+            <if test="tokenExpire != null">token_expire = #{tokenExpire},</if>
+            update_time = GETDATE()
+        </set>
+        where id = #{id}
+    </update>
+    
+    <update id="updateLastLoginTime">
+        update dbo.[user]
+        set last_login_time = GETDATE()
+        where id = #{id}
+    </update>
+    
+    <update id="updateToken">
+        update dbo.[user]
+        set token = #{token},
+            token_expire = #{tokenExpire},
+            update_time = GETDATE()
+        where id = #{id}
+    </update>
+    
+    <!-- 查询工程师列表 -->
+    <select id="selectEngineers" resultMap="BaseResultMap">
+        select 
+        <include refid="User_Column_List_With_Alias" />
+        from dbo.[user] u
+        join dbo.[user_role] ur on u.id = ur.user_id
+        join dbo.[role] r on ur.role_id = r.id
+        where r.code = 'engineer'
+        and u.status = 1
+        <if test="params != null">
+            <if test="params.name != null and params.name != ''">
+                and u.name like '%' + #{params.name} + '%'
+            </if>
+            <if test="params.department != null and params.department != ''">
+                and u.department = #{params.department}
+            </if>
+            <if test="params.location != null and params.location != ''">
+                and u.location = #{params.location}
+            </if>
+        </if>
+        order by u.name
+    </select>
+    
+    <!-- 查询销售人员列表 -->
+    <select id="selectSales" resultMap="BaseResultMap">
+        select 
+        <include refid="User_Column_List_With_Alias" />
+        from dbo.[user] u
+        join dbo.[user_role] ur on u.id = ur.user_id
+        join dbo.[role] r on ur.role_id = r.id
+        where r.code = 'sales'
+        and u.status = 1
+        <if test="params != null">
+            <if test="params.name != null and params.name != ''">
+                and u.name like '%' + #{params.name} + '%'
+            </if>
+            <if test="params.department != null and params.department != ''">
+                and u.department = #{params.department}
+            </if>
+            <if test="params.location != null and params.location != ''">
+                and u.location = #{params.location}
+            </if>
+        </if>
+        order by u.name
+    </select>
+</mapper> 
