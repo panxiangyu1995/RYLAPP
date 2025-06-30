@@ -1,5 +1,18 @@
 # 更新日志
 
+## 0.1.2 - 2025-06-30
+### 优化
+- 修改了ContactsRelationMapper.xml中的selectOtherContacts查询，确保与SQL Server方言兼容
+- 调整了SQL查询语法，使用SQL Server兼容的字符串连接方式（'%' + #{keyword} + '%'）
+- 增加了对department字段的NULL值检查，避免空值导致的查询错误
+- 在ContactsServiceImpl中增强了日志记录，添加了详细的执行步骤和参数信息
+- 添加了更强大的异常处理机制，确保在出现错误时返回空列表而不是抛出异常
+
+### 修复
+- 修复了"其它联系人"功能在SQL Server环境下的兼容性问题
+- 优化了convertUserToContactDTO方法，使用lastLoginTime字段作为最后活跃时间
+- 增强了空值处理，避免因空值导致的NullPointerException
+
 ## 0.1.1 - 2025-06-30
 ### 优化
 - 重构了联系人模块的"其它联系人"功能，移除了对不存在的contacts_relation表的依赖
