@@ -259,7 +259,7 @@ const routes = [
   {
     path: '/engineer/:id',
     name: 'EngineerDetail',
-    component: () => import('../views/EngineerDetail.vue'),
+    component: () => import('../views/contacts/EngineerDetail.vue'),
     meta: { requiresAuth: true }
   },
   {

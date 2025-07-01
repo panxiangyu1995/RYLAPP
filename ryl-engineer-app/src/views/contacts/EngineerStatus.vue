@@ -64,12 +64,14 @@
                 <tr 
                   v-for="(engineer, idx) in group.engineers" 
                   :key="idx"
+                  @click="viewEngineerDetail(engineer.id)"
+                  class="engineer-row"
                 >
                   <td>
-                    <a class="engineer-cell" @click="viewEngineerDetail(engineer.id)">
+                    <div class="engineer-cell">
                       <img :src="engineer.avatar || defaultAvatar" :alt="engineer.name" class="engineer-avatar">
                       <span class="engineer-name">{{ engineer.name }}</span>
-                    </a>
+                    </div>
                   </td>
                   <td>{{ engineer.currentTask }}</td>
                   <td>{{ engineer.taskCount }}</td>
@@ -148,9 +150,7 @@ export default {
     // 查看工程师详情
     const viewEngineerDetail = (engineerId) => {
       router.push({
-        name: 'ContactDetail',
-        params: { id: engineerId },
-        query: { type: 'engineer' }
+        path: `/engineer/${engineerId}`
       })
     }
     
@@ -439,11 +439,19 @@ export default {
   border-bottom: none;
 }
 
+.engineer-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.engineer-row:hover {
+  background-color: #f9fafb;
+}
+
 .engineer-cell {
   display: flex;
   align-items: center;
   gap: 8px;
-  cursor: pointer;
 }
 
 .engineer-avatar {

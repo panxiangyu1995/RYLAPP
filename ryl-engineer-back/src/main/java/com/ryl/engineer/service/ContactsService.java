@@ -44,6 +44,13 @@ public interface ContactsService {
     Map<String, List<Map<String, Object>>> getEngineerStatusByLocation(String status, String keyword);
     
     /**
+     * 获取工程师详情及任务列表
+     * @param engineerId 工程师ID
+     * @return 工程师详情和任务列表数据
+     */
+    Map<String, Object> getEngineerDetailWithTasks(Long engineerId);
+    
+    /**
      * 获取联系人详情
      * @param currentUserId 当前用户ID
      * @param contactUserId 联系人用户ID

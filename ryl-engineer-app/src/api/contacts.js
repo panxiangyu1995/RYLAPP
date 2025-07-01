@@ -13,6 +13,15 @@ export function getEngineerStatusList(params) {
 }
 
 /**
+ * 获取工程师详情
+ * @param {number} engineerId 工程师ID
+ * @returns {Promise} 返回工程师详情和任务列表
+ */
+export function getEngineerDetail(engineerId) {
+  return http.get(`/api/v1/contacts/engineers/${engineerId}`)
+}
+
+/**
  * 获取其它联系人列表（非工程师角色）
  * @param {Object} params 查询参数
  * @param {string} params.keyword 搜索关键词(姓名/工号/部门)

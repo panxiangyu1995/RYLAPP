@@ -407,6 +407,159 @@ public class ContactsServiceImpl implements ContactsService {
         return dto;
     }
 
+    // 新增：获取工程师详情及任务列表
+    @Override
+    public Map<String, Object> getEngineerDetailWithTasks(Long engineerId) {
+        logger.info("获取工程师详情及任务列表 - 工程师ID: {}", engineerId);
+        
+        try {
+            Map<String, Object> result = new HashMap<>();
+            
+            // 1. 获取工程师基本信息
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT u.id, u.work_id as workId, u.name, u.department, u.location, u.avatar, ");
+            sql.append("(SELECT COUNT(*) FROM task_engineer te JOIN task t ON te.task_id = t.task_id ");
+            sql.append("WHERE te.engineer_id = u.id AND t.status NOT IN ('completed', 'cancelled')) as taskCount, ");
+            sql.append("CASE ");
+            sql.append("  WHEN (SELECT COUNT(*) FROM task_engineer te JOIN task t ON te.task_id = t.task_id ");
+            sql.append("        WHERE te.engineer_id = u.id AND t.status NOT IN ('completed', 'cancelled')) > 2 THEN '忙碌' ");
+            sql.append("  ELSE '可协助' ");
+            sql.append("END as status ");
+            sql.append("FROM [user] u ");
+            sql.append("JOIN user_role ur ON u.id = ur.user_id ");
+            sql.append("JOIN role r ON ur.role_id = r.id ");
+            sql.append("WHERE u.id = ? AND r.code = 'ENGINEER'");
+            
+            List<Map<String, Object>> engineerInfo = jdbcTemplate.queryForList(sql.toString(), engineerId);
+            
+            if (engineerInfo.isEmpty()) {
+                throw new ServiceException("未找到指定工程师信息");
+            }
+            
+            result.put("engineer", engineerInfo.get(0));
+            
+            // 2. 获取工程师的任务列表（进行中的任务）
+            StringBuilder taskSql = new StringBuilder();
+            taskSql.append("SELECT t.task_id as taskId, t.title, t.status, ");
+            taskSql.append("(SELECT TOP 1 sr.step_index FROM step_record sr WHERE sr.task_id = t.task_id ORDER BY sr.create_time DESC) as currentStep, ");
+            taskSql.append("(SELECT TOP 1 sr.description FROM step_record sr WHERE sr.task_id = t.task_id ORDER BY sr.create_time DESC) as stepDescription, ");
+            taskSql.append("(SELECT TOP 1 sr.create_time FROM step_record sr WHERE sr.task_id = t.task_id ORDER BY sr.create_time DESC) as lastUpdateTime, ");
+            taskSql.append("(SELECT COUNT(*) FROM step_record sr WHERE sr.task_id = t.task_id) as stepCount ");
+            taskSql.append("FROM task t ");
+            taskSql.append("JOIN task_engineer te ON t.task_id = te.task_id ");
+            taskSql.append("WHERE te.engineer_id = ? AND t.status = 'in-progress' ");
+            taskSql.append("ORDER BY t.priority DESC, t.create_time DESC");
+            
+            List<Map<String, Object>> inProgressTasks = jdbcTemplate.queryForList(taskSql.toString(), engineerId);
+            
+            // 3. 获取工程师的已完成任务
+            StringBuilder completedTaskSql = new StringBuilder();
+            completedTaskSql.append("SELECT t.task_id as taskId, t.title, t.status, ");
+            completedTaskSql.append("(SELECT TOP 1 sr.step_index FROM step_record sr WHERE sr.task_id = t.task_id ORDER BY sr.create_time DESC) as currentStep, ");
+            completedTaskSql.append("(SELECT TOP 1 sr.description FROM step_record sr WHERE sr.task_id = t.task_id ORDER BY sr.create_time DESC) as stepDescription, ");
+            completedTaskSql.append("(SELECT TOP 1 sr.create_time FROM step_record sr WHERE sr.task_id = t.task_id ORDER BY sr.create_time DESC) as lastUpdateTime, ");
+            completedTaskSql.append("(SELECT COUNT(*) FROM step_record sr WHERE sr.task_id = t.task_id) as stepCount ");
+            completedTaskSql.append("FROM task t ");
+            completedTaskSql.append("JOIN task_engineer te ON t.task_id = te.task_id ");
+            completedTaskSql.append("WHERE te.engineer_id = ? AND t.status = 'completed' ");
+            completedTaskSql.append("ORDER BY t.completed_date DESC");
+            
+            List<Map<String, Object>> completedTasks = jdbcTemplate.queryForList(completedTaskSql.toString(), engineerId);
+            
+            // 4. 为每个任务获取步骤记录图片
+            inProgressTasks = processTaskImages(inProgressTasks);
+            completedTasks = processTaskImages(completedTasks);
+            
+            // 5. 添加持续时间信息
+            inProgressTasks = addTaskDurations(inProgressTasks);
+            completedTasks = addTaskDurations(completedTasks);
+            
+            result.put("inProgressTasks", inProgressTasks);
+            result.put("completedTasks", completedTasks);
+            
+            return result;
+        } catch (ServiceException se) {
+            // 直接抛出业务异常
+            throw se;
+        } catch (Exception e) {
+            logger.error("获取工程师详情异常", e);
+            throw new ServiceException("获取工程师详情失败: " + e.getMessage());
+        }
+    }
+    
+    // 为任务列表添加图片
+    private List<Map<String, Object>> processTaskImages(List<Map<String, Object>> tasks) {
+        for (Map<String, Object> task : tasks) {
+            String taskId = (String) task.get("taskId");
+            
+            // 获取任务的最新记录ID
+            Long latestRecordId = null;
+            try {
+                latestRecordId = jdbcTemplate.queryForObject(
+                    "SELECT TOP 1 id FROM step_record WHERE task_id = ? ORDER BY create_time DESC", 
+                    Long.class, taskId);
+            } catch (Exception e) {
+                logger.warn("获取任务记录ID失败，任务ID: {}", taskId);
+                continue;
+            }
+            
+            if (latestRecordId != null) {
+                // 获取记录对应的图片URL列表
+                List<String> imageUrls = jdbcTemplate.queryForList(
+                    "SELECT image_url FROM record_image WHERE record_id = ?", 
+                    String.class, latestRecordId);
+                
+                task.put("images", imageUrls);
+            } else {
+                task.put("images", new ArrayList<String>());
+            }
+        }
+        return tasks;
+    }
+    
+    // 为任务添加持续时间
+    private List<Map<String, Object>> addTaskDurations(List<Map<String, Object>> tasks) {
+        for (Map<String, Object> task : tasks) {
+            String taskId = (String) task.get("taskId");
+            
+            // 获取任务的创建时间和最后更新时间
+            Map<String, Object> timeData = null;
+            try {
+                timeData = jdbcTemplate.queryForMap(
+                    "SELECT create_time, " +
+                    "(SELECT TOP 1 create_time FROM step_record WHERE task_id = ? ORDER BY create_time DESC) as last_time " +
+                    "FROM task WHERE task_id = ?", 
+                    taskId, taskId);
+            } catch (Exception e) {
+                logger.warn("获取任务时间数据失败，任务ID: {}", taskId);
+                task.put("duration", "未知");
+                continue;
+            }
+            
+            if (timeData != null) {
+                Date createTime = (Date) timeData.get("create_time");
+                Date lastTime = (Date) timeData.get("last_time");
+                
+                if (createTime != null && lastTime != null) {
+                    // 计算持续时间（毫秒）
+                    long durationMillis = lastTime.getTime() - createTime.getTime();
+                    
+                    // 转换为小时和分钟
+                    long hours = durationMillis / (60 * 60 * 1000);
+                    long minutes = (durationMillis % (60 * 60 * 1000)) / (60 * 1000);
+                    
+                    String durationText = hours + "小时" + minutes + "分钟";
+                    task.put("duration", durationText);
+                } else {
+                    task.put("duration", "未知");
+                }
+            } else {
+                task.put("duration", "未知");
+            }
+        }
+        return tasks;
+    }
+
     @Override
     public Map<String, List<Map<String, Object>>> getEngineerStatusByLocation(String status, String keyword) {
         logger.info("获取工程师状态列表 - 状态筛选: {}, 关键词: {}", status, keyword);

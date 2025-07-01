@@ -13,221 +13,262 @@
       </div>
     </header>
 
-    <!-- 工程师基本信息 -->
-    <div class="engineer-card">
-      <img :src="engineer.avatar" alt="工程师头像" class="engineer-avatar">
-      <div class="engineer-info">
-        <h2 class="engineer-name">{{ engineer.name }}</h2>
-        <p class="engineer-title">{{ engineer.title }}</p>
-        <div class="engineer-status">
-          <span :class="['status-badge', getStatusClass(engineer.status)]">
-            {{ engineer.status }}
-          </span>
-          <span class="task-count">当前任务数: {{ engineer.currentTaskCount }}</span>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 任务列表标题 -->
-    <div class="task-header">
-      <h3>当前任务列表</h3>
-      <div class="task-filters">
-        <button 
-          v-for="(filter, index) in taskFilters" 
-          :key="index"
-          :class="['filter-btn', { active: activeFilter === filter.value }]"
-          @click="activeFilter = filter.value"
-        >
-          {{ filter.label }}
-        </button>
-      </div>
-    </div>
-    
-    <!-- 任务列表 -->
-    <div class="task-list">
-      <div 
-        v-for="(task, index) in filteredTasks" 
-        :key="index"
-        class="task-item"
-      >
-        <div class="task-header-info">
-          <div>
-            <h4 class="task-title">{{ task.title }}</h4>
-            <p class="task-id">任务编号: {{ task.taskId }}</p>
-          </div>
-          <span :class="['task-status', getTaskStatusClass(task.status)]">
-            {{ task.status }}
-          </span>
-        </div>
-        
-        <div class="task-progress">
-          <div class="progress-header">
-            <span class="progress-label">当前步骤:</span>
-            <span class="progress-step">{{ task.currentStep }}</span>
-          </div>
-          <div class="progress-content">
-            <p class="progress-description">{{ task.stepDescription }}</p>
-            <div class="progress-images">
-              <img 
-                v-for="(image, i) in task.images" 
-                :key="i"
-                :src="image"
-                alt="任务图片"
-                class="progress-image"
-              >
-            </div>
-            <div class="progress-meta">
-              <span class="progress-time">{{ task.lastUpdateTime }}</span>
-              <span class="progress-duration">用时: {{ task.duration }}</span>
-            </div>
-          </div>
-          <a class="view-flow-link" @click="viewTaskFlow(task.taskId)">
-            <i class="icon-list"></i>查看完整流程
-          </a>
-        </div>
-      </div>
+    <!-- 加载中状态 -->
+    <div v-if="loading" class="loading-container">
+      <div class="spinner"></div>
+      <p>加载中...</p>
     </div>
 
-    <!-- 底部操作栏 -->
-    <div class="bottom-actions">
-      <button class="bottom-btn primary" @click="requestAssistance">
-        <i class="icon-user-plus"></i>请求协助
-      </button>
+    <!-- 错误状态 -->
+    <div v-else-if="error" class="error-container">
+      <i class="icon-error-circle"></i>
+      <p>{{ error }}</p>
+      <button class="retry-button" @click="loadEngineerDetail">重试</button>
     </div>
+
+    <template v-else>
+      <!-- 工程师基本信息 -->
+      <div class="engineer-card">
+        <img :src="engineer.avatar || defaultAvatar" :alt="engineer.name" class="engineer-avatar">
+        <div class="engineer-info">
+          <h2 class="engineer-name">{{ engineer.name }}</h2>
+          <p class="engineer-title">{{ engineer.department }}</p>
+          <div class="engineer-status">
+            <span :class="['status-badge', getStatusClass(engineer.status)]">
+              {{ engineer.status }}
+            </span>
+            <span class="task-count">当前任务数: {{ engineer.taskCount }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 任务列表标题 -->
+      <div class="task-header">
+        <h3>当前任务列表</h3>
+        <div class="task-filters">
+          <button 
+            v-for="(filter, index) in taskFilters" 
+            :key="index"
+            :class="['filter-btn', { active: activeFilter === filter.value }]"
+            @click="activeFilter = filter.value"
+          >
+            {{ filter.label }}
+          </button>
+        </div>
+      </div>
+      
+      <!-- 任务列表 -->
+      <div class="task-list">
+        <div v-if="filteredTasks.length === 0" class="no-data">
+          <p>暂无任务数据</p>
+        </div>
+        
+        <div 
+          v-for="(task, index) in filteredTasks" 
+          :key="index"
+          class="task-item"
+        >
+          <div class="task-header-info">
+            <div>
+              <h4 class="task-title">{{ task.title }}</h4>
+              <p class="task-id">任务编号: {{ task.taskId }}</p>
+            </div>
+            <span :class="['task-status', getTaskStatusClass(task.status)]">
+              {{ task.status === 'in-progress' ? '进行中' : '已完成' }}
+            </span>
+          </div>
+          
+          <div class="task-progress">
+            <div class="progress-header">
+              <span class="progress-label">当前步骤:</span>
+              <span class="progress-step">{{ task.currentStep }}</span>
+            </div>
+            <div class="progress-content">
+              <p class="progress-description">{{ task.stepDescription || '暂无描述' }}</p>
+              <div v-if="task.images && task.images.length > 0" class="progress-images">
+                <img 
+                  v-for="(image, i) in task.images" 
+                  :key="i"
+                  :src="image"
+                  alt="任务图片"
+                  class="progress-image"
+                >
+              </div>
+              <div class="progress-meta">
+                <span class="progress-time">{{ formatDateTime(task.lastUpdateTime) }}</span>
+                <span class="progress-duration">用时: {{ task.duration || '未记录' }}</span>
+              </div>
+            </div>
+            <a class="view-flow-link" @click="viewTaskFlow(task.taskId)">
+              <i class="icon-list"></i>查看完整流程
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部操作栏 -->
+      <div class="bottom-actions">
+        <button class="bottom-btn primary" @click="requestAssistance">
+          <i class="icon-user-plus"></i>请求协助
+        </button>
+      </div>
+    </template>
   </div>
 </template>
 
 <script>
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { getEngineerDetail } from '@/api/contacts'
+import defaultAvatar from '@/assets/images/company-logo.png'
 
 export default {
   name: 'EngineerDetailPage',
   setup() {
     const router = useRouter()
-
+    const route = useRoute()
+    const engineerId = ref(parseInt(route.params.id) || 0)
+    const engineer = ref({})
+    const inProgressTasks = ref([])
+    const completedTasks = ref([])
+    const loading = ref(true)
+    const error = ref(null)
+    const activeFilter = ref('in-progress')
+    
+    const taskFilters = [
+      { label: '进行中', value: 'in-progress' },
+      { label: '已完成', value: 'completed' }
+    ]
+    
+    // 根据筛选条件过滤任务
+    const filteredTasks = computed(() => {
+      if (activeFilter.value === 'in-progress') {
+        return inProgressTasks.value
+      } else {
+        return completedTasks.value
+      }
+    })
+    
+    // 加载工程师详情和任务列表
+    const loadEngineerDetail = async () => {
+      if (!engineerId.value) {
+        error.value = '工程师ID无效'
+        loading.value = false
+        return
+      }
+      
+      loading.value = true
+      error.value = null
+      
+      try {
+        console.log('获取工程师详情，ID:', engineerId.value)
+        const res = await getEngineerDetail(engineerId.value)
+        console.log('工程师详情API返回:', res)
+        
+        if (res.code === 200 && res.data) {
+          // 设置工程师信息
+          engineer.value = res.data.engineer || {}
+          
+          // 设置任务列表
+          inProgressTasks.value = res.data.inProgressTasks || []
+          completedTasks.value = res.data.completedTasks || []
+        } else {
+          error.value = res.message || '获取工程师详情失败'
+        }
+      } catch (err) {
+        console.error('获取工程师详情异常:', err)
+        error.value = '获取工程师详情失败，请稍后再试'
+      } finally {
+        loading.value = false
+      }
+    }
+    
+    // 格式化日期时间
+    const formatDateTime = (dateTime) => {
+      if (!dateTime) return '未记录'
+      
+      try {
+        const date = new Date(dateTime)
+        return date.toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).replace(/\//g, '-')
+      } catch (e) {
+        return dateTime.toString()
+      }
+    }
+    
+    // 返回上一页
     const goBack = () => {
       router.back()
     }
     
+    // 联系工程师
     const contactEngineer = () => {
-      // 导航到聊天详情页，传递工程师ID作为参数
-      router.push(`/chat/${router.currentRoute.value.params.id || 1}`)
+      router.push(`/chat/${engineerId.value}`)
     }
-
-    return {
-      goBack,
-      contactEngineer
+    
+    // 查看任务流程
+    const viewTaskFlow = (taskId) => {
+      console.log('查看任务流程:', taskId)
+      router.push(`/task-flow/${taskId}`)
     }
-  },
-  data() {
-    return {
-      engineer: {
-        id: 1,
-        name: '张工程师',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-        title: '高级维修工程师 | 气相色谱专家',
-        status: '忙碌',
-        currentTaskCount: 3
-      },
-      activeFilter: 'in-progress',
-      taskFilters: [
-        { label: '进行中', value: 'in-progress' },
-        { label: '已完成', value: 'completed' }
-      ],
-      tasks: [
-        {
-          taskId: 'T20231120-001',
-          title: '某大学 - 气相色谱仪维修',
-          status: '进行中',
-          currentStep: '检修结果填写',
-          stepDescription: '检查发现进样口密封圈老化，需要更换。同时色谱柱温度控制不稳定，怀疑是温控板故障。',
-          images: [
-            'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-            'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'
-          ],
-          lastUpdateTime: '2023-11-20 14:30',
-          duration: '1小时20分钟',
-          type: 'in-progress'
-        },
-        {
-          taskId: 'T20231119-003',
-          title: '某医院 - 气质联用仪保养',
-          status: '进行中',
-          currentStep: '真空系统检测',
-          stepDescription: '真空度测试正常，分子泵运转良好，无异常噪音。前级泵油已更换，真空管路已清洁。',
-          images: [
-            'https://images.unsplash.com/photo-1581093196277-9f608bb3b4b9?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'
-          ],
-          lastUpdateTime: '2023-11-20 10:15',
-          duration: '45分钟',
-          type: 'in-progress'
-        },
-        {
-          taskId: 'T20231118-005',
-          title: '某研究所 - 气相色谱仪安装培训',
-          status: '进行中',
-          currentStep: '软件操作培训',
-          stepDescription: '已完成基础操作培训，客户能够独立进行简单样品分析。明天将进行高级功能培训和故障排除指导。',
-          images: [
-            'https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-            'https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-            'https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'
-          ],
-          lastUpdateTime: '2023-11-20 16:45',
-          duration: '3小时30分钟',
-          type: 'in-progress'
-        },
-        {
-          taskId: 'T20231115-002',
-          title: '某企业 - 液相色谱仪维修',
-          status: '已完成',
-          currentStep: '完成维修',
-          stepDescription: '更换高压泵密封圈，清洗进样阀，校准检测器。设备已恢复正常运行。',
-          images: [
-            'https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'
-          ],
-          lastUpdateTime: '2023-11-15 15:30',
-          duration: '2小时15分钟',
-          type: 'completed'
-        }
-      ]
-    }
-  },
-  computed: {
-    filteredTasks() {
-      return this.tasks.filter(task => task.type === this.activeFilter);
-    }
-  },
-  methods: {
-    getStatusClass(status) {
-      switch(status) {
-        case '忙碌': return 'status-busy';
-        case '空闲': return 'status-free';
-        case '休假': return 'status-vacation';
-        default: return '';
-      }
-    },
-    getTaskStatusClass(status) {
-      switch(status) {
-        case '进行中': return 'status-in-progress';
-        case '已完成': return 'status-completed';
-        case '待处理': return 'status-pending';
-        default: return '';
-      }
-    },
-    viewTaskFlow(taskId) {
-      console.log('查看任务流程:', taskId);
-      this.$router.push(`/task-flow/${taskId}`);
-    },
-    requestAssistance() {
-      // 导航到请求协助页面，传递工程师ID和当前任务信息
-      this.$router.push({
-        path: `/request-assistance/${this.engineer.id}`,
+    
+    // 请求协助
+    const requestAssistance = () => {
+      router.push({
+        path: `/request-assistance/${engineerId.value}`,
         query: {
-          engineerName: this.engineer.name,
-          taskCount: this.engineer.currentTaskCount
+          engineerName: engineer.value.name,
+          taskCount: engineer.value.taskCount
         }
-      });
+      })
+    }
+    
+    // 根据状态获取CSS类
+    const getStatusClass = (status) => {
+      switch(status) {
+        case '忙碌': return 'status-busy'
+        case '可协助': return 'status-available'
+        case '部分可协': return 'status-partial'
+        default: return ''
+      }
+    }
+    
+    // 获取任务状态CSS类
+    const getTaskStatusClass = (status) => {
+      switch(status) {
+        case 'in-progress': return 'status-in-progress'
+        case 'completed': return 'status-completed'
+        case 'pending': return 'status-pending'
+        default: return ''
+      }
+    }
+    
+    // 组件挂载时加载数据
+    onMounted(() => {
+      loadEngineerDetail()
+    })
+    
+    return {
+      engineer,
+      loading,
+      error,
+      activeFilter,
+      taskFilters,
+      filteredTasks,
+      defaultAvatar,
+      formatDateTime,
+      goBack,
+      contactEngineer,
+      viewTaskFlow,
+      requestAssistance,
+      getStatusClass,
+      getTaskStatusClass,
+      loadEngineerDetail
     }
   }
 }
@@ -237,7 +278,7 @@ export default {
 .engineer-detail-page {
   min-height: 100vh;
   background-color: #f5f5f5;
-  padding-bottom: 80px;
+  padding-bottom: 120px;
 }
 
 .header {
@@ -252,47 +293,46 @@ export default {
 }
 
 .header-left {
-  width: 24px;
-}
-
-.icon-arrow-left::before {
-  content: '\f060';
-  font-family: 'Font Awesome 6 Free';
-  font-weight: 900;
-  color: #666;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .header h1 {
   flex: 1;
+  margin: 0;
+  text-align: center;
   font-size: 18px;
-  font-weight: 600;
-  margin-left: 16px;
+  font-weight: 500;
 }
 
 .contact-btn {
-  display: flex;
-  align-items: center;
-  padding: 6px 12px;
   background-color: #3b82f6;
   color: #fff;
-  border-radius: 9999px;
-  font-size: 14px;
   border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
-.icon-chat::before {
-  content: '\f075';
-  font-family: 'Font Awesome 6 Free';
-  font-weight: 900;
+.contact-btn i {
   margin-right: 4px;
 }
 
 .engineer-card {
+  background-color: #fff;
+  margin: 16px;
+  padding: 16px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  padding: 16px;
-  background-color: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .engineer-avatar {
@@ -301,6 +341,7 @@ export default {
   border-radius: 50%;
   object-fit: cover;
   margin-right: 16px;
+  border: 1px solid #eaeaea;
 }
 
 .engineer-info {
@@ -309,142 +350,162 @@ export default {
 
 .engineer-name {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 500;
+  margin: 0 0 4px;
 }
 
 .engineer-title {
+  color: #666;
+  margin: 0 0 8px;
   font-size: 14px;
-  color: #6b7280;
-  margin-top: 4px;
 }
 
 .engineer-status {
   display: flex;
   align-items: center;
-  margin-top: 4px;
+  justify-content: space-between;
 }
 
 .status-badge {
-  padding: 2px 8px;
-  border-radius: 9999px;
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
   font-size: 12px;
-  margin-right: 8px;
+  font-weight: 500;
 }
 
 .status-busy {
   background-color: #fee2e2;
-  color: #dc2626;
+  color: #ef4444;
 }
 
-.status-free {
-  background-color: #d1fae5;
-  color: #059669;
+.status-available {
+  background-color: #dcfce7;
+  color: #22c55e;
 }
 
-.status-vacation {
-  background-color: #dbeafe;
-  color: #3b82f6;
+.status-partial {
+  background-color: #fef3c7;
+  color: #f59e0b;
 }
 
 .task-count {
   font-size: 12px;
-  color: #6b7280;
+  color: #666;
 }
 
 .task-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background-color: #fff;
-  margin-top: 8px;
-  border-bottom: 1px solid #e5e7eb;
+  justify-content: space-between;
+  padding: 16px;
 }
 
 .task-header h3 {
   font-size: 16px;
   font-weight: 500;
+  margin: 0;
 }
 
 .task-filters {
   display: flex;
-  gap: 8px;
+  gap: 12px;
 }
 
 .filter-btn {
-  font-size: 14px;
-  color: #6b7280;
   background: none;
   border: none;
-  padding: 0;
+  padding: 4px 0;
+  font-size: 14px;
+  cursor: pointer;
+  color: #666;
+  position: relative;
 }
 
 .filter-btn.active {
   color: #3b82f6;
   font-weight: 500;
-  border-bottom: 2px solid #3b82f6;
+}
+
+.filter-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #3b82f6;
 }
 
 .task-list {
-  background-color: #fff;
+  padding: 0 16px;
 }
 
 .task-item {
+  background-color: #fff;
+  border-radius: 8px;
   padding: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .task-header-info {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  margin-bottom: 12px;
 }
 
 .task-title {
   font-size: 16px;
   font-weight: 500;
+  margin: 0 0 4px;
 }
 
 .task-id {
   font-size: 12px;
-  color: #6b7280;
-  margin-top: 4px;
+  color: #666;
+  margin: 0;
 }
 
 .task-status {
-  padding: 4px 8px;
-  border-radius: 9999px;
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
   font-size: 12px;
+  font-weight: 500;
+  align-self: flex-start;
 }
 
 .status-in-progress {
-  background-color: #fef3c7;
-  color: #d97706;
+  background-color: #e0f2fe;
+  color: #0284c7;
 }
 
 .status-completed {
-  background-color: #d1fae5;
-  color: #059669;
+  background-color: #dcfce7;
+  color: #22c55e;
 }
 
 .status-pending {
-  background-color: #dbeafe;
-  color: #3b82f6;
+  background-color: #fef3c7;
+  color: #f59e0b;
 }
 
 .task-progress {
-  margin-top: 12px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  padding: 12px;
 }
 
 .progress-header {
   display: flex;
-  justify-content: space-between;
   font-size: 14px;
   margin-bottom: 8px;
 }
 
 .progress-label {
-  color: #6b7280;
+  color: #666;
+  margin-right: 8px;
 }
 
 .progress-step {
@@ -452,99 +513,154 @@ export default {
 }
 
 .progress-content {
-  background-color: #f3f4f6;
-  padding: 12px;
-  border-radius: 8px;
+  margin-bottom: 12px;
 }
 
 .progress-description {
   font-size: 14px;
+  margin: 0 0 12px;
+  line-height: 1.5;
 }
 
 .progress-images {
   display: flex;
   gap: 8px;
-  overflow-x: auto;
-  padding: 8px 0;
-  margin-top: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
 }
 
 .progress-image {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #eaeaea;
 }
 
 .progress-meta {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #6b7280;
-  margin-top: 8px;
+  color: #666;
 }
 
 .view-flow-link {
   display: flex;
   align-items: center;
+  justify-content: center;
   color: #3b82f6;
   font-size: 14px;
-  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #eaeaea;
   cursor: pointer;
 }
 
-.icon-list::before {
-  content: '\f03a';
-  font-family: 'Font Awesome 6 Free';
-  font-weight: 900;
+.view-flow-link i {
   margin-right: 4px;
 }
 
 .bottom-actions {
   position: fixed;
-  bottom: 0;
+  bottom: 60px;
   left: 0;
   right: 0;
   background-color: #fff;
-  border-top: 1px solid #e5e7eb;
-  padding: 16px;
-  padding-bottom: calc(16px + 56px); /* 增加底部padding，防止被导航栏遮挡 */
+  padding: 12px 16px;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
-  gap: 16px;
+  justify-content: center;
 }
 
 .bottom-btn {
-  flex: 1;
-  padding: 12px;
-  border-radius: 8px;
+  border: none;
+  border-radius: 4px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  border: none;
 }
 
 .bottom-btn.primary {
   background-color: #3b82f6;
   color: #fff;
+  width: 100%;
+  justify-content: center;
 }
 
-.bottom-btn.secondary {
-  background-color: #f3f4f6;
-  color: #6b7280;
-}
-
-.icon-user-plus::before {
-  content: '\f234';
-  font-family: 'Font Awesome 6 Free';
-  font-weight: 900;
+.bottom-btn i {
   margin-right: 8px;
 }
 
-.icon-calendar::before {
-  content: '\f133';
-  font-family: 'Font Awesome 6 Free';
-  font-weight: 900;
-  margin-right: 8px;
+/* 加载中样式 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+.spinner {
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 错误样式 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.error-container i {
+  font-size: 48px;
+  color: #ef4444;
+  margin-bottom: 16px;
+}
+
+.error-container p {
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.retry-button {
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* 无数据样式 */
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: #666;
+}
+
+.no-data i {
+  font-size: 36px;
+  margin-bottom: 12px;
+  color: #9ca3af;
 }
 </style> 

@@ -58,6 +58,19 @@ public class ContactsController {
     }
     
     /**
+     * 获取工程师详情及任务列表
+     */
+    @GetMapping("/engineers/{engineerId}")
+    public Result<?> getEngineerDetail(@PathVariable Long engineerId) {
+        try {
+            Map<String, Object> result = contactsService.getEngineerDetailWithTasks(engineerId);
+            return Result.success(result);
+        } catch (Exception e) {
+            return Result.error("获取工程师详情失败: " + e.getMessage());
+        }
+    }
+    
+    /**
      * 获取非工程师角色的联系人列表
      */
     @GetMapping("/other")
