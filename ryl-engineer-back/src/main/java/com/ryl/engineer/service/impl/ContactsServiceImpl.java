@@ -13,19 +13,23 @@ import com.ryl.engineer.exception.ServiceException;
 import com.ryl.engineer.mapper.ContactsGroupMapper;
 import com.ryl.engineer.mapper.ContactsGroupRelationMapper;
 import com.ryl.engineer.mapper.ContactsRelationMapper;
+import com.ryl.engineer.mapper.UserMapper;
 import com.ryl.engineer.service.ContactsService;
 import com.ryl.engineer.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +52,12 @@ public class ContactsServiceImpl implements ContactsService {
     @Autowired
     private UserService userService;
     
+    @Autowired
+    private UserMapper userMapper;
+    
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+    
     @Override
     public PageResult<ContactDTO> getContactsList(Long userId, Integer page, Integer size, 
                                                  String keyword, String department, Integer status) {
@@ -67,7 +77,7 @@ public class ContactsServiceImpl implements ContactsService {
         logger.info("获取其它联系人列表 - 页码: {}, 每页大小: {}, 关键词: {}", page, size, keyword);
         
         try {
-            PageHelper.startPage(page, size);
+        PageHelper.startPage(page, size);
             logger.debug("执行查询前 - 已设置分页参数");
             
             // 执行查询，不再传递userId参数
@@ -99,8 +109,8 @@ public class ContactsServiceImpl implements ContactsService {
                 logger.warn("查询结果不是Page类型，无法获取总数，使用列表大小作为总数");
                 List<ContactDTO> contactDTOList = userList.stream()
                     .map(this::convertUserToContactDTO)
-                    .collect(Collectors.toList());
-                
+            .collect(Collectors.toList());
+        
                 return new PageResult<>((long) contactDTOList.size(), contactDTOList);
             }
         } catch (Exception e) {
@@ -395,5 +405,98 @@ public class ContactsServiceImpl implements ContactsService {
         dto.setRole("其他联系人");
         
         return dto;
+    }
+
+    @Override
+    public Map<String, List<Map<String, Object>>> getEngineerStatusByLocation(String status, String keyword) {
+        logger.info("获取工程师状态列表 - 状态筛选: {}, 关键词: {}", status, keyword);
+        
+        try {
+            // 使用JdbcTemplate直接执行SQL查询，获取工程师列表
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT u.id, u.work_id as workId, u.name, u.department, u.location, u.avatar, ");
+            sql.append("(SELECT COUNT(*) FROM task_engineer te JOIN task t ON te.task_id = t.task_id ");
+            sql.append("WHERE te.engineer_id = u.id AND t.status NOT IN ('completed', 'cancelled')) as taskCount, ");
+            sql.append("(SELECT TOP 1 t.title FROM task_engineer te JOIN task t ON te.task_id = t.task_id ");
+            sql.append("WHERE te.engineer_id = u.id AND t.status NOT IN ('completed', 'cancelled') ");
+            sql.append("ORDER BY t.priority DESC, t.create_time DESC) as currentTask ");
+            sql.append("FROM [user] u ");
+            sql.append("JOIN user_role ur ON u.id = ur.user_id ");
+            sql.append("JOIN role r ON ur.role_id = r.id ");
+            sql.append("WHERE r.code = 'ENGINEER' AND u.status = 1 ");
+            
+            List<Object> params = new ArrayList<>();
+            
+            // 添加关键字搜索条件
+            if (keyword != null && !keyword.isEmpty()) {
+                sql.append("AND (u.name LIKE ? OR u.work_id LIKE ? OR u.department LIKE ?) ");
+                String likePattern = "%" + keyword + "%";
+                params.add(likePattern);
+                params.add(likePattern);
+                params.add(likePattern);
+            }
+            
+            sql.append("ORDER BY u.location, u.name");
+            
+            List<Map<String, Object>> engineers;
+            if (params.isEmpty()) {
+                engineers = jdbcTemplate.queryForList(sql.toString());
+            } else {
+                engineers = jdbcTemplate.queryForList(sql.toString(), params.toArray());
+            }
+            
+            logger.info("查询到{}个工程师", engineers.size());
+            
+            // 处理工程师状态
+            for (Map<String, Object> engineer : engineers) {
+                Integer taskCount = ((Number) engineer.getOrDefault("taskCount", 0)).intValue();
+                
+                // 根据任务数量判断状态
+                if (taskCount == 0) {
+                    engineer.put("status", "可协助");
+                } else if (taskCount < 3) {
+                    engineer.put("status", "部分可协");
+                } else {
+                    engineer.put("status", "忙碌");
+                }
+                
+                // 如果没有当前任务，设置为"无任务"
+                if (engineer.get("currentTask") == null) {
+                    engineer.put("currentTask", "无任务");
+                }
+            }
+            
+            // 根据status参数过滤
+            if (status != null && !status.isEmpty()) {
+                if ("available".equals(status)) {
+                    engineers = engineers.stream()
+                        .filter(e -> "可协助".equals(e.get("status")) || "部分可协".equals(e.get("status")))
+                        .collect(Collectors.toList());
+                } else if ("busy".equals(status)) {
+                    engineers = engineers.stream()
+                        .filter(e -> "忙碌".equals(e.get("status")))
+                        .collect(Collectors.toList());
+                }
+            }
+            
+            // 按工作地点分组
+            Map<String, List<Map<String, Object>>> result = new HashMap<>();
+            for (Map<String, Object> engineer : engineers) {
+                String location = (String) engineer.getOrDefault("location", "未知");
+                if (location == null || location.isEmpty()) {
+                    location = "未知";
+                }
+                
+                if (!result.containsKey(location)) {
+                    result.put(location, new ArrayList<>());
+                }
+                result.get(location).add(engineer);
+            }
+            
+            return result;
+        } catch (Exception e) {
+            logger.error("获取工程师状态列表异常", e);
+            throw e;
+        }
     }
 } 

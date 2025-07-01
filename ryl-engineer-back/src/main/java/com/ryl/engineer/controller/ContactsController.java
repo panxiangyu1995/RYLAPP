@@ -43,6 +43,21 @@ public class ContactsController {
     }
     
     /**
+     * 获取工程师状态列表（按工作地点分组）
+     */
+    @GetMapping("/engineers")
+    public Result<?> getEngineerStatusList(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword) {
+        try {
+            Map<String, List<Map<String, Object>>> result = contactsService.getEngineerStatusByLocation(status, keyword);
+            return Result.success(result);
+        } catch (Exception e) {
+            return Result.error("获取工程师状态列表失败: " + e.getMessage());
+        }
+    }
+    
+    /**
      * 获取非工程师角色的联系人列表
      */
     @GetMapping("/other")

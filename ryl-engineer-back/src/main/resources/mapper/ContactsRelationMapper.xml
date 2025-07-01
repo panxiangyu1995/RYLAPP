@@ -52,30 +52,30 @@
     <!-- 获取非工程师角色的联系人列表 -->
     <select id="selectOtherContacts" resultType="com.ryl.engineer.entity.User">
         SELECT * FROM (
-            SELECT
+        SELECT
                 u.id,
-                u.work_id,
-                u.name,
-                u.avatar,
-                u.department,
-                u.mobile,
-                u.status,
+            u.work_id, 
+            u.name, 
+            u.avatar, 
+            u.department, 
+            u.mobile,
+            u.status,
                 u.last_login_time
-            FROM
+        FROM
                 dbo.[user] u
             INNER JOIN
-                dbo.user_role ur ON u.id = ur.user_id
+            dbo.user_role ur ON u.id = ur.user_id
             INNER JOIN
-                dbo.role r ON ur.role_id = r.id
-            WHERE
+            dbo.role r ON ur.role_id = r.id
+        WHERE
                 r.code != 'ENGINEER'
-                <if test="keyword != null and keyword != ''">
+        <if test="keyword != null and keyword != ''">
                     AND (
                         u.name LIKE '%' + #{keyword} + '%'
                         OR u.work_id LIKE '%' + #{keyword} + '%'
                         OR (u.department IS NOT NULL AND u.department LIKE '%' + #{keyword} + '%')
                     )
-                </if>
+        </if>
         ) AS subquery
         ORDER BY last_login_time DESC
     </select>

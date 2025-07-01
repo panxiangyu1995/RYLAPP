@@ -1,26 +1,12 @@
 import http from './http'
 
-/**
- * 获取联系人列表
- * @param {Object} params 查询参数
- * @param {number} params.page 页码，默认1
- * @param {number} params.size 每页记录数，默认20
- * @param {string} params.keyword 搜索关键词(姓名/工号/部门)
- * @param {string} params.department 按部门筛选
- * @param {number} params.status 按状态筛选（0-离线，1-在线）
- * @returns {Promise} 返回联系人列表
- */
-export function getContactsList(params) {
-  return http.get('/api/v1/contacts/list', { params })
-}
 
 /**
- * 获取工程师状态列表
+ * 获取工程师状态列表（按工作地点分组，不分页）
  * @param {Object} params 查询参数
- * @param {number} params.page 页码，默认1
- * @param {number} params.size 每页记录数，默认100
  * @param {string} params.status 按协助状态筛选（available-可协助，busy-忙碌）
- * @returns {Promise} 返回工程师状态列表
+ * @param {string} params.keyword 搜索关键词(姓名/工号/部门)
+ * @returns {Promise} 返回工程师状态列表，按工作地点分组
  */
 export function getEngineerStatusList(params) {
   return http.get('/api/v1/contacts/engineers', { params })

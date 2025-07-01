@@ -21,6 +21,12 @@
         <p>加载中...</p>
       </div>
       
+      <div v-else-if="error" class="error-container">
+        <i class="icon-error-circle"></i>
+        <p>{{ error }}</p>
+        <button class="retry-button" @click="loadEngineers">重试</button>
+      </div>
+      
       <div v-else-if="groupedEngineers.length === 0" class="no-data">
         <i class="icon-info-circle"></i>
         <p>暂无工程师数据</p>
@@ -61,7 +67,7 @@
                 >
                   <td>
                     <a class="engineer-cell" @click="viewEngineerDetail(engineer.id)">
-                      <img :src="engineer.avatar" :alt="engineer.name" class="engineer-avatar">
+                      <img :src="engineer.avatar || defaultAvatar" :alt="engineer.name" class="engineer-avatar">
                       <span class="engineer-name">{{ engineer.name }}</span>
                     </a>
                   </td>
@@ -86,8 +92,10 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { getEngineerStatusList } from '@/api/contacts'
+import defaultAvatar from '@/assets/images/company-logo.png'
 
 export default {
   name: 'EngineerStatusPage',
@@ -97,6 +105,7 @@ export default {
     const activeFilter = ref('all')
     const engineers = ref([])
     const expandedLocations = ref([])
+    const error = ref(null)
     
     const filters = [
       { label: '全部工程师', value: 'all' },
@@ -138,7 +147,11 @@ export default {
     
     // 查看工程师详情
     const viewEngineerDetail = (engineerId) => {
-      router.push(`/engineer/${engineerId}`)
+      router.push({
+        name: 'ContactDetail',
+        params: { id: engineerId },
+        query: { type: 'engineer' }
+      })
     }
     
     // 根据状态获取CSS类
@@ -162,76 +175,66 @@ export default {
     }
     
     // 加载工程师数据
-    const loadEngineers = () => {
+    const loadEngineers = async () => {
       loading.value = true
+      error.value = null
       
-      // 模拟API调用
-      setTimeout(() => {
-        engineers.value = [
-          {
-            id: 1,
-            name: '张工程师',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-            currentTask: '气相维修',
-            taskCount: 3,
-            status: '忙碌',
-            location: '泰州'
-          },
-          {
-            id: 2,
-            name: '李工程师',
-            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-            currentTask: '液相保养',
-            taskCount: 1,
-            status: '可协助',
-            location: '泰州'
-          },
-          {
-            id: 3,
-            name: '王工程师',
-            avatar: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-            currentTask: '质谱培训',
-            taskCount: 2,
-            status: '部分可协',
-            location: '苏州'
-          },
-          {
-            id: 4,
-            name: '刘工程师',
-            avatar: 'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-            currentTask: '无任务',
-            taskCount: 0,
-            status: '可协助',
-            location: '苏州'
-          },
-          {
-            id: 5,
-            name: '赵工程师',
-            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-            currentTask: '色谱仪检修',
-            taskCount: 2,
-            status: '忙碌',
-            location: '武汉'
-          },
-          {
-            id: 6,
-            name: '孙工程师',
-            avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-            currentTask: '培训中',
-            taskCount: 1,
-            status: '部分可协',
-            location: '四川'
-          }
-        ]
+      try {
+        // 根据筛选条件设置API参数
+        const params = {}
+        if (activeFilter.value !== 'all') {
+          params.status = activeFilter.value
+        }
         
-        // 默认展开所有分组
-        expandedLocations.value = engineers.value
-          .map(engineer => engineer.location)
-          .filter((value, index, self) => self.indexOf(value) === index)
+        console.log('请求工程师状态列表，参数:', params)
+        const res = await getEngineerStatusList(params)
+        console.log('API返回完整数据:', JSON.stringify(res))
         
+        if (res.code === 200 && res.data) {
+          // 将数据转换为扁平数组
+          const engineersList = []
+          
+          // 遍历每个位置分组
+          Object.entries(res.data).forEach(([location, locationEngineers]) => {
+            // 遍历该位置的所有工程师
+            locationEngineers.forEach(engineer => {
+              engineersList.push({
+                id: engineer.id,
+                name: engineer.name,
+                avatar: engineer.avatar || defaultAvatar,
+                workId: engineer.workId,
+                department: engineer.department || '未设置部门',
+                location: location,
+                currentTask: engineer.currentTask || '无任务',
+                taskCount: engineer.taskCount || 0,
+                status: engineer.status
+              })
+            })
+          })
+          
+          engineers.value = engineersList
+          console.log('处理后的工程师数据:', engineers.value)
+          
+          // 默认展开所有分组
+          expandedLocations.value = Object.keys(res.data)
+        } else {
+          console.error('获取工程师状态列表失败:', res.message)
+          error.value = res.message || '获取工程师状态列表失败'
+          engineers.value = []
+        }
+      } catch (err) {
+        console.error('获取工程师状态列表异常:', err)
+        error.value = '获取工程师状态列表失败，请稍后再试'
+        engineers.value = []
+      } finally {
         loading.value = false
-      }, 1000)
+      }
     }
+    
+    // 监听筛选条件变化，重新加载数据
+    watch(activeFilter, () => {
+      loadEngineers()
+    })
     
     onMounted(() => {
       loadEngineers()
@@ -243,9 +246,11 @@ export default {
       groupedEngineers,
       expandedLocations,
       loading,
+      error,
       getStatusClass,
       viewEngineerDetail,
-      toggleLocationGroup
+      toggleLocationGroup,
+      defaultAvatar
     }
   }
 }
@@ -312,6 +317,38 @@ export default {
   justify-content: center;
   padding: 40px 0;
   color: #6b7280;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: #b91c1c;
+}
+
+.icon-error-circle::before {
+  content: '\f057';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.retry-button {
+  margin-top: 16px;
+  padding: 8px 16px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.retry-button:hover {
+  background-color: #dc2626;
 }
 
 .icon-info-circle::before {

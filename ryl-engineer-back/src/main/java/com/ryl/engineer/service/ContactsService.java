@@ -5,6 +5,7 @@ import com.ryl.engineer.dto.contact.ContactGroupDTO;
 import com.ryl.engineer.common.PageResult;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 联系人服务接口
@@ -33,6 +34,14 @@ public interface ContactsService {
      * @return 非工程师角色的联系人分页列表
      */
     PageResult<ContactDTO> getOtherContactsList(Long userId, Integer page, Integer size, String keyword);
+    
+    /**
+     * 获取工程师状态列表（按工作地点分组）
+     * @param status 协助状态筛选（available-可协助，busy-忙碌）
+     * @param keyword 搜索关键词
+     * @return 按工作地点分组的工程师状态列表
+     */
+    Map<String, List<Map<String, Object>>> getEngineerStatusByLocation(String status, String keyword);
     
     /**
      * 获取联系人详情
