@@ -140,24 +140,6 @@
 
     <!-- 底部导航 -->
     <BottomNavigation />
-
-    <!-- 缓存状态提示 -->
-    <div v-if="showCacheStatus && taskStore.cacheLoading" class="cache-status-toast">
-      <div class="toast-content">
-        <div class="spinner-small"></div>
-        <span>正在预加载任务数据，优化您的浏览体验...</span>
-        <button class="close-toast" @click="hideCacheStatus">×</button>
-      </div>
-    </div>
-    
-    <!-- 缓存完成提示 -->
-    <div v-if="showCacheStatus && !taskStore.cacheLoading && taskStore.isCacheLoaded" class="cache-status-toast success">
-      <div class="toast-content">
-        <i class="icon-check"></i>
-        <span>已预加载 {{ taskStore.cacheCount }} 个任务详情，切换任务将更加流畅</span>
-        <button class="close-toast" @click="hideCacheStatus">×</button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -265,12 +247,6 @@ export default {
       return isAdmin.value || isEngineer.value
     })
     
-    // 缓存加载状态显示
-    const showCacheStatus = ref(true)
-    const hideCacheStatus = () => {
-      showCacheStatus.value = false
-    }
-    
     // 切换筛选面板
     const toggleFilterPanel = () => {
       showFilterPanel.value = !showFilterPanel.value
@@ -372,19 +348,6 @@ export default {
     // 首次加载
     onMounted(async () => {
       await loadTasks()
-      
-      try {
-        if (!taskStore.isCacheLoaded) {
-          await taskStore.preloadUserTaskDetails()
-          setTimeout(() => {
-            hideCacheStatus()
-          }, 5000)
-        } else {
-          showCacheStatus.value = false
-        }
-      } catch (err) {
-        showCacheStatus.value = false
-      }
     })
     
     // 根据角色和筛选条件过滤任务列表
@@ -486,7 +449,6 @@ export default {
       engineers,
       selectedEngineer,
       isRefreshing,
-      showCacheStatus,
       taskStore,
       loading,
       error,
@@ -509,8 +471,7 @@ export default {
       goToNotifications,
       callEngineer,
       messageEngineer,
-      getFilterLabel,
-      hideCacheStatus
+      getFilterLabel
     }
   }
 }
@@ -816,54 +777,5 @@ export default {
 
 .fab-button i {
   font-size: 24px;
-}
-
-/* 缓存状态提示 */
-.cache-status-toast {
-  position: fixed;
-  bottom: 70px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  width: 90%;
-  max-width: 400px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.cache-status-toast.success {
-  background-color: rgba(82, 196, 26, 0.9);
-}
-
-.toast-content {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-}
-
-.spinner-small {
-  width: 16px;
-  height: 16px;
-  border: 2px solid white;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-right: 12px;
-}
-
-.icon-check {
-  margin-right: 12px;
-}
-
-.close-toast {
-  margin-left: auto;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 0 4px;
 }
 </style> 

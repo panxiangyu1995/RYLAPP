@@ -4,8 +4,13 @@
     @click="handleClick"
   >
     <!-- 调试信息 -->
-    <div class="debug-info" v-if="showDebug">
-      <pre>{{ JSON.stringify(task, null, 2) }}</pre>
+    <div v-if="showDebug" class="debug-button-container">
+      <button class="debug-button" @click="toggleDebugInfo">
+        {{ showDebugInfo ? '隐藏调试信息' : '显示调试信息' }}
+      </button>
+      <div v-if="showDebugInfo" class="debug-info">
+        <pre>{{ JSON.stringify(task, null, 2) }}</pre>
+      </div>
     </div>
     
     <div class="task-header">
@@ -83,6 +88,11 @@ export default {
       type: Boolean,
       default: false
     }
+  },
+  data() {
+    return {
+      showDebugInfo: false
+    };
   },
   computed: {
     hasEngineer() {
@@ -162,9 +172,39 @@ export default {
     },
     getEngineers() {
       try {
+        // 打印任务对象以便调试
+        if (this.showDebug) {
+          console.log('Task object for engineers check:', this.task);
+          if (this.task.engineers) {
+            console.log('Engineers array:', this.task.engineers);
+          }
+          if (this.task.owner) {
+            console.log('Task owner:', this.task.owner);
+          }
+        }
+        
         // 检查engineers字段是否存在并且是数组
-        if (Array.isArray(this.task.engineers)) {
+        if (this.task.engineers && Array.isArray(this.task.engineers) && this.task.engineers.length > 0) {
           return this.task.engineers.slice(0, 3);
+        }
+        
+        // 如果有owner字段，优先使用owner
+        if (this.task.owner && typeof this.task.owner === 'object') {
+          return [this.task.owner];
+        }
+
+        // 如果有assignedEngineer或assignedEngineers字段，使用它们
+        if (this.task.assignedEngineer && typeof this.task.assignedEngineer === 'object') {
+          return [this.task.assignedEngineer];
+        }
+        
+        if (this.task.assignedEngineers && Array.isArray(this.task.assignedEngineers) && this.task.assignedEngineers.length > 0) {
+          return this.task.assignedEngineers.slice(0, 3);
+        }
+
+        // 如果有taskOwner字段
+        if (this.task.taskOwner && typeof this.task.taskOwner === 'object') {
+          return [this.task.taskOwner];
         }
         
         // 如果engineers不是数组或不存在，返回空数组
@@ -183,6 +223,9 @@ export default {
       } else {
         console.error('任务ID不存在，无法跳转');
       }
+    },
+    toggleDebugInfo() {
+      this.showDebugInfo = !this.showDebugInfo;
     }
   }
 }
@@ -362,6 +405,21 @@ export default {
 .no-engineer {
   font-size: 12px;
   color: #6b7280;
+}
+
+.debug-button-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.debug-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border: none;
 }
 
 .debug-info {

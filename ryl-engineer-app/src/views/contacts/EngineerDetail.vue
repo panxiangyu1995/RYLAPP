@@ -299,6 +299,7 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  color: #000;
 }
 
 .header h1 {
@@ -662,5 +663,12 @@ export default {
   font-size: 36px;
   margin-bottom: 12px;
   color: #9ca3af;
+}
+
+.icon-arrow-left::before {
+  content: "\f060";
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: #000;
 }
 </style> 
