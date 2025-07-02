@@ -3,7 +3,7 @@ description:
 globs: 
 alwaysApply: true
 ---
-# 研仪联工程师APP API规范文档
+# 瑞屹林工程师APP API规范文档
 
 ## 1. 基础路径与版本控制
 

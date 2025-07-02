@@ -3,7 +3,7 @@ description: 涉及到数据库规范问题时参考
 globs: 
 alwaysApply: false
 ---
-# 研仪联工程师APP - SQL Server数据库开发规范
+# 瑞屹林工程师APP - SQL Server数据库开发规范
 
 ## 1. 数据库设计规范
 
@@ -295,8 +295,8 @@ CREATE TABLE [user] (
     CONSTRAINT uk_username UNIQUE (username)
 );
 
-CREATE INDEX idx_role ON [user](role);
-CREATE INDEX idx_status ON [user](status);
+CREATE INDEX idx_role ON [user](mdc:role);
+CREATE INDEX idx_status ON [user](mdc:status);
 END
 GO
 ```
@@ -338,6 +338,6 @@ FETCH NEXT @PageSize ROWS ONLY;
 
 ## 10. 参考资料
 
-- [SQL Server官方文档](https://docs.microsoft.com/zh-cn/sql/sql-server)
-- [SQL Server性能优化指南](https://docs.microsoft.com/zh-cn/sql/relational-databases/performance/performance-center-for-sql-server-database-engine-and-azure-sql-database)
-- [SQL Server安全最佳实践](https://docs.microsoft.com/zh-cn/sql/relational-databases/security/securing-sql-server) 
+- [SQL Server官方文档](mdc:https:/docs.microsoft.com/zh-cn/sql/sql-server)
+- [SQL Server性能优化指南](mdc:https:/docs.microsoft.com/zh-cn/sql/relational-databases/performance/performance-center-for-sql-server-database-engine-and-azure-sql-database)
+- [SQL Server安全最佳实践](mdc:https:/docs.microsoft.com/zh-cn/sql/relational-databases/security/securing-sql-server) 
