@@ -55,9 +55,19 @@
                   <div 
                     v-for="(image, imgIndex) in stepContent.images" 
                     :key="imgIndex"
-                    class="w-full aspect-square rounded-lg overflow-hidden bg-white"
+                    class="w-full aspect-square rounded-lg overflow-hidden bg-white relative group"
                   >
-                    <img :src="image.url" class="w-full h-full object-cover" :alt="image.description" />
+                    <img 
+                      :src="image.url" 
+                      class="w-full h-full object-cover" 
+                      :alt="image.description"
+                      @click="previewImage(image.url, stepContent.images.map(img => img.url))"
+                    />
+                    <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-1 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center">
+                      <button @click.stop="downloadImage(image.url, image.id)" class="text-white text-xs mx-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -133,7 +143,10 @@
               >
                 <span class="text-primary-medium mr-2">{{ getFileIcon(file.name) }}</span>
                 <span class="flex-1 truncate text-sm">{{ file.name }}</span>
-                <a :href="file.url" target="_blank" class="text-primary-medium text-sm">查看</a>
+                <div class="flex">
+                  <a :href="file.url" target="_blank" class="text-primary-medium text-sm mr-2">查看</a>
+                  <button @click="downloadFile(file.url, file.id, file.name)" class="text-primary-medium text-sm">下载</button>
+                </div>
               </div>
             </div>
           </div>
@@ -145,6 +158,9 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { useTaskStore } from '@/stores/task';
+
+const taskStore = useTaskStore();
 
 const props = defineProps({
   taskType: {
@@ -302,4 +318,133 @@ const hasAssessmentContent = computed(() => {
 const hasSolutionContent = computed(() => {
   return props.currentStep === 3;
 });
+
+// 图片预览功能
+const previewImage = (current, urls) => {
+  if (typeof wx !== 'undefined') {
+    wx.previewImage({
+      current, // 当前显示图片的http链接
+      urls, // 需要预览的图片http链接列表
+      success: () => {
+        console.log('图片预览成功');
+      },
+      fail: (err) => {
+        console.error('图片预览失败:', err);
+        wx.showToast({ title: '图片预览失败', icon: 'none' });
+      }
+    });
+  } else {
+    // 非微信环境，使用普通的图片预览方式
+    window.open(current, '_blank');
+  }
+};
+
+// 图片下载功能
+const downloadImage = async (url, imageId) => {
+  try {
+    // 获取下载链接
+    const downloadUrl = await taskStore.downloadImage(imageId);
+    
+    if (typeof wx !== 'undefined') {
+      // 微信小程序环境
+      wx.showLoading({ title: '下载中...' });
+      
+      wx.downloadFile({
+        url: downloadUrl,
+        success: (res) => {
+          if (res.statusCode === 200) {
+            // 下载成功后保存到相册
+            wx.saveImageToPhotosAlbum({
+              filePath: res.tempFilePath,
+              success: () => {
+                wx.showToast({ title: '图片已保存到相册', icon: 'success' });
+              },
+              fail: (err) => {
+                console.error('保存图片失败:', err);
+                wx.showToast({ title: '保存图片失败', icon: 'none' });
+              }
+            });
+          } else {
+            wx.showToast({ title: '下载图片失败', icon: 'none' });
+          }
+        },
+        fail: (err) => {
+          console.error('下载图片失败:', err);
+          wx.showToast({ title: '下载图片失败', icon: 'none' });
+        },
+        complete: () => {
+          wx.hideLoading();
+        }
+      });
+    } else {
+      // 浏览器环境
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `image-${imageId}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  } catch (error) {
+    console.error('下载图片失败:', error);
+    if (typeof wx !== 'undefined') {
+      wx.showToast({ title: '下载图片失败', icon: 'none' });
+    }
+  }
+};
+
+// 附件下载功能
+const downloadFile = async (url, fileId, fileName) => {
+  try {
+    // 获取下载链接
+    const downloadUrl = await taskStore.downloadAttachment(props.taskId, fileId);
+    
+    if (typeof wx !== 'undefined') {
+      // 微信小程序环境
+      wx.showLoading({ title: '下载中...' });
+      
+      wx.downloadFile({
+        url: downloadUrl,
+        success: (res) => {
+          if (res.statusCode === 200) {
+            // 下载成功后打开文件
+            wx.openDocument({
+              filePath: res.tempFilePath,
+              showMenu: true,
+              success: () => {
+                wx.showToast({ title: '文件已打开', icon: 'success' });
+              },
+              fail: (err) => {
+                console.error('打开文件失败:', err);
+                wx.showToast({ title: '打开文件失败', icon: 'none' });
+              }
+            });
+          } else {
+            wx.showToast({ title: '下载文件失败', icon: 'none' });
+          }
+        },
+        fail: (err) => {
+          console.error('下载文件失败:', err);
+          wx.showToast({ title: '下载文件失败', icon: 'none' });
+        },
+        complete: () => {
+          wx.hideLoading();
+        }
+      });
+    } else {
+      // 浏览器环境
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = fileName || `file-${fileId}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  } catch (error) {
+    console.error('下载文件失败:', error);
+    if (typeof wx !== 'undefined') {
+      wx.showToast({ title: '下载文件失败', icon: 'none' });
+    }
+  }
+};
 </script> 

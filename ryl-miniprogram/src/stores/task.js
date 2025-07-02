@@ -152,6 +152,50 @@ export const useTaskStore = defineStore('task', {
       } finally {
         this.loading = false;
       }
+    },
+    
+    // 获取高清图片预览
+    async getImagePreview(imageId, options = {}) {
+      try {
+        // 构建查询参数
+        const params = new URLSearchParams();
+        if (options.width) params.append('width', options.width);
+        if (options.height) params.append('height', options.height);
+        
+        const url = `/images/${imageId}/preview${params.toString() ? `?${params.toString()}` : ''}`;
+        const response = await request.get(url);
+        return response.data;
+      } catch (error) {
+        this.error = error.message || '获取图片预览失败';
+        console.error('获取图片预览失败:', error);
+        throw error;
+      }
+    },
+    
+    // 下载图片
+    async downloadImage(imageId) {
+      try {
+        // 在微信小程序环境中，这个API通常会直接在组件中调用wx.downloadFile
+        // 此处返回下载链接，以便在非微信环境中使用
+        return `/api/v1/images/${imageId}/download`;
+      } catch (error) {
+        this.error = error.message || '下载图片失败';
+        console.error('下载图片失败:', error);
+        throw error;
+      }
+    },
+    
+    // 下载附件
+    async downloadAttachment(taskId, fileId) {
+      try {
+        // 在微信小程序环境中，这个API通常会直接在组件中调用wx.downloadFile
+        // 此处返回下载链接，以便在非微信环境中使用
+        return `/api/v1/tasks/${taskId}/attachments/${fileId}/download`;
+      } catch (error) {
+        this.error = error.message || '下载附件失败';
+        console.error('下载附件失败:', error);
+        throw error;
+      }
     }
   }
 }); 
