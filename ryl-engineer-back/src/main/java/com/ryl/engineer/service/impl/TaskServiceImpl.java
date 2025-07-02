@@ -42,6 +42,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -1176,12 +1177,13 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     }
     
     /**
-     * 更新任务上门决策
+     * 更新任务上门决策（包含约定上门时间）
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean updateTaskSiteVisitDecision(String taskId, Integer stepIndex, Boolean requiresVisit) {
-        log.info("更新任务上门决策: taskId={}, stepIndex={}, requiresVisit={}", taskId, stepIndex, requiresVisit);
+    public boolean updateTaskSiteVisitDecision(String taskId, Integer stepIndex, Boolean requiresVisit, String visitAppointmentTime) {
+        log.info("更新任务上门决策: taskId={}, stepIndex={}, requiresVisit={}, visitAppointmentTime={}", 
+                taskId, stepIndex, requiresVisit, visitAppointmentTime);
         
         try {
             // 1. 查询任务信息
@@ -1197,10 +1199,24 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
             
             // 2. 更新任务上门决策
             task.setNeedSiteVisit(requiresVisit ? 1 : 0);
+            
+            // 3. 设置约定上门时间（如果需要上门且提供了时间）
+            if (requiresVisit && StringUtils.hasText(visitAppointmentTime)) {
+                try {
+                    DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+                    LocalDateTime appointmentTime = LocalDateTime.parse(visitAppointmentTime, formatter);
+                    task.setVisitAppointmentTime(appointmentTime);
+                    log.info("设置约定上门时间: {}", appointmentTime);
+                } catch (Exception e) {
+                    log.error("解析约定上门时间失败: {}", e.getMessage());
+                    // 解析失败不影响其他操作，继续执行
+                }
+            }
+            
             taskMapper.updateById(task);
             
-            // 3. 更新任务流程
-            // 3.1 获取当前步骤和下一步骤
+            // 4. 更新任务流程
+            // 4.1 获取当前步骤和下一步骤
             List<TaskStep> steps = taskStepMapper.selectList(
                 Wrappers.<TaskStep>lambdaQuery()
                     .eq(TaskStep::getTaskId, taskId)
@@ -1212,13 +1228,13 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                 return false;
             }
             
-            // 3.2 将当前步骤标记为已完成
+            // 4.2 将当前步骤标记为已完成
             TaskStep currentStep = steps.get(stepIndex);
             currentStep.setStatus("completed");
             currentStep.setEndTime(LocalDateTime.now());
             taskStepMapper.updateById(currentStep);
             
-            // 3.3 确定下一步骤
+            // 4.3 确定下一步骤
             int nextStepIndex;
             if (requiresVisit) {
                 // 如果需要上门，进入下一步
@@ -1241,11 +1257,11 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
             nextStepIndex = Math.min(nextStepIndex, steps.size() - 1);
             nextStepIndex = Math.max(nextStepIndex, 0);
             
-            // 3.4 更新任务的当前步骤
+            // 4.4 更新任务的当前步骤
             task.setCurrentStep(nextStepIndex);
             taskMapper.updateById(task);
             
-            // 3.5 将下一步骤标记为进行中
+            // 4.5 将下一步骤标记为进行中
             TaskStep nextStep = steps.get(nextStepIndex);
             nextStep.setStatus("in-progress");
             nextStep.setStartTime(LocalDateTime.now());
@@ -1257,6 +1273,13 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
             log.error("更新任务上门决策异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
             throw e;
         }
+    }
+    
+    // 原有的updateTaskSiteVisitDecision方法调用新方法
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateTaskSiteVisitDecision(String taskId, Integer stepIndex, Boolean requiresVisit) {
+        return updateTaskSiteVisitDecision(taskId, stepIndex, requiresVisit, null);
     }
     
     /**
@@ -1483,5 +1506,126 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                 .eq(TaskStep::getTaskId, taskId)
                 .eq(TaskStep::getStepIndex, stepIndex)
         );
+    }
+    
+    /**
+     * 更新任务报价
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateTaskPrice(String taskId, Integer stepIndex, Double price) {
+        log.info("更新任务报价: taskId={}, stepIndex={}, price={}", taskId, stepIndex, price);
+        
+        try {
+            // 1. 查询任务信息
+            Task task = taskMapper.selectOne(
+                Wrappers.<Task>lambdaQuery()
+                    .eq(Task::getTaskId, taskId)
+            );
+            
+            if (task == null) {
+                log.error("任务不存在: taskId={}", taskId);
+                return false;
+            }
+            
+            // 2. 更新报价
+            task.setPrice(new BigDecimal(price));
+            // 重置报价确认状态
+            task.setPriceConfirmed(0);
+            taskMapper.updateById(task);
+            
+            // 3. 更新步骤记录
+            TaskStep currentStep = getTaskStepByTaskIdAndIndex(taskId, stepIndex);
+            if (currentStep == null) {
+                log.error("任务步骤不存在: taskId={}, stepIndex={}", taskId, stepIndex);
+                return false;
+            }
+            
+            // 4. 记录活动
+            TaskActivity activity = new TaskActivity();
+            activity.setTaskId(taskId);
+            activity.setActivityType("price_update");
+            activity.setContent("工程师已设置报价: " + price);
+            activity.setCreateTime(new Date());
+            taskActivityMapper.insert(activity);
+            
+            log.info("更新任务报价成功: taskId={}, price={}", taskId, price);
+            return true;
+        } catch (Exception e) {
+            log.error("更新任务报价异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
+            throw e;
+        }
+    }
+    
+    /**
+     * 获取任务报价确认状态
+     */
+    @Override
+    public Map<String, Object> getTaskPriceConfirmation(String taskId) {
+        log.info("获取任务报价确认状态: taskId={}", taskId);
+        
+        try {
+            // 1. 查询任务信息
+            Task task = taskMapper.selectOne(
+                Wrappers.<Task>lambdaQuery()
+                    .eq(Task::getTaskId, taskId)
+            );
+            
+            if (task == null) {
+                log.error("任务不存在: taskId={}", taskId);
+                throw new IllegalArgumentException("任务不存在");
+            }
+            
+            // 2. 构建返回结果
+            Map<String, Object> result = new HashMap<>();
+            result.put("taskId", task.getTaskId());
+            result.put("price", task.getPrice());
+            result.put("priceConfirmed", task.getPriceConfirmed() != null && task.getPriceConfirmed() == 1);
+            
+            return result;
+        } catch (Exception e) {
+            log.error("获取任务报价确认状态异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
+            throw e;
+        }
+    }
+    
+    /**
+     * 更新任务报价确认状态
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateTaskPriceConfirmation(String taskId, Boolean confirmed) {
+        log.info("更新任务报价确认状态: taskId={}, confirmed={}", taskId, confirmed);
+        
+        try {
+            // 1. 查询任务信息
+            Task task = taskMapper.selectOne(
+                Wrappers.<Task>lambdaQuery()
+                    .eq(Task::getTaskId, taskId)
+            );
+            
+            if (task == null) {
+                log.error("任务不存在: taskId={}", taskId);
+                return false;
+            }
+            
+            // 2. 更新报价确认状态
+            task.setPriceConfirmed(confirmed ? 1 : 0);
+            taskMapper.updateById(task);
+            
+            // 3. 记录活动
+            TaskActivity activity = new TaskActivity();
+            activity.setTaskId(taskId);
+            activity.setActivityType("price_confirmation");
+            activity.setContent(confirmed ? "客户已确认报价" : "客户取消了报价确认");
+            activity.setCreateTime(new Date());
+            taskActivityMapper.insert(activity);
+            
+            log.info("更新任务报价确认状态成功: taskId={}, confirmed={}", taskId, confirmed);
+            return true;
+        } catch (Exception e) {
+            log.error("更新任务报价确认状态异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
+            throw e;
+        }
     }
 } 

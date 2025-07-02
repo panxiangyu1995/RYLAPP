@@ -188,4 +188,14 @@ public class Task {
      * 是否需要上门（0-不需要，1-需要）
      */
     private Integer needSiteVisit;
+    
+    /**
+     * 约定上门时间
+     */
+    private LocalDateTime visitAppointmentTime;
+    
+    /**
+     * 客户是否已确认报价（0-未确认，1-已确认）
+     */
+    private Integer priceConfirmed;
 } 

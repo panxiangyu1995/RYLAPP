@@ -55,10 +55,41 @@ export function downloadTaskFlowAttachment(fileId) {
 /**
  * 决定任务是否需要上门
  * @param {string} taskId - 任务ID
- * @param {Object} data - 包含stepIndex和requiresVisit的数据对象
+ * @param {Object} data - 包含stepIndex、requiresVisit和visitAppointmentTime(可选)的数据对象
  * @returns {Promise<Object>} 响应结果
  */
 export function decideSiteVisit(taskId, data) {
   console.log(`发送上门决策请求: taskId=${taskId}, data=`, data);
   return http.post(`${BASE_URL}/${taskId}/decide-visit`, data)
+}
+
+/**
+ * 设置任务报价
+ * @param {string} taskId - 任务ID
+ * @param {Object} data - 包含price和stepIndex的数据对象
+ * @returns {Promise<Object>} 响应结果
+ */
+export function setTaskPrice(taskId, data) {
+  console.log(`发送设置报价请求: taskId=${taskId}, data=`, data);
+  return http.post(`${BASE_URL}/${taskId}/set-price`, data)
+}
+
+/**
+ * 确认任务报价
+ * @param {string} taskId - 任务ID
+ * @param {boolean} confirmed - 是否确认
+ * @returns {Promise<Object>} 响应结果
+ */
+export function confirmTaskPrice(taskId, confirmed) {
+  console.log(`发送确认报价请求: taskId=${taskId}, confirmed=${confirmed}`);
+  return http.post(`${BASE_URL}/${taskId}/confirm-price`, { confirmed })
+}
+
+/**
+ * 获取任务报价确认状态
+ * @param {string} taskId - 任务ID
+ * @returns {Promise<Object>} 响应结果
+ */
+export function getTaskPriceConfirmation(taskId) {
+  return http.get(`${BASE_URL}/${taskId}/price-confirmation`)
 } 

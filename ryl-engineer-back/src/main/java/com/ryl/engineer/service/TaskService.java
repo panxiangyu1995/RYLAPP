@@ -122,6 +122,40 @@ public interface TaskService {
     boolean updateTaskSiteVisitDecision(String taskId, Integer stepIndex, Boolean requiresVisit);
     
     /**
+     * 更新任务上门决策（包含约定上门时间）
+     * @param taskId 任务ID
+     * @param stepIndex 步骤索引
+     * @param requiresVisit 是否需要上门
+     * @param visitAppointmentTime 约定上门时间（可选）
+     * @return 是否成功
+     */
+    boolean updateTaskSiteVisitDecision(String taskId, Integer stepIndex, Boolean requiresVisit, String visitAppointmentTime);
+    
+    /**
+     * 更新任务报价确认状态
+     * @param taskId 任务ID
+     * @param confirmed 是否确认
+     * @return 是否成功
+     */
+    boolean updateTaskPriceConfirmation(String taskId, Boolean confirmed);
+    
+    /**
+     * 更新任务报价
+     * @param taskId 任务ID
+     * @param stepIndex 步骤索引
+     * @param price 报价金额
+     * @return 是否成功
+     */
+    boolean updateTaskPrice(String taskId, Integer stepIndex, Double price);
+    
+    /**
+     * 获取任务报价确认状态
+     * @param taskId 任务ID
+     * @return 报价确认状态信息
+     */
+    Map<String, Object> getTaskPriceConfirmation(String taskId);
+    
+    /**
      * 转出任务
      * @param taskId 任务ID
      * @param engineerId 接收任务的工程师ID

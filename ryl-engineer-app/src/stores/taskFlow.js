@@ -265,7 +265,7 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
   }
   
   // 决定是否需要上门
-  const decideSiteVisit = async (requiresVisit) => {
+  const decideSiteVisit = async (requiresVisit, visitAppointmentTime = null) => {
     if (currentStepIndex.value < 0 || !currentTaskId.value) {
       console.warn('无法决定是否需要上门：当前步骤无效或任务ID为空')
       return false
@@ -277,10 +277,17 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
     
     try {
       // 调用API决定是否需要上门
-      const response = await taskFlowApi.decideSiteVisit(currentTaskId.value, {
+      const payload = {
         stepIndex: currentStepIndex.value,
         requiresVisit
-      })
+      }
+      
+      // 如果需要上门且提供了约定上门时间，则添加到请求中
+      if (requiresVisit && visitAppointmentTime) {
+        payload.visitAppointmentTime = visitAppointmentTime
+      }
+      
+      const response = await taskFlowApi.decideSiteVisit(currentTaskId.value, payload)
       
       if (response && response.code === 200) {
         console.log(`成功决定${requiresVisit ? '需要' : '不需要'}上门`)
@@ -288,7 +295,11 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
         // 重新获取最新的流程数据，确保前后端一致
         await fetchTaskFlow(currentTaskId.value)
         
+        if (requiresVisit && visitAppointmentTime) {
+          toast.success(`已确认需要上门服务，约定上门时间：${new Date(visitAppointmentTime).toLocaleString()}`)
+        } else {
         toast.success(`已确认${requiresVisit ? '需要' : '不需要'}上门服务`)
+        }
         return true
       } else {
         console.error('决定是否需要上门失败:', response ? response.message : '无响应')
@@ -351,6 +362,71 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
     }
   }
   
+  // 添加报价
+  const setTaskPrice = async (price) => {
+    if (currentStepIndex.value < 0 || !currentTaskId.value) {
+      console.warn('无法设置报价：当前步骤无效或任务ID为空')
+      return false
+    }
+    
+    updating.value = true
+    error.value = null
+    lastOperation.value = 'set-price'
+    
+    try {
+      // 调用API设置报价
+      const response = await taskFlowApi.setTaskPrice(currentTaskId.value, {
+        stepIndex: currentStepIndex.value,
+        price
+      })
+      
+      if (response && response.code === 200) {
+        console.log(`成功设置报价: ${price}`)
+        
+        // 重新获取最新的流程数据，确保前后端一致
+        await fetchTaskFlow(currentTaskId.value)
+        
+        toast.success(`已设置报价: ${price}元`)
+        return true
+      } else {
+        console.error('设置报价失败:', response ? response.message : '无响应')
+        error.value = response ? (response.message || '设置报价失败') : '服务器无响应'
+        toast.error('设置报价失败，请重试')
+        return false
+      }
+    } catch (err) {
+      console.error('设置报价错误:', err)
+      error.value = err.message || '设置报价时发生错误'
+      toast.error('设置报价时出现错误，请重试')
+      return false
+    } finally {
+      updating.value = false
+    }
+  }
+  
+  // 获取报价确认状态
+  const getTaskPriceConfirmation = async () => {
+    if (!currentTaskId.value) {
+      console.warn('无法获取报价确认状态：任务ID为空')
+      return null
+    }
+    
+    try {
+      const response = await taskFlowApi.getTaskPriceConfirmation(currentTaskId.value)
+      
+      if (response && response.code === 200) {
+        console.log('获取报价确认状态成功:', response.data)
+        return response.data
+      } else {
+        console.error('获取报价确认状态失败:', response ? response.message : '无响应')
+        return null
+      }
+    } catch (err) {
+      console.error('获取报价确认状态错误:', err)
+      return null
+    }
+  }
+  
   // 重置状态
   const resetState = () => {
     currentTaskId.value = null
@@ -384,6 +460,8 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
     completeCurrentStep,
     decideSiteVisit,
     addStepRecord,
+    setTaskPrice,
+    getTaskPriceConfirmation,
     resetState
   }
 }) 

@@ -8,20 +8,20 @@
       <h1 class="text-xl font-medium">任务进展</h1>
     </div>
     
-    <!-- 登录提示 -->
-    <div v-if="!userStore.isLoggedIn" class="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-6">
-      <p class="text-yellow-700 mb-2">您需要登录后才能查看任务进展</p>
+    <!-- 调试模式提示 -->
+    <div v-if="!userStore.isLoggedIn" class="bg-blue-50 border border-blue-300 rounded-lg p-4 mb-6">
+      <p class="text-blue-700 mb-2">调试模式：显示模拟任务数据</p>
       <button 
         type="button"
         @click="goToLogin"
-        class="btn bg-yellow-500 hover:bg-yellow-600 text-white"
+        class="btn bg-blue-500 hover:bg-blue-600 text-white"
       >
-        立即登录
+        登录
       </button>
     </div>
     
     <!-- 任务列表 -->
-    <div v-else>
+    <div>
       <!-- 加载中状态 -->
       <div v-if="loading" class="text-center py-8">
         <p>加载中...</p>
@@ -62,8 +62,6 @@ const error = ref('');
 
 // 获取任务列表
 const fetchTasks = async () => {
-  if (!userStore.isLoggedIn) return;
-  
   loading.value = true;
   
   try {
@@ -78,9 +76,8 @@ const fetchTasks = async () => {
 
 // 页面加载时获取任务列表
 onMounted(() => {
-  if (userStore.isLoggedIn) {
-    fetchTasks();
-  }
+  // 始终获取任务列表，无论是否登录（使用模拟数据）
+  fetchTasks();
 });
 
 // 前往登录页

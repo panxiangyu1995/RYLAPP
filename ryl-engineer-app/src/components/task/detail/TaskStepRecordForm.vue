@@ -76,6 +76,22 @@
         </div>
       </div>
       
+      <div class="form-field" v-if="showVisitAppointmentTime">
+        <label class="field-label">约定上门时间</label>
+        <div class="datetime-input-group">
+          <input 
+            v-model="visitDate" 
+            type="date"
+            class="date-input"
+          />
+          <input 
+            v-model="visitTime" 
+            type="time"
+            class="time-input"
+          />
+        </div>
+      </div>
+      
       <div class="form-field">
         <label class="field-label">
           耗时
@@ -153,11 +169,28 @@ export default {
     const hours = ref(0)
     const minutes = ref(0)
     const isSubmitting = ref(false)
+    const visitDate = ref(format(new Date(), 'yyyy-MM-dd'))
+    const visitTime = ref('09:00')
     
     // 当前日期
     const currentDate = computed(() => {
       return format(new Date(), 'yyyy-MM-dd')
     })
+    
+    // 是否显示约定上门时间
+    const showVisitAppointmentTime = computed(() => {
+      return props.stepName && (
+        props.stepName.includes('上门') || 
+        props.stepName.includes('决策') ||
+        props.stepName.includes('评估')
+      )
+    })
+    
+    // 获取约定上门时间
+    const getVisitAppointmentTime = () => {
+      if (!visitDate.value || !visitTime.value) return null
+      return `${visitDate.value}T${visitTime.value}:00`
+    }
     
     // 触发文件选择
     const triggerFileInput = () => {
@@ -292,6 +325,11 @@ export default {
           }))
         }
         
+        // 如果显示约定上门时间，则添加到数据中
+        if (showVisitAppointmentTime.value) {
+          recordData.visitAppointmentTime = getVisitAppointmentTime()
+        }
+        
         // 触发提交事件
         emit('submit', recordData)
         
@@ -323,6 +361,8 @@ export default {
       hours.value = 0
       minutes.value = 0
       contentError.value = ''
+      visitDate.value = format(new Date(), 'yyyy-MM-dd')
+      visitTime.value = '09:00'
     }
     
     return {
@@ -334,6 +374,9 @@ export default {
       minutes,
       isSubmitting,
       currentDate,
+      visitDate,
+      visitTime,
+      showVisitAppointmentTime,
       triggerFileInput,
       handleFileUpload,
       onFileDrop,
@@ -711,5 +754,25 @@ export default {
 
 .icon-spin {
   animation: spin 1s linear infinite;
+}
+
+.datetime-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.date-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.date-input:focus,
+.time-input:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 </style> 

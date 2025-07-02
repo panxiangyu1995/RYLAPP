@@ -252,7 +252,7 @@ public class TaskController {
     /**
      * 决定任务是否需要上门
      * @param taskId 任务ID
-     * @param data 包含stepIndex和requiresVisit的数据对象
+     * @param data 包含stepIndex、requiresVisit和visitAppointmentTime(可选)的数据对象
      * @return 是否成功
      */
     @PostMapping("/{taskId}/decide-visit")
@@ -265,6 +265,8 @@ public class TaskController {
             Integer stepIndex = data.get("stepIndex") instanceof Number ? 
                 ((Number) data.get("stepIndex")).intValue() : null;
             Boolean requiresVisit = (Boolean) data.get("requiresVisit");
+            String visitAppointmentTime = data.get("visitAppointmentTime") != null ? 
+                data.get("visitAppointmentTime").toString() : null;
             
             if (stepIndex == null) {
                 return Result.error(400, "步骤索引不能为空");
@@ -275,7 +277,7 @@ public class TaskController {
             }
             
             // 更新任务上门决策
-            boolean success = taskService.updateTaskSiteVisitDecision(taskId, stepIndex, requiresVisit);
+            boolean success = taskService.updateTaskSiteVisitDecision(taskId, stepIndex, requiresVisit, visitAppointmentTime);
             
             if (!success) {
                 log.error("更新任务上门决策失败: taskId={}", taskId);
@@ -287,6 +289,99 @@ public class TaskController {
         } catch (Exception e) {
             log.error("更新任务上门决策异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
             return Result.error(500, "更新任务上门决策异常: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 确认任务报价
+     * @param taskId 任务ID
+     * @param data 包含confirmed的数据对象
+     * @return 是否成功
+     */
+    @PostMapping("/{taskId}/confirm-price")
+    public Result<Boolean> confirmTaskPrice(
+            @PathVariable("taskId") String taskId,
+            @RequestBody Map<String, Object> data) {
+        log.info("收到确认任务报价请求: taskId={}, data={}", taskId, data);
+        
+        try {
+            Boolean confirmed = (Boolean) data.get("confirmed");
+            
+            if (confirmed == null) {
+                return Result.error(400, "确认状态不能为空");
+            }
+            
+            // 更新任务报价确认状态
+            boolean success = taskService.updateTaskPriceConfirmation(taskId, confirmed);
+            
+            if (!success) {
+                log.error("更新任务报价确认状态失败: taskId={}", taskId);
+                return Result.error(400, "更新任务报价确认状态失败");
+            }
+            
+            log.info("更新任务报价确认状态成功: taskId={}, confirmed={}", taskId, confirmed);
+            return Result.success("更新任务报价确认状态成功", true);
+        } catch (Exception e) {
+            log.error("更新任务报价确认状态异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
+            return Result.error(500, "更新任务报价确认状态异常: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 设置任务报价
+     * @param taskId 任务ID
+     * @param data 包含price和stepIndex的数据对象
+     * @return 是否成功
+     */
+    @PostMapping("/{taskId}/set-price")
+    public Result<Boolean> setTaskPrice(
+            @PathVariable("taskId") String taskId,
+            @RequestBody Map<String, Object> data) {
+        log.info("收到设置任务报价请求: taskId={}, data={}", taskId, data);
+        
+        try {
+            Double price = data.get("price") instanceof Number ? 
+                ((Number) data.get("price")).doubleValue() : null;
+            Integer stepIndex = data.get("stepIndex") instanceof Number ? 
+                ((Number) data.get("stepIndex")).intValue() : null;
+            
+            if (price == null) {
+                return Result.error(400, "报价不能为空");
+            }
+            
+            if (stepIndex == null) {
+                return Result.error(400, "步骤索引不能为空");
+            }
+            
+            // 更新任务报价
+            boolean success = taskService.updateTaskPrice(taskId, stepIndex, price);
+            
+            if (!success) {
+                log.error("更新任务报价失败: taskId={}", taskId);
+                return Result.error(400, "更新任务报价失败");
+            }
+            
+            log.info("更新任务报价成功: taskId={}, price={}", taskId, price);
+            return Result.success("更新任务报价成功", true);
+        } catch (Exception e) {
+            log.error("更新任务报价异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
+            return Result.error(500, "更新任务报价异常: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取任务报价确认状态
+     * @param taskId 任务ID
+     * @return 报价确认状态
+     */
+    @GetMapping("/{taskId}/price-confirmation")
+    public Result<Map<String, Object>> getTaskPriceConfirmation(@PathVariable("taskId") String taskId) {
+        try {
+            Map<String, Object> result = taskService.getTaskPriceConfirmation(taskId);
+            return Result.success(result);
+        } catch (Exception e) {
+            log.error("获取任务报价确认状态异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
+            return Result.error(500, "获取任务报价确认状态异常: " + e.getMessage());
         }
     }
     

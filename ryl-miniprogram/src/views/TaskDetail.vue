@@ -42,6 +42,8 @@
         :task-type="task.task_type" 
         :current-step="task.current_step" 
         :step-content="currentStepContent" 
+        :task-id="task.task_id"
+        @confirm-price="handleConfirmPrice"
       />
       
       <!-- 服务评价表单 -->
@@ -136,6 +138,20 @@ const goToTaskList = () => {
 // 返回上一页
 const goBack = () => {
   router.back();
+};
+
+// 处理报价确认
+const handleConfirmPrice = async (taskId) => {
+  try {
+    await taskStore.confirmTaskPrice(taskId);
+    // 显示确认成功提示
+    alert('报价确认成功！');
+    // 重新获取任务详情，刷新状态
+    fetchTaskDetail();
+  } catch (err) {
+    console.error('确认报价失败:', err);
+    alert('确认报价失败，请重试');
+  }
 };
 
 // 页面加载时获取任务详情

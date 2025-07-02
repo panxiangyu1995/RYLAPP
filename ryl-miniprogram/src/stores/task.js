@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import request from '@/utils/request';
+import { getMockTaskList, getMockTaskDetail, submitMockEvaluation, confirmMockTaskPrice } from '@/utils/mockData';
 
 export const useTaskStore = defineStore('task', {
   state: () => ({
@@ -30,9 +31,15 @@ export const useTaskStore = defineStore('task', {
     async fetchTaskList() {
       this.loading = true;
       try {
-        const response = await request.get('/tasks');
-        this.taskList = response.data.list || [];
+        // 使用模拟数据
+        const data = await getMockTaskList();
+        this.taskList = data;
         return this.taskList;
+        
+        // 实际API调用（目前注释掉）
+        // const response = await request.get('/tasks');
+        // this.taskList = response.data.list || [];
+        // return this.taskList;
       } catch (error) {
         this.error = error.message || '获取任务列表失败';
         console.error('获取任务列表失败:', error);
@@ -46,9 +53,15 @@ export const useTaskStore = defineStore('task', {
     async fetchTaskDetail(taskId) {
       this.loading = true;
       try {
-        const response = await request.get(`/tasks/${taskId}`);
-        this.currentTask = response.data;
+        // 使用模拟数据
+        const data = await getMockTaskDetail(taskId);
+        this.currentTask = data;
         return this.currentTask;
+        
+        // 实际API调用（目前注释掉）
+        // const response = await request.get(`/tasks/${taskId}`);
+        // this.currentTask = response.data;
+        // return this.currentTask;
       } catch (error) {
         this.error = error.message || '获取任务详情失败';
         console.error('获取任务详情失败:', error);
@@ -105,11 +118,36 @@ export const useTaskStore = defineStore('task', {
     async submitEvaluation(taskId, evaluationData) {
       this.loading = true;
       try {
-        const response = await request.post(`/tasks/${taskId}/evaluation`, evaluationData);
-        return response.data;
+        // 使用模拟数据
+        const result = await submitMockEvaluation(taskId, evaluationData);
+        return result;
+        
+        // 实际API调用（目前注释掉）
+        // const response = await request.post(`/tasks/${taskId}/evaluation`, evaluationData);
+        // return response.data;
       } catch (error) {
         this.error = error.message || '提交评价失败';
         console.error('提交评价失败:', error);
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    // 确认任务报价
+    async confirmTaskPrice(taskId) {
+      this.loading = true;
+      try {
+        // 使用模拟数据
+        const result = await confirmMockTaskPrice(taskId);
+        return result;
+        
+        // 实际API调用（目前注释掉）
+        // const response = await request.post(`/tasks/${taskId}/confirm-price`, { confirmed: true });
+        // return response.data;
+      } catch (error) {
+        this.error = error.message || '确认报价失败';
+        console.error('确认报价失败:', error);
         throw error;
       } finally {
         this.loading = false;

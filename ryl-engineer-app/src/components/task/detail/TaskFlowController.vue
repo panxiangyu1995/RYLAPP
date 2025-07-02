@@ -115,9 +115,10 @@
             <div class="step-actions-container" v-if="canManageFlow">
               <!-- 是否需要上门选择（只在"判断是否需要上门"步骤且未完成时显示） -->
               <div class="site-visit-decision-buttons" v-if="index === 1 && step.status !== 'completed' && step.id === 'site-visit-decision'">
+                <div class="site-visit-options">
                 <button 
                   class="site-visit-btn need-visit" 
-                  @click="decideSiteVisit(true)"
+                    @click="showVisitTimeSelector = true"
                   :disabled="decidingSiteVisit"
                 >
                   <i class="fas fa-address-card"></i>
@@ -131,6 +132,45 @@
                   <i class="fas fa-video"></i>
                   远程协助
                 </button>
+                </div>
+                
+                <!-- 约定上门时间选择器 -->
+                <div class="visit-time-selector" v-if="showVisitTimeSelector">
+                  <div class="selector-header">
+                    <h5>选择约定上门时间</h5>
+                  </div>
+                  <div class="selector-content">
+                    <div class="datetime-input-group">
+                      <input 
+                        v-model="visitDate" 
+                        type="date"
+                        class="date-input"
+                      />
+                      <input 
+                        v-model="visitTime" 
+                        type="time"
+                        class="time-input"
+                      />
+                    </div>
+                  </div>
+                  <div class="selector-actions">
+                    <button 
+                      class="cancel-btn" 
+                      @click="showVisitTimeSelector = false"
+                      :disabled="decidingSiteVisit"
+                    >
+                      取消
+                    </button>
+                    <button 
+                      class="confirm-btn" 
+                      @click="confirmSiteVisit"
+                      :disabled="decidingSiteVisit"
+                    >
+                      <i v-if="decidingSiteVisit" class="fas fa-spinner fa-spin"></i>
+                      确认
+                    </button>
+                  </div>
+                </div>
               </div>
               
               <!-- 编辑记录按钮 -->
@@ -285,6 +325,11 @@ export default {
     const loading = ref(false)
     const error = ref(null)
     
+    // 上门时间选择器相关状态
+    const showVisitTimeSelector = ref(false)
+    const visitDate = ref(format(new Date(), 'yyyy-MM-dd'))
+    const visitTime = ref('09:00')
+    
     // 任务类型映射表 - 将API返回的类型映射到我们定义的类型
     const taskTypeMapping = {
       'REPAIR': 'repair',
@@ -424,7 +469,7 @@ export default {
     }
     
     // 处理是否需要上门决策
-    const decideSiteVisit = async (requiresVisit) => {
+    const decideSiteVisit = async (requiresVisit, visitAppointmentTime = null) => {
       if (!props.canManageFlow) return
       
       decidingSiteVisit.value = true
@@ -432,11 +477,14 @@ export default {
       
       try {
         // 使用taskFlowStore处理上门决策
-        const success = await taskFlowStore.decideSiteVisit(requiresVisit)
+        const success = await taskFlowStore.decideSiteVisit(requiresVisit, visitAppointmentTime)
         
         if (success) {
+          // 关闭时间选择器
+          showVisitTimeSelector.value = false
+          
           // 触发上门决策事件
-          emit('decide-site-visit', currentStepIndex.value, requiresVisit)
+          emit('decide-site-visit', currentStepIndex.value, requiresVisit, visitAppointmentTime)
         } else {
           throw new Error('更新上门决策失败')
         }
@@ -446,6 +494,13 @@ export default {
       } finally {
         decidingSiteVisit.value = false
       }
+    }
+    
+    // 确认上门访问
+    const confirmSiteVisit = () => {
+      // 构建ISO格式的日期时间字符串
+      const visitAppointmentTime = `${visitDate.value}T${visitTime.value}:00`
+      decideSiteVisit(true, visitAppointmentTime)
     }
     
     // 过滤图片附件
@@ -567,17 +622,6 @@ export default {
     const addRecord = (step) => {
       emit('add-record', step)
     }
-    
-    // 处理是否需要上门决策
-    const handleOnsiteDecision = (needOnsite) => {
-      if (!props.canEdit || currentStepValue.value !== 1) return
-      
-      // 触发上门决策事件
-      emit('on-site-decision', {
-        needOnsite,
-        nextStep: needOnsite ? 2 : 6 // 如果需要上门，进入下一步；否则跳到服务评价步骤
-      })
-    }
 
     // 检查任务步骤状态变化和任务流程位置，来自动更新任务状态
     const checkAndUpdateTaskStatus = () => {
@@ -678,7 +722,10 @@ export default {
       previewImageUrl,
       updateStep,
       addRecord,
-      handleOnsiteDecision,
+      showVisitTimeSelector,
+      visitDate,
+      visitTime,
+      confirmSiteVisit,
       checkAndUpdateTaskStatus,
       prevStep,
       nextStep
@@ -1238,5 +1285,90 @@ export default {
 
 .no-visit:hover {
   background-color: #e5e7eb;
+}
+
+.site-visit-options {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.visit-time-selector {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.selector-header {
+  margin-bottom: 10px;
+}
+
+.selector-header h5 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.selector-content {
+  margin-bottom: 15px;
+}
+
+.datetime-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.date-input, .time-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.date-input {
+  flex: 1;
+}
+
+.selector-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel-btn, .confirm-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #4b5563;
+}
+
+.confirm-btn {
+  background-color: #2563eb;
+  border: 1px solid #1d4ed8;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background-color: #e5e7eb;
+}
+
+.confirm-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.cancel-btn:disabled, .confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style> 

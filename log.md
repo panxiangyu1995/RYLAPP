@@ -75,3 +75,37 @@
 ### 改进功能
 - 保留了公司名称中的省市前缀，使生成的任务ID更加准确
 - 限制只取前5个字符的首字母，使缩写更加一致 
+
+## 版本 0.0.7 - 2025年07月02日
+
+### 修改内容
+1. 数据库任务表添加了两个新字段：
+   - appointment_time：约定上门时间
+   - price_confirmed：客户是否已确认报价(0-未确认，1-已确认)
+2. 后端API增强：
+   - 修改TaskController，支持处理约定上门时间和报价确认
+   - 在TaskService接口中添加了新方法
+   - 实现TaskServiceImpl中的方法，支持约定上门时间和报价确认功能
+3. APP前端功能增强：
+   - 更新TaskFlowController.vue，添加约定上门时间选择器
+   - 修改TaskStepRecordForm.vue，添加约定上门时间输入
+   - 更新taskFlow.js store，支持约定上门时间和报价相关操作
+4. 小程序前端功能增强：
+   - 更新TaskProgress.vue，添加报价确认按钮
+   - 更新TaskDetail.vue，添加处理报价确认的方法
+   - 在task.js store中添加confirmTaskPrice方法
+   - 在mockData.js中添加confirmMockTaskPrice函数
+
+### 修复问题
+- 无
+
+### 改进功能
+- 实现了APP判断不需要上门时直接跳转到服务评价步骤的功能
+- 实现了约定上门时间的选择和存储功能
+- 实现了小程序报价确认功能与APP报价填写功能
+- 优化了任务流程的用户体验
+
+### 技术亮点
+- 前后端一体化设计，确保数据流转的一致性
+- 使用Vue.js的响应式特性实现动态表单
+- 实现了模拟数据的状态管理，便于小程序前端开发测试 

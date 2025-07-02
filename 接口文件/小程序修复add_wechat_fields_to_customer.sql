@@ -1,4 +1,3 @@
-    -- 文件路径: /dbschema/migrations/V1.0.6__add_wechat_fields_to_customer.sql
     -- 描述: 为 customer 表添加微信小程序集成所需字段
 
     USE ryl_engineer;
