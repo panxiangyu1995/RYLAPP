@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ryl.engineer.common.PageResult;
+import com.ryl.engineer.dto.TaskDetailDTO;
 import com.ryl.engineer.dto.EngineerDTO;
 import com.ryl.engineer.dto.TaskDTO;
 import com.ryl.engineer.dto.TaskFlowDTO;
@@ -32,6 +33,7 @@ import com.ryl.engineer.mapper.UserMapper;
 import com.ryl.common.constant.TaskStatusConstants;
 import com.ryl.engineer.service.ChatService;
 import com.ryl.engineer.service.TaskService;
+import com.ryl.engineer.vo.EngineerSimpleVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -244,76 +246,75 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
      * 分页查询任务列表
      */
     @Override
-    public PageResult<TaskDTO> getTaskPage(TaskQueryRequest request) {
-        // 参数校验
+    public PageResult<TaskDetailDTO> getTaskPage(TaskQueryRequest request) {
+        // 1. 参数校验和分页对象创建
         if (request.getPage() == null || request.getPage() < 1) {
             request.setPage(1);
         }
-        if (request.getSize() == null || request.getSize() < 1) {
-            request.setSize(10);
+        if (request.getSize() == null || request.getSize() <= 0) {
+            request.setSize(20);
+        }
+        Page<Task> page = new Page<>(request.getPage(), request.getSize());
+
+        // 2. 构建查询条件
+        LambdaQueryWrapper<Task> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.orderByDesc(Task::getCreateTime);
+
+        // 按工程师ID筛选
+        if (request.getEngineerId() != null) {
+            List<String> taskIdsForEngineer = taskEngineerMapper.selectList(
+                    new LambdaQueryWrapper<TaskEngineer>()
+                            .eq(TaskEngineer::getEngineerId, request.getEngineerId())
+                            .select(TaskEngineer::getTaskId)
+            ).stream().map(TaskEngineer::getTaskId).distinct().collect(Collectors.toList());
+
+            if (taskIdsForEngineer.isEmpty()) {
+                return PageResult.fromPage(new Page<>(request.getPage(), request.getSize()));
+            }
+            queryWrapper.in(Task::getTaskId, taskIdsForEngineer);
         }
 
-        // 1. 构建MyBatis-Plus分页参数
-        Page<Task> page = new Page<>(request.getPage(), request.getSize());
-        
-        // 2. 构建查询条件
-        LambdaQueryWrapper<Task> queryWrapper = Wrappers.lambdaQuery(Task.class);
-        
-        // 添加过滤条件
+        // 其他查询条件
         if (StringUtils.hasText(request.getStatus())) {
             queryWrapper.eq(Task::getStatus, request.getStatus());
         }
-        
         if (StringUtils.hasText(request.getTaskType())) {
             queryWrapper.eq(Task::getTaskType, request.getTaskType());
         }
-        
         if (StringUtils.hasText(request.getKeyword())) {
-            queryWrapper.and(wrapper -> wrapper
-                    .like(Task::getTitle, request.getKeyword())
-                    .or()
-                    .like(Task::getCustomer, request.getKeyword())
-                    .or()
-                    .like(Task::getDeviceName, request.getKeyword())
-            );
-        }
-        
-        if (StringUtils.hasText(request.getPriority())) {
-            queryWrapper.eq(Task::getPriority, request.getPriority());
-        }
-        
-        if (request.getCustomerId() != null) {
-            queryWrapper.eq(Task::getCustomerId, request.getCustomerId());
-        }
-        
-        if (request.getSalesId() != null) {
-            queryWrapper.eq(Task::getSalesId, request.getSalesId());
-        }
-        
-        if (StringUtils.hasText(request.getStartDate())) {
-            queryWrapper.ge(Task::getCreateTime, request.getStartDate() + " 00:00:00");
-        }
-        
-        if (StringUtils.hasText(request.getEndDate())) {
-            queryWrapper.le(Task::getCreateTime, request.getEndDate() + " 23:59:59");
-        }
-        
-        // 按创建时间降序排序
-        queryWrapper.orderByDesc(Task::getCreateTime);
-
-        // 3. 执行查询
-        // 如果有 engineerId，则连接查询；否则，直接查询 task 表
-        if (request.getEngineerId() != null) {
-            taskMapper.findByEngineerId(page, request.getEngineerId());
-        } else {
-            taskMapper.selectPage(page, queryWrapper);
+            queryWrapper.and(wrapper -> wrapper.like(Task::getTitle, request.getKeyword())
+                    .or().like(Task::getTaskId, request.getKeyword()));
         }
 
-        // 4. 转换为DTO，并保留分页信息
-        com.baomidou.mybatisplus.core.metadata.IPage<TaskDTO> dtoPage = page.convert(this::convertToDTO);
-        
-        // 5. 构建分页结果
-        return PageResult.fromPage(dtoPage);
+        // 3. 执行主分页查询
+        taskMapper.selectPage(page, queryWrapper);
+        List<Task> tasks = page.getRecords();
+
+        if (tasks.isEmpty()) {
+            return PageResult.fromPage(new Page<>(request.getPage(), request.getSize()));
+        }
+
+        // 4. 二次查询：批量获取所有相关任务的工程师信息
+        List<String> taskIds = tasks.stream().map(Task::getTaskId).collect(Collectors.toList());
+        List<EngineerSimpleVO> allEngineers = userMapper.findEngineersByTaskIds(taskIds);
+
+        // 将工程师信息按taskId分组
+        Map<String, List<EngineerSimpleVO>> engineersByTaskId = allEngineers.stream()
+                .collect(Collectors.groupingBy(EngineerSimpleVO::getTaskId));
+
+        // 5. 组装TaskDetailDTO
+        List<TaskDetailDTO> detailDTOs = tasks.stream().map(task -> {
+            TaskDetailDTO dto = new TaskDetailDTO();
+            BeanUtils.copyProperties(task, dto);
+            dto.setEngineers(engineersByTaskId.getOrDefault(task.getTaskId(), Collections.emptyList()));
+            return dto;
+        }).collect(Collectors.toList());
+
+        // 6. 构建并返回最终的分页结果
+        Page<TaskDetailDTO> resultPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
+        resultPage.setRecords(detailDTOs);
+
+        return PageResult.fromPage(resultPage);
     }
     
     /**

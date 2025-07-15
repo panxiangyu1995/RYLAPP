@@ -2,14 +2,17 @@ package com.ryl.engineer.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ryl.engineer.entity.TaskEngineer;
+import com.ryl.engineer.vo.EngineerSimpleVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
 /**
  * 任务工程师关联Mapper接口
  */
-@Mapper
+@Repository
 public interface TaskEngineerMapper extends BaseMapper<TaskEngineer> {
     
     /**
@@ -32,4 +35,6 @@ public interface TaskEngineerMapper extends BaseMapper<TaskEngineer> {
      * @return 影响行数
      */
     int batchInsert(@Param("list") List<TaskEngineer> taskEngineers);
+
+    List<EngineerSimpleVO> findEngineersByTaskIds(@Param("taskIds") List<String> taskIds);
 }

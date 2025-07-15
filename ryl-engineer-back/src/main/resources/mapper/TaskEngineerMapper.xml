@@ -14,10 +14,28 @@
     </select>
     
     <insert id="batchInsert" parameterType="java.util.List">
-        INSERT INTO dbo.task_engineer (task_id, engineer_id, is_owner, create_time)
+        INSERT INTO dbo.task_engineer (task_id, engineer_id)
         VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.taskId}, #{item.engineerId}, #{item.isOwner}, #{item.createTime})
+            (#{item.taskId}, #{item.engineerId})
         </foreach>
     </insert>
+
+    <select id="findEngineersByTaskIds" resultType="com.ryl.engineer.vo.EngineerSimpleVO">
+        SELECT
+            te.task_id AS taskId,
+            te.engineer_id AS engineerId,
+            u.name AS engineerName
+        FROM
+            dbo.task_engineer te
+                JOIN
+            dbo.user u ON te.engineer_id = u.id
+        WHERE
+            te.task_id
+                IN
+            <foreach item="taskId" collection="taskIds" open="(" separator="," close=")">
+                #{taskId}
+            </foreach>
+    </select>
+
 </mapper> 

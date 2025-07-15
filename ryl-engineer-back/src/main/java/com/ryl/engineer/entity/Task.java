@@ -1,8 +1,10 @@
 package com.ryl.engineer.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -72,7 +74,14 @@ public class Task {
     /**
      * 工程师ID
      */
+    @TableField(exist = false)
     private Integer engineerId;
+
+    /**
+     * 工程师姓名
+     */
+    @TableField(exist = false)
+    private String engineerName;
     
     /**
      * 优先级（low/normal/high）

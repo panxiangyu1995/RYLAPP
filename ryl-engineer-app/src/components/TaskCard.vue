@@ -46,7 +46,7 @@
           :key="index"
           class="engineer-avatar"
         >
-          <span>{{ engineer.name ? engineer.name.substring(0, 1) : '工' }}</span>
+          <span>{{ engineer.engineerName ? engineer.engineerName.substring(0, 1) : '工' }}</span>
         </div>
         <span v-if="getEngineers().length > 3" class="more-engineers">
           +{{ getEngineers().length - 3 }}

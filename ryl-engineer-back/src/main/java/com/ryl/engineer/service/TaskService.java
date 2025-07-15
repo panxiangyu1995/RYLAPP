@@ -2,6 +2,7 @@ package com.ryl.engineer.service;
 
 import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.dto.TaskDTO;
+import com.ryl.engineer.dto.TaskDetailDTO;
 import com.ryl.engineer.dto.TaskFlowDTO;
 import com.ryl.engineer.dto.request.CreateTaskRequest;
 import com.ryl.engineer.dto.request.RejectTaskRequest;
@@ -30,7 +31,7 @@ public interface TaskService {
      * @param request 查询条件
      * @return 任务分页列表
      */
-    PageResult<TaskDTO> getTaskPage(TaskQueryRequest request);
+    PageResult<TaskDetailDTO> getTaskPage(TaskQueryRequest request);
     
     /**
      * 获取任务详情

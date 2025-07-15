@@ -3,18 +3,17 @@
 <mapper namespace="com.ryl.engineer.mapper.TaskMapper">
 
     <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.Task">
-        <id column="id" property="id"/>
-        <result column="task_id" property="taskId"/>
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="task_id" jdbcType="VARCHAR" property="taskId"/>
         <result column="title" property="title"/>
         <result column="task_type" property="taskType"/>
-        <result column="customer_id" property="customerId"/>
+        <result column="customer_id" jdbcType="BIGINT" property="customerId"/>
         <result column="customer" property="customer"/>
         <result column="customer_level" property="customerLevel"/>
         <result column="location" property="location"/>
         <result column="contact_person" property="contactPerson"/>
         <result column="contact_phone" property="contactPhone"/>
-        <result column="sales_id" property="salesId"/>
-        <result column="engineer_id" property="engineerId"/>
+        <result column="sales_id" jdbcType="BIGINT" property="salesId"/>
         <result column="priority" property="priority"/>
         <result column="status" property="status"/>
         <result column="device_name" property="deviceName"/>
@@ -25,6 +24,10 @@
         <result column="create_time" property="createTime"/>
         <!-- 其他字段映射 -->
     </resultMap>
+
+    <sql id="Base_Column_List">
+        id, task_id, title, task_type, customer_id, customer, customer_level, location, contact_person, contact_phone, sales_id, priority, status, device_name, device_model, device_brand, device_type, device_sn, create_time
+    </sql>
 
     <select id="findByEngineerId" resultMap="BaseResultMap">
         SELECT t.*
@@ -62,6 +65,7 @@
             timestamp DESC
     </select>
 
+    <!--
     <select id="findPendingTasks" resultMap="BaseResultMap">
         SELECT * FROM dbo.task
         WHERE status = 'pending' AND (engineer_id IS NULL OR engineer_id = 0)
@@ -79,5 +83,6 @@
             update_time = GETDATE()
         WHERE id = #{taskId}
     </update>
+    -->
 
 </mapper>

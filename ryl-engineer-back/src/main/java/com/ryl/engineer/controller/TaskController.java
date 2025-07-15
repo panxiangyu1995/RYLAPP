@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.Result;
 import com.ryl.engineer.dto.TaskDTO;
+import com.ryl.engineer.dto.TaskDetailDTO;
 import com.ryl.engineer.dto.TaskFlowDTO;
 import com.ryl.engineer.dto.request.CreateTaskRequest;
 import com.ryl.engineer.dto.request.RejectTaskRequest;
@@ -69,8 +70,8 @@ public class TaskController {
      * @return 任务分页列表
      */
     @GetMapping
-    public Result<PageResult<TaskDTO>> getTaskPage(TaskQueryRequest request) {
-        PageResult<TaskDTO> page = taskService.getTaskPage(request);
+    public Result<PageResult<TaskDetailDTO>> getTaskPage(TaskQueryRequest request) {
+        PageResult<TaskDetailDTO> page = taskService.getTaskPage(request);
         return Result.success(page);
     }
     

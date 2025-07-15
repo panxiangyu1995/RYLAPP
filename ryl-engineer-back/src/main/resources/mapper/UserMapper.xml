@@ -171,4 +171,21 @@
         ORDER BY u.id
     </select>
 
+    <!-- 根据任务ID列表批量查询关联的工程师简要信息 -->
+    <select id="findEngineersByTaskIds" resultType="com.ryl.engineer.vo.EngineerSimpleVO">
+        SELECT
+            te.task_id as taskId,
+            u.id as engineerId,
+            u.name as engineerName
+        FROM
+            dbo.task_engineer te
+        JOIN
+            dbo.[user] u ON te.engineer_id = u.id
+        WHERE
+            te.task_id IN
+            <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+
 </mapper> 

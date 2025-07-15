@@ -1,6 +1,8 @@
 package com.ryl.engineer.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ryl.engineer.entity.User;
+import com.ryl.engineer.vo.EngineerSimpleVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -112,9 +114,17 @@ public interface UserMapper {
     List<User> findUsersByRole(@Param("roleCode") String roleCode);
 
     /**
-     * 根据角色代码查找第一个用户
-     * @param roleCode 角色代码
-     * @return 单个用户信息
+     * 根据角色编码查找第一个用户
+     * @param roleCode 角色编码
+     * @return 用户
      */
     User findFirstByRole(@Param("roleCode") String roleCode);
+
+    /**
+     * 根据任务ID列表批量查询关联的工程师简要信息
+     *
+     * @param taskIds 任务ID列表
+     * @return 工程师简要信息列表
+     */
+    List<EngineerSimpleVO> findEngineersByTaskIds(@Param("list") List<String> taskIds);
 } 
