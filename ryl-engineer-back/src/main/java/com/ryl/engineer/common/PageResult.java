@@ -37,6 +37,14 @@ public class PageResult<T> {
     public PageResult() {
     }
 
+    public PageResult(List<T> list, long total, long size, long current) {
+        this.list = list;
+        this.total = total;
+        this.size = size;
+        this.current = current;
+        this.pages = (total + size - 1) / size;
+    }
+
     /**
      * 从MyBatis-Plus的IPage对象创建PageResult
      * @param page IPage对象

@@ -36,6 +36,25 @@
         WHERE a.id = #{id}
     </select>
     
+    <select id="countByUserId" resultType="long">
+        SELECT COUNT(DISTINCT a.id)
+        FROM dbo.assistance_request a
+        LEFT JOIN dbo.[user] u1 ON a.requester_id = u1.id
+        LEFT JOIN dbo.[user] u2 ON a.engineer_id = u2.id
+        LEFT JOIN dbo.assistance_request_recipient rec ON a.id = rec.request_id
+        WHERE (a.requester_id = #{userId} OR a.engineer_id = #{userId} OR rec.recipient_id = #{userId})
+        <if test="status != null and status != ''">
+            AND a.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (
+                a.description LIKE CONCAT('%', #{keyword}, '%') OR
+                a.request_id LIKE CONCAT('%', #{keyword}, '%') OR
+                a.task_id LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+    </select>
+    
     <select id="selectByUserId" resultMap="BaseResultMap">
         SELECT DISTINCT
             a.id, a.request_id, a.description, a.requester_id, u1.name as requester_name,
@@ -58,6 +77,8 @@
             )
         </if>
         ORDER BY a.create_time DESC
+        OFFSET #{offset} ROWS
+        FETCH NEXT #{pageSize} ROWS ONLY
     </select>
     
     <select id="selectByTaskId" parameterType="java.lang.String" resultMap="BaseResultMap">

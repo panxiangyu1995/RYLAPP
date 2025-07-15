@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,18 +41,23 @@ public class AssistanceServiceImpl implements AssistanceService {
                                                               String status, String keyword) {
         if (userId == null) {
             System.out.println("警告: 用户ID为空，返回空列表");
-            // 返回一个空的PageResult对象
-            return PageResult.fromPage(new Page<>(page, size, 0));
+            return new PageResult<AssistanceRequest>(Collections.emptyList(), 0L, size.longValue(), page.longValue());
         }
 
-        // 1. 创建MyBatis-Plus分页参数
-        Page<AssistanceRequest> pageRequest = new Page<>(page, size);
+        // 1. 获取总记录数
+        long total = requestMapper.countByUserId(userId, status, keyword);
+        if (total == 0) {
+            return new PageResult<AssistanceRequest>(Collections.emptyList(), 0L, size.longValue(), page.longValue());
+        }
 
-        // 2. 调用Mapper进行分页查询
-        IPage<AssistanceRequest> requestPage = requestMapper.selectByUserId(pageRequest, userId, status, keyword);
+        // 2. 计算分页参数
+        long offset = (long) (page - 1) * size;
 
-        // 3. 结果转换并返回
-        return PageResult.fromPage(requestPage);
+        // 3. 获取当前页数据
+        List<AssistanceRequest> list = requestMapper.selectByUserId(userId, status, keyword, offset, size);
+
+        // 4. 组装并返回结果
+        return new PageResult<AssistanceRequest>(list, total, size.longValue(), page.longValue());
     }
 
     @Override

@@ -20,13 +20,35 @@ public interface AssistanceRequestMapper {
     AssistanceRequest selectById(Long id);
     
     /**
-     * 获取用户相关的协助请求列表
+     * 获取用户相关的协助请求总数
+     *
+     * @param userId  用户ID
+     * @param status  状态过滤
+     * @param keyword 关键词搜索
+     * @return 记录总数
      */
-    IPage<AssistanceRequest> selectByUserId(
-        Page<AssistanceRequest> page,
-        @Param("userId") Long userId,
-        @Param("status") String status,
-        @Param("keyword") String keyword
+    long countByUserId(
+            @Param("userId") Long userId,
+            @Param("status") String status,
+            @Param("keyword") String keyword
+    );
+
+    /**
+     * 获取用户相关的协助请求列表（手动分页）
+     *
+     * @param userId   用户ID
+     * @param status   状态过滤
+     * @param keyword  关键词搜索
+     * @param offset   查询偏移量
+     * @param pageSize 每页大小
+     * @return 协助请求列表
+     */
+    List<AssistanceRequest> selectByUserId(
+            @Param("userId") Long userId,
+            @Param("status") String status,
+            @Param("keyword") String keyword,
+            @Param("offset") long offset,
+            @Param("pageSize") long pageSize
     );
     
     /**
