@@ -1,6 +1,6 @@
 package com.ryl.engineer.warehouse.service;
 
-import com.ryl.engineer.common.dto.PageDTO;
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.ItemRequestDTO;
 import com.ryl.engineer.warehouse.dto.ItemUsageStatsDTO;
@@ -22,7 +22,7 @@ public interface ItemRequestService {
      * @param pageSize    每页数量
      * @return 申请列表
      */
-    ResponseDTO<PageDTO<ItemRequestDTO>> getRequestList(Integer requestType, Integer status, Integer pageNum, Integer pageSize);
+    PageResult<ItemRequestDTO> getRequestList(Integer requestType, Integer status, Integer pageNum, Integer pageSize);
 
     /**
      * 获取用户的申请列表
@@ -34,7 +34,7 @@ public interface ItemRequestService {
      * @param pageSize    每页数量
      * @return 申请列表
      */
-    ResponseDTO<PageDTO<ItemRequestDTO>> getUserRequestList(Long userId, Integer requestType, Integer status, Integer pageNum, Integer pageSize);
+    PageResult<ItemRequestDTO> getUserRequestList(Long userId, Integer requestType, Integer status, Integer pageNum, Integer pageSize);
 
     /**
      * 获取任务相关的申请列表
@@ -44,7 +44,7 @@ public interface ItemRequestService {
      * @param pageSize 每页数量
      * @return 申请列表
      */
-    ResponseDTO<PageDTO<ItemRequestDTO>> getTaskRequestList(String taskId, Integer pageNum, Integer pageSize);
+    PageResult<ItemRequestDTO> getTaskRequestList(String taskId, Integer pageNum, Integer pageSize);
 
     /**
      * 获取申请详情

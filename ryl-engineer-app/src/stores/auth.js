@@ -106,29 +106,16 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
     
     try {
-      // 确保传递confirmPassword字段
-      const registerData = {
-        workId: userData.workId,
-        name: userData.name,
-        mobile: userData.mobile,
-        password: userData.password,
-        confirmPassword: userData.confirmPassword,
-        department: userData.department,
-        location: userData.location || ''
-      };
-      
-      const response = await register(registerData)
+      const response = await register(userData)
       
       if (response.code === 200 && response.data && response.data.registered) {
-        // 注册成功后跳转到登录页
-        router.push('/login')
-        return { success: true }
+        return true
       } else {
         throw new Error(response.message || '注册失败')
       }
     } catch (err) {
       error.value = err.message || '注册过程中发生错误'
-      return { success: false, error: error.value }
+      return false
     } finally {
       loading.value = false
     }

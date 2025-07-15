@@ -84,21 +84,8 @@ export default {
     const manualCode = ref('')
     const flashOn = ref(false)
     
-    // 模拟最近扫描记录
-    const recentScans = ref([
-      {
-        id: 1,
-        code: 'HP-5MS-12345',
-        name: '气相色谱柱',
-        time: '10分钟前'
-      },
-      {
-        id: 2,
-        code: 'LC-1260-67890',
-        name: '液相色谱泵',
-        time: '2小时前'
-      }
-    ])
+    // 最近扫描记录，应从本地存储或API获取
+    const recentScans = ref([])
     
     // 返回上一页
     const goBack = () => {
@@ -144,27 +131,12 @@ export default {
     // 初始化扫码功能
     const initScanner = () => {
       console.log('初始化扫码功能')
-      // 实际项目中应初始化摄像头和二维码扫描库
-      // 例如使用quagga.js、jsQR或html5-qrcode等库
-      
-      // 模拟扫码成功
-      setTimeout(() => {
-        const mockScanResult = {
-          id: 3,
-          code: 'MS-5977-24680',
-          name: '质谱检测器',
-          time: '刚刚'
-        }
-        
-        // 添加到最近扫描记录
-        recentScans.value.unshift(mockScanResult)
-        
-        // 提示扫码成功
-        alert(`扫码成功: ${mockScanResult.name}`)
-        
-        // 跳转到物品详情页
-        router.push(`/warehouse/${warehouseId.value}/item/3`)
-      }, 5000)
+      // TODO: 在此集成真实的二维码扫描库 (例如 html5-qrcode)
+      // 1. 获取DOM元素
+      // 2. 创建扫描器实例
+      // 3. 配置成功回调，在回调中处理扫描结果 (例如添加到recentScans, 跳转页面等)
+      // 4. 配置失败回调
+      // 5. 启动扫描器
     }
     
     // 清理扫码资源

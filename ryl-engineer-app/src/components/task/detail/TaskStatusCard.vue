@@ -97,6 +97,7 @@ export default {
     const getStatusClass = (status) => {
       switch(status) {
         case 'pending': return 'status-pending'
+        case '待确认': return 'status-confirming'
         case 'in-progress': return 'status-progress'
         case 'completed': return 'status-completed'
         case 'cancelled': return 'status-cancelled'
@@ -110,6 +111,7 @@ export default {
     const getStatusChipClass = (status) => {
       switch(status) {
         case 'pending': return 'chip-pending'
+        case '待确认': return 'chip-confirming'
         case 'in-progress': return 'chip-progress'
         case 'completed': return 'chip-completed'
         case 'cancelled': return 'chip-cancelled'
@@ -123,6 +125,7 @@ export default {
     const getStatusIcon = (status) => {
       switch(status) {
         case 'pending': return 'fas fa-clock'
+        case '待确认': return 'fas fa-user-clock'
         case 'in-progress': return 'fas fa-play-circle'
         case 'completed': return 'fas fa-check-circle'
         case 'cancelled': return 'fas fa-ban'
@@ -136,6 +139,7 @@ export default {
     const getStatusText = (status) => {
       switch(status) {
         case 'pending': return '待处理'
+        case '待确认': return '待确认'
         case 'in-progress': return '进行中'
         case 'completed': return '已完成'
         case 'cancelled': return '已取消'
@@ -277,9 +281,11 @@ export default {
   color: #c2410c;
 }
 
+.status-badge.status-confirming, .chip-confirming { background-color: #fef3c7; color: #d97706; }
+
 .status-info {
-  flex: 1;
-  padding: 0 16px;
+  margin-left: 16px;
+  flex-grow: 1;
 }
 
 .last-updated {

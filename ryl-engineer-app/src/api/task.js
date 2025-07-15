@@ -203,4 +203,23 @@ export function getTaskStatistics() {
  */
 export function getEngineersList(params) {
   return http.get('/api/v1/user/engineers', { params })
+}
+
+/**
+ * 工程师接受任务
+ * @param {number} taskId 任务ID (物理ID)
+ * @returns {Promise<Object>} 响应结果
+ */
+export function acceptTask(taskId) {
+  return http.post(`${BASE_URL}/${taskId}/accept`);
+}
+
+/**
+ * 工程师拒绝任务
+ * @param {number} taskId 任务ID (物理ID)
+ * @param {Object} data 拒绝任务的数据，包含 reason 和 transferTarget
+ * @returns {Promise<Object>} 响应结果
+ */
+export function rejectTask(taskId, data) {
+  return http.post(`${BASE_URL}/${taskId}/reject`, data);
 } 

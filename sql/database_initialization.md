@@ -36,14 +36,42 @@
 
 1.  **`customer_table_complete_fix.sql`**: 为 `customer` 表全面添加小程序所需的字段（如 openid, nickname, avatar_url 等）。这是一个复合脚本，包含了早期多个修复脚本的功能。
 2.  **`add_account_password_fields.sql`**: 为 `customer` 表添加 `username` 和 `password` 字段，以支持传统的账号密码登录功能。
-3.  **`task_id_field_fix.sql`**: 修正 `task` 相关表中 `task_id` 字段的类型和约束，以解决外键关联问题。
-4.  **`task_image_update.sql`**: 更新 `task_image` 表结构，使其更符合业务需求。
-5.  **`fix_username_to_contact.sql`**: (可选) 一个修复脚本，用于将旧数据从 `username` 字段迁移到 `contact` 字段。对于新初始化的数据库，此脚本通常不是必需的。
-6.  **`小程序测试数据.sql`**: (可选) 插入一套完整的测试数据，包括客户、设备、任务等，便于开发和调试。
+3.  **`add_device_type_to_task.sql`**: 为 `task` 表添加 `device_type` 字段，以支持按仪器类型派发任务。
+4.  **`add_technical_category_to_user.sql`**: 为 `user` 表添加 `technical_category` 字段，以支持按工程师技术能力派发任务。
+5.  **`task_id_field_fix.sql`**: 修正 `task` 相关表中 `task_id` 字段的类型和约束，以解决外键关联问题。
+6.  **`task_image_update.sql`**: 更新 `task_image` 表结构，使其更符合业务需求。
+7.  **`fix_username_to_contact.sql`**: (可选) 一个修复脚本，用于将旧数据从 `username` 字段迁移到 `contact` 字段。对于新初始化的数据库，此脚本通常不是必需的。
+8.  **`小程序测试数据.sql`**: (可选) 插入一套完整的测试数据，包括客户、设备、任务等，便于开发和调试。
 
 ## 重要数据表最终结构
 
 以下是核心数据表在执行完**所有**上述脚本后的最终定义。
+
+### 用户表 (user)
+
+APP内部员工表（工程师、销售、管理员等）。
+
+```sql
+CREATE TABLE [user] (
+    [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
+    [work_id] VARCHAR(50) NOT NULL,                    -- 工号
+    [name] VARCHAR(50) NOT NULL,                       -- 姓名
+    [mobile] VARCHAR(20) NOT NULL,                     -- 手机号
+    [password] VARCHAR(255) NOT NULL,                  -- 密码
+    [department] VARCHAR(50),                          -- 部门
+    [location] VARCHAR(50),                            -- 工作地点
+    [avatar] VARCHAR(255),                             -- 头像URL
+    [status] TINYINT DEFAULT 1,                        -- 状态（0-禁用，1-启用）
+    [technical_category] VARCHAR(255) NULL,            -- 技术分类 (新增，逗号分隔)
+    [token] VARCHAR(255),                              -- 登录令牌
+    [token_expire] DATETIME2,                          -- 令牌过期时间
+    [last_login_time] DATETIME2,                       -- 最后登录时间
+    [create_time] DATETIME2 DEFAULT GETDATE(),         -- 创建时间
+    [update_time] DATETIME2 DEFAULT GETDATE(),         -- 更新时间
+    CONSTRAINT [uk_work_id] UNIQUE ([work_id]),
+    CONSTRAINT [uk_mobile] UNIQUE ([mobile])
+);
+```
 
 ### 客户表 (customer)
 
@@ -148,6 +176,7 @@ CREATE TABLE task (
     device_name VARCHAR(100),                       -- 设备名称
     device_model VARCHAR(100),                      -- 设备型号
     device_brand VARCHAR(50),                       -- 设备品牌
+    device_type VARCHAR(50),                        -- 仪器类型 (新增)
     device_sn VARCHAR(100),                         -- 设备序列号
     fault_description TEXT,                         -- 故障描述
     quantity INT DEFAULT 1,                         -- 设备数量
@@ -334,6 +363,7 @@ CREATE TABLE task_comment (
 | device_name | deviceName |
 | device_model | deviceModel |
 | device_brand | deviceBrand |
+| device_type | deviceType |
 | device_sn | deviceSn |
 | fault_description | faultDescription |
 | quantity | quantity |

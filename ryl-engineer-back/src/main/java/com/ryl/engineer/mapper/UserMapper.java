@@ -45,7 +45,16 @@ public interface UserMapper {
      * @return 影响行数
      */
     int update(User user);
-    
+
+    /**
+     * 插入用户角色关联记录
+     *
+     * @param userId 用户ID
+     * @param roleCode 角色ID
+     * @return 影响行数
+     */
+    int insertUserRole(@Param("userId") Long userId, @Param("roleCode") String roleCode);
+
     /**
      * 根据ID查询用户
      *
@@ -87,4 +96,25 @@ public interface UserMapper {
      * @return 销售人员列表
      */
     List<User> selectSales(@Param("params") Map<String, Object> params);
+
+    /**
+     * 根据技术分类查找工程师
+     * @param category 技术分类
+     * @return 用户列表
+     */
+    List<User> findEngineersByTechnicalCategory(@Param("category") String category);
+
+    /**
+     * 根据角色代码查找用户
+     * @param roleCode 角色代码
+     * @return 用户列表
+     */
+    List<User> findUsersByRole(@Param("roleCode") String roleCode);
+
+    /**
+     * 根据角色代码查找第一个用户
+     * @param roleCode 角色代码
+     * @return 单个用户信息
+     */
+    User findFirstByRole(@Param("roleCode") String roleCode);
 } 

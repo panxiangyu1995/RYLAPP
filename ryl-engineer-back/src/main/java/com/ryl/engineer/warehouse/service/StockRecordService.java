@@ -1,6 +1,6 @@
 package com.ryl.engineer.warehouse.service;
 
-import com.ryl.engineer.common.dto.PageDTO;
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.StockRecordDTO;
 import com.ryl.engineer.warehouse.dto.StockStatsDTO;
@@ -43,7 +43,7 @@ public interface StockRecordService {
      * @param pageSize   每页数量
      * @return 出入库记录列表
      */
-    ResponseDTO<PageDTO<StockRecordDTO>> getRecords(Long itemId, Integer recordType, Long warehouseId, 
+    PageResult<StockRecordDTO> getRecords(Long itemId, Integer recordType, Long warehouseId, 
                                                   LocalDateTime startTime, LocalDateTime endTime, 
                                                   Integer pageNum, Integer pageSize);
 
@@ -56,7 +56,7 @@ public interface StockRecordService {
      * @param pageSize  每页数量
      * @return 出入库记录列表
      */
-    ResponseDTO<PageDTO<StockRecordDTO>> getItemRecords(Long itemId, Integer recordType, Integer pageNum, Integer pageSize);
+    PageResult<StockRecordDTO> getItemRecords(Long itemId, Integer recordType, Integer pageNum, Integer pageSize);
 
     /**
      * 获取仓库的出入库记录
@@ -69,7 +69,7 @@ public interface StockRecordService {
      * @param pageSize    每页数量
      * @return 出入库记录列表
      */
-    ResponseDTO<PageDTO<StockRecordDTO>> getWarehouseRecords(Long warehouseId, Integer recordType, 
+    PageResult<StockRecordDTO> getWarehouseRecords(Long warehouseId, Integer recordType, 
                                                             LocalDate startDate, LocalDate endDate, 
                                                             Integer pageNum, Integer pageSize);
 

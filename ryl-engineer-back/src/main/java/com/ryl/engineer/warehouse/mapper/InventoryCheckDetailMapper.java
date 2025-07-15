@@ -16,6 +16,24 @@ import java.util.Map;
 public interface InventoryCheckDetailMapper extends BaseMapper<InventoryCheckDetail> {
 
     /**
+     * 根据盘库ID统计明细数量
+     *
+     * @param checkId 盘库ID
+     * @return 数量
+     */
+    @Select("SELECT COUNT(*) FROM inventory_check_detail WHERE check_id = #{checkId}")
+    Integer countByCheckId(@Param("checkId") Long checkId);
+
+    /**
+     * 根据盘库ID统计差异明细数量
+     *
+     * @param checkId 盘库ID
+     * @return 数量
+     */
+    @Select("SELECT COUNT(*) FROM inventory_check_detail WHERE check_id = #{checkId} AND actual_quantity != system_quantity")
+    Integer countDifferenceByCheckId(@Param("checkId") Long checkId);
+
+    /**
      * 获取盘库记录的明细
      *
      * @param checkId 盘库记录ID

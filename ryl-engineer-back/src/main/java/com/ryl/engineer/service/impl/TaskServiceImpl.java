@@ -2,9 +2,8 @@ package com.ryl.engineer.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
 import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.dto.EngineerDTO;
 import com.ryl.engineer.dto.TaskDTO;
@@ -30,6 +29,8 @@ import com.ryl.engineer.mapper.TaskActivityMapper;
 import com.ryl.engineer.mapper.TaskTransferHistoryMapper;
 import com.ryl.engineer.mapper.TaskStatusHistoryMapper;
 import com.ryl.engineer.mapper.UserMapper;
+import com.ryl.common.constant.TaskStatusConstants;
+import com.ryl.engineer.service.ChatService;
 import com.ryl.engineer.service.TaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -78,6 +79,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     
     @Autowired
     private UserMapper userMapper;
+    
+    @Autowired
+    private ChatService chatService;
     
     @Value("${app.upload.base-path:}")
     private String baseUploadPath;
@@ -248,11 +252,11 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         if (request.getSize() == null || request.getSize() < 1) {
             request.setSize(10);
         }
+
+        // 1. 构建MyBatis-Plus分页参数
+        Page<Task> page = new Page<>(request.getPage(), request.getSize());
         
-        // 开启分页
-        Page<Object> page = PageHelper.startPage(request.getPage(), request.getSize());
-        
-        // 构建查询条件
+        // 2. 构建查询条件
         LambdaQueryWrapper<Task> queryWrapper = Wrappers.lambdaQuery(Task.class);
         
         // 添加过滤条件
@@ -296,21 +300,20 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         
         // 按创建时间降序排序
         queryWrapper.orderByDesc(Task::getCreateTime);
-        
-        // 执行查询
-        List<Task> tasks;
+
+        // 3. 执行查询
+        // 如果有 engineerId，则连接查询；否则，直接查询 task 表
         if (request.getEngineerId() != null) {
-            // 如果指定了工程师ID，需要联表查询
-            tasks = taskMapper.findByEngineerId(request.getEngineerId());
+            taskMapper.findByEngineerId(page, request.getEngineerId());
         } else {
-            tasks = taskMapper.selectList(queryWrapper);
+            taskMapper.selectPage(page, queryWrapper);
         }
+
+        // 4. 转换为DTO，并保留分页信息
+        com.baomidou.mybatisplus.core.metadata.IPage<TaskDTO> dtoPage = page.convert(this::convertToDTO);
         
-        // 转换为DTO
-        List<TaskDTO> taskDTOs = tasks.stream().map(this::convertToDTO).collect(Collectors.toList());
-        
-        // 构建分页结果
-        return new PageResult<TaskDTO>(page.getTotal(), taskDTOs, request.getPage(), request.getSize());
+        // 5. 构建分页结果
+        return PageResult.fromPage(dtoPage);
     }
     
     /**
@@ -343,16 +346,27 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                     .collect(Collectors.toList()));
         }
         
-        // 设置工程师信息（在实际项目中需要从用户表查询工程师详细信息）
+        // 设置工程师信息
         if (engineers != null && !engineers.isEmpty()) {
-            // 模拟工程师信息，实际项目中应该从用户表查询
             taskDTO.setEngineers(engineers.stream().map(e -> {
                 EngineerDTO engineerDTO = new EngineerDTO();
                 engineerDTO.setId(e.getEngineerId());
-                engineerDTO.setName("工程师" + e.getEngineerId()); // 实际应从用户表查询
-                engineerDTO.setAvatar("/img/default-avatar.png"); // 实际应从用户表查询
-                engineerDTO.setDepartment("技术部"); // 实际应从用户表查询
-                engineerDTO.setMobile("13800138000"); // 实际应从用户表查询
+                
+                // 从用户表查询真实的工程师信息
+                User engineerUser = userMapper.selectById(e.getEngineerId());
+                if (engineerUser != null) {
+                    engineerDTO.setName(engineerUser.getName());
+                    engineerDTO.setAvatar(engineerUser.getAvatar());
+                    engineerDTO.setDepartment(engineerUser.getDepartment());
+                    engineerDTO.setMobile(engineerUser.getMobile());
+                } else {
+                    // 如果找不到用户，提供默认值
+                    engineerDTO.setName("工程师" + e.getEngineerId());
+                    engineerDTO.setAvatar("/img/default-avatar.png");
+                    engineerDTO.setDepartment("未知");
+                    engineerDTO.setMobile("未知");
+                }
+
                 engineerDTO.setIsOwner(e.getIsOwner() == 1);
                 engineerDTO.setOnline(true); // 实际应从在线状态表查询
                 return engineerDTO;
@@ -366,32 +380,42 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     private TaskDTO convertToDTO(Task task) {
         TaskDTO dto = new TaskDTO();
         BeanUtils.copyProperties(task, dto);
-        
-        // 根据状态生成状态文本
+
+        String status = task.getStatus();
         String statusText;
-        switch (task.getStatus()) {
-            case "draft":
-                statusText = "草稿";
-                break;
-            case "pending":
-                statusText = "待处理";
-                break;
-            case "in-progress":
-                statusText = "进行中";
-                break;
-            case "completed":
-                statusText = "已完成";
-                break;
-            case "cancelled":
-                statusText = "已取消";
-                break;
-            default:
-                statusText = "未知状态";
+
+        // 增加对status为null的健壮性处理
+        if (status == null) {
+            statusText = "待处理"; // 为null的旧数据默认显示为待处理
+        } else {
+            // 根据状态生成状态文本
+            switch (status) {
+                case "draft":
+                    statusText = "草稿";
+                    break;
+                case "pending":
+                    statusText = "待处理";
+                    break;
+                case TaskStatusConstants.PENDING_CONFIRMATION:
+                    statusText = "待确认";
+                    break;
+                case "in-progress":
+                    statusText = "进行中";
+                    break;
+                case "completed":
+                    statusText = "已完成";
+                    break;
+                case "cancelled":
+                    statusText = "已取消";
+                    break;
+                default:
+                    statusText = "未知状态";
+            }
         }
         dto.setStatusText(statusText);
-        
+
         // 转换布尔值
-        dto.setIsExternalTask(task.getIsExternalTask() == 1);
+        dto.setIsExternalTask(task.getIsExternalTask() != null && task.getIsExternalTask() == 1);
         dto.setNeedSiteVisit(task.getNeedSiteVisit() != null && task.getNeedSiteVisit() == 1);
         
         return dto;
@@ -1626,6 +1650,76 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         } catch (Exception e) {
             log.error("更新任务报价确认状态异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
             throw e;
+        }
+    }
+
+    @Override
+    @Transactional
+    public void acceptTask(Long taskId) {
+        Task task = taskMapper.selectById(taskId);
+        if (task == null) {
+            throw new IllegalArgumentException("任务不存在");
+        }
+        if (!TaskStatusConstants.PENDING_CONFIRMATION.equals(task.getStatus())) {
+            throw new IllegalStateException("任务状态不正确，无法接受");
+        }
+
+        task.setStatus("进行中");
+        taskMapper.updateById(task);
+
+        // 可选：记录状态变更历史
+        log.info("工程师已接受任务 #{}", task.getTaskId());
+    }
+
+    @Override
+    @Transactional
+    public void rejectTask(Long taskId, com.ryl.engineer.dto.request.RejectTaskRequest request) {
+        Task task = taskMapper.selectById(taskId);
+        if (task == null) {
+            throw new IllegalArgumentException("任务不存在");
+        }
+        if (!TaskStatusConstants.PENDING_CONFIRMATION.equals(task.getStatus())) {
+            throw new IllegalStateException("任务状态不正确，无法拒绝");
+        }
+
+        log.info("工程师拒绝了任务 #{}，原因: {}", task.getTaskId(), request.getReason());
+
+        if ("admin".equalsIgnoreCase(request.getTransferTarget())) {
+            // 转派给管理员
+            task.setEngineerId(null);
+            task.setStatus("pending"); // 重置为待处理/待分配
+            taskMapper.updateById(task);
+
+            // 通知所有管理员
+            List<User> admins = userMapper.findUsersByRole("ROLE_ADMIN");
+            if (admins != null && !admins.isEmpty()) {
+                String adminMessage = String.format("任务 #%s (%s) 已被工程师拒绝，原因：%s。请尽快重新指派。",
+                        task.getTaskId(), task.getTitle(), request.getReason());
+                for (User admin : admins) {
+                    chatService.sendSystemMessage(admin.getId(), adminMessage);
+                }
+            }
+        } else {
+            // 转派给其他工程师
+            try {
+                Long newEngineerId = Long.parseLong(request.getTransferTarget());
+                task.setEngineerId(newEngineerId.intValue());
+                // 状态保持 "待确认"
+                taskMapper.updateById(task);
+
+                // 向新工程师发送通知
+                String messageContent = String.format(
+                    "{\"text\":\"您有一个新的任务（%s）待处理，请及时确认。\",\"actions\":[{\"label\":\"接受\",\"type\":\"accept-task\",\"taskId\":\"%d\"},{\"label\":\"拒绝\",\"type\":\"reject-task\",\"taskId\":\"%d\"}]}",
+                    task.getTitle(),
+                    task.getId(),
+                    task.getId()
+                );
+                chatService.sendSystemMessage(newEngineerId, messageContent);
+
+            } catch (NumberFormatException e) {
+                log.error("无效的转派目标工程师ID: {}", request.getTransferTarget());
+                throw new IllegalArgumentException("无效的转派目标");
+            }
         }
     }
 } 

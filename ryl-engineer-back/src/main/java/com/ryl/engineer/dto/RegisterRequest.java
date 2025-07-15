@@ -54,4 +54,15 @@ public class RegisterRequest implements Serializable {
      * 地点
      */
     private String location;
+
+    /**
+     * 角色代码
+     */
+    @NotBlank(message = "角色不能为空")
+    private String roleCode;
+
+    /**
+     * 技术分类（仅当角色为工程师时需要）
+     */
+    private String technicalCategory;
 } 

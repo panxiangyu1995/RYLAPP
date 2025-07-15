@@ -1,5 +1,7 @@
 package com.ryl.engineer.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ryl.engineer.entity.SystemAnnouncement;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -20,7 +22,17 @@ public interface AnnouncementMapper {
     /**
      * 获取公告列表
      */
-    List<SystemAnnouncement> selectList(@Param("keyword") String keyword);
+    IPage<SystemAnnouncement> selectList(
+            Page<SystemAnnouncement> page,
+            @Param("keyword") String keyword,
+            @Param("userId") Long userId,
+            @Param("onlyUnread") Boolean onlyUnread
+    );
+
+    /**
+     * 获取所有有效的公告列表（不分页）
+     */
+    List<SystemAnnouncement> selectAllActive(@Param("keyword") String keyword);
     
     /**
      * 新增公告

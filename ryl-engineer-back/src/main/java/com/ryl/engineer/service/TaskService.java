@@ -4,6 +4,7 @@ import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.dto.TaskDTO;
 import com.ryl.engineer.dto.TaskFlowDTO;
 import com.ryl.engineer.dto.request.CreateTaskRequest;
+import com.ryl.engineer.dto.request.RejectTaskRequest;
 import com.ryl.engineer.dto.request.TaskFlowStatusRequest;
 import com.ryl.engineer.dto.request.TaskQueryRequest;
 import com.ryl.engineer.dto.request.TaskStepUpdateRequest;
@@ -172,4 +173,17 @@ public interface TaskService {
      * @return 是否成功
      */
     boolean updateTaskStatus(String taskId, String status, String note);
+
+    /**
+     * 工程师接受任务
+     * @param taskId 任务ID
+     */
+    void acceptTask(Long taskId);
+
+    /**
+     * 工程师拒绝任务
+     * @param taskId 任务ID
+     * @param request 拒绝任务的请求体，包含原因和转派目标
+     */
+    void rejectTask(Long taskId, RejectTaskRequest request);
 } 

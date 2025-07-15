@@ -8,6 +8,8 @@ import com.ryl.engineer.mapper.AssistanceRequestMapper;
 import com.ryl.engineer.mapper.AssistanceRequestRecipientMapper;
 import com.ryl.engineer.mapper.UserMapper;
 import com.ryl.engineer.service.AssistanceService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,44 +38,20 @@ public class AssistanceServiceImpl implements AssistanceService {
     @Override
     public PageResult<AssistanceRequest> getAssistanceRequestList(Long userId, Integer page, Integer size,
                                                               String status, String keyword) {
-        // 输出调试信息
-        System.out.println("服务层查询协助请求 - 用户ID: " + userId + ", 页码: " + page + ", 大小: " + size);
-        
         if (userId == null) {
             System.out.println("警告: 用户ID为空，返回空列表");
-            return new PageResult<>(0, new ArrayList<>(), page, size);
+            // 返回一个空的PageResult对象
+            return PageResult.fromPage(new Page<>(page, size, 0));
         }
-        
-        // 获取用户相关的协助请求列表（包括发起的和接收的）
-        List<AssistanceRequest> requests = requestMapper.selectByUserId(userId, status, keyword);
-        
-        // 输出查询结果
-        System.out.println("查询结果总数: " + (requests == null ? "null" : requests.size()));
-        if (requests != null && !requests.isEmpty()) {
-            System.out.println("第一条记录ID: " + requests.get(0).getId() + ", 请求ID: " + requests.get(0).getRequestId());
-        }
-        
-        // 防御性检查
-        if (requests == null) {
-            requests = new ArrayList<>();
-        }
-        
-        // 总记录数
-        int total = requests.size();
-        
-        // 分页处理
-        int fromIndex = (page - 1) * size;
-        int toIndex = Math.min(fromIndex + size, total);
-        
-        // 边界检查
-        if (fromIndex >= total) {
-            return new PageResult<>(0, new ArrayList<>(), page, size);
-        }
-        
-        // 分页后的数据
-        List<AssistanceRequest> result = requests.subList(fromIndex, toIndex);
-        
-        return new PageResult<>(total, result, page, size);
+
+        // 1. 创建MyBatis-Plus分页参数
+        Page<AssistanceRequest> pageRequest = new Page<>(page, size);
+
+        // 2. 调用Mapper进行分页查询
+        IPage<AssistanceRequest> requestPage = requestMapper.selectByUserId(pageRequest, userId, status, keyword);
+
+        // 3. 结果转换并返回
+        return PageResult.fromPage(requestPage);
     }
 
     @Override

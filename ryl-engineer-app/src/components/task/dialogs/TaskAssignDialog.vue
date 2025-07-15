@@ -106,6 +106,7 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue'
+import { getEngineersList } from '@/api/user'
 
 export default {
   name: 'TaskAssignDialog',
@@ -212,46 +213,17 @@ export default {
     // 加载工程师数据
     const loadEngineers = async () => {
       loading.value = true
-      
       try {
-        // 这里应该是从API获取工程师列表的逻辑
-        // 为了演示，我们使用模拟数据
-        const mockEngineers = [
-          { 
-            id: 1, 
-            name: '张工程', 
-            department: '维修部', 
-            stats: { activeTasks: 3, completedTasks: 42 }
-          },
-          { 
-            id: 2, 
-            name: '李工程', 
-            department: '调试部', 
-            stats: { activeTasks: 1, completedTasks: 28 }
-          },
-          { 
-            id: 3, 
-            name: '王工程', 
-            department: '安装部', 
-            stats: { activeTasks: 2, completedTasks: 35 }
-          },
-          { 
-            id: 4, 
-            name: '赵工程', 
-            department: '维修部', 
-            stats: { activeTasks: 5, completedTasks: 50 }
-          },
-          { 
-            id: 5, 
-            name: '钱工程', 
-            department: '调试部', 
-            stats: { activeTasks: 2, completedTasks: 22 }
-          }
-        ]
-        
-        engineers.value = mockEngineers
+        const response = await getEngineersList({ all: true }) // 传递参数以获取所有工程师
+        if (response.code === 200 && Array.isArray(response.data)) {
+          engineers.value = response.data
+        } else {
+          console.error('获取工程师列表失败:', response.message)
+          engineers.value = [] // 清空以防显示旧数据
+        }
       } catch (error) {
         console.error('加载工程师数据时出错:', error)
+        engineers.value = []
       } finally {
         loading.value = false
       }

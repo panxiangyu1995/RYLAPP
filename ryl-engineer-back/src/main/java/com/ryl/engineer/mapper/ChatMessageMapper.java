@@ -1,5 +1,7 @@
 package com.ryl.engineer.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ryl.engineer.entity.ChatMessage;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -20,9 +22,10 @@ public interface ChatMessageMapper {
     /**
      * 根据会话ID获取消息列表
      */
-    List<ChatMessage> selectByConversationId(
-        @Param("conversationId") String conversationId, 
-        @Param("startTime") String startTime, 
+    IPage<ChatMessage> selectByConversationId(
+        Page<ChatMessage> page,
+        @Param("conversationId") String conversationId,
+        @Param("startTime") String startTime,
         @Param("endTime") String endTime
     );
     

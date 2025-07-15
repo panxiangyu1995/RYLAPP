@@ -1,7 +1,7 @@
 package com.ryl.engineer.controller;
 
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.Result;
-import com.ryl.engineer.common.dto.PageDTO;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.InventoryCheckDTO;
 import com.ryl.engineer.warehouse.dto.InventoryCheckDetailDTO;
@@ -32,17 +32,13 @@ public class InventoryCheckController {
      * @return 盘库记录列表
      */
     @GetMapping("/list")
-    public Result<PageDTO<InventoryCheckDTO>> getCheckList(
+    public Result<PageResult<InventoryCheckDTO>> getCheckList(
             @RequestParam(required = false) Long warehouseId,
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        ResponseDTO<PageDTO<InventoryCheckDTO>> responseDTO = inventoryCheckService.getCheckList(warehouseId, status, pageNum, pageSize);
-        if (responseDTO.getCode() == 200) {
-            return Result.success(responseDTO.getData());
-        } else {
-            return Result.error(responseDTO.getCode(), responseDTO.getMessage());
-        }
+        PageResult<InventoryCheckDTO> pageResult = inventoryCheckService.getCheckList(warehouseId, status, pageNum, pageSize);
+        return Result.success(pageResult);
     }
 
     /**
@@ -55,17 +51,13 @@ public class InventoryCheckController {
      * @return 盘库记录列表
      */
     @GetMapping("/user/{userId}")
-    public Result<PageDTO<InventoryCheckDTO>> getUserCheckList(
+    public Result<PageResult<InventoryCheckDTO>> getUserCheckList(
             @PathVariable Long userId,
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        ResponseDTO<PageDTO<InventoryCheckDTO>> responseDTO = inventoryCheckService.getUserCheckList(userId, status, pageNum, pageSize);
-        if (responseDTO.getCode() == 200) {
-            return Result.success(responseDTO.getData());
-        } else {
-            return Result.error(responseDTO.getCode(), responseDTO.getMessage());
-        }
+        PageResult<InventoryCheckDTO> pageResult = inventoryCheckService.getUserCheckList(userId, status, pageNum, pageSize);
+        return Result.success(pageResult);
     }
 
     /**
@@ -93,16 +85,12 @@ public class InventoryCheckController {
      * @return 盘库明细列表
      */
     @GetMapping("/{checkId}/details")
-    public Result<PageDTO<InventoryCheckDetailDTO>> getCheckDetailList(
+    public Result<PageResult<InventoryCheckDetailDTO>> getCheckDetailList(
             @PathVariable Long checkId,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        ResponseDTO<PageDTO<InventoryCheckDetailDTO>> responseDTO = inventoryCheckService.getCheckDetailList(checkId, pageNum, pageSize);
-        if (responseDTO.getCode() == 200) {
-            return Result.success(responseDTO.getData());
-        } else {
-            return Result.error(responseDTO.getCode(), responseDTO.getMessage());
-        }
+        PageResult<InventoryCheckDetailDTO> pageResult = inventoryCheckService.getCheckDetailList(checkId, pageNum, pageSize);
+        return Result.success(pageResult);
     }
 
     /**
@@ -114,16 +102,12 @@ public class InventoryCheckController {
      * @return 盘库差异明细列表
      */
     @GetMapping("/{checkId}/differences")
-    public Result<PageDTO<InventoryCheckDetailDTO>> getDifferenceDetailList(
+    public Result<PageResult<InventoryCheckDetailDTO>> getDifferenceDetailList(
             @PathVariable Long checkId,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        ResponseDTO<PageDTO<InventoryCheckDetailDTO>> responseDTO = inventoryCheckService.getDifferenceDetailList(checkId, pageNum, pageSize);
-        if (responseDTO.getCode() == 200) {
-            return Result.success(responseDTO.getData());
-        } else {
-            return Result.error(responseDTO.getCode(), responseDTO.getMessage());
-        }
+        PageResult<InventoryCheckDetailDTO> pageResult = inventoryCheckService.getDifferenceDetailList(checkId, pageNum, pageSize);
+        return Result.success(pageResult);
     }
 
     /**

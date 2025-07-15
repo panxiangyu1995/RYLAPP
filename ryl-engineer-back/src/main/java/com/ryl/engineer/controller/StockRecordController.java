@@ -1,7 +1,7 @@
 package com.ryl.engineer.controller;
 
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.Result;
-import com.ryl.engineer.common.dto.PageDTO;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.StockRecordDTO;
 import com.ryl.engineer.warehouse.dto.request.StockInRequest;
@@ -69,7 +69,7 @@ public class StockRecordController {
      * @return 出入库记录列表
      */
     @GetMapping("/records")
-    public Result<PageDTO<StockRecordDTO>> getRecords(
+    public Result<PageResult<StockRecordDTO>> getRecords(
             @RequestParam(required = false) Long itemId,
             @RequestParam(required = false) Integer recordType,
             @RequestParam(required = false) Long warehouseId,
@@ -77,11 +77,7 @@ public class StockRecordController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "20") Integer pageSize) {
-        ResponseDTO<PageDTO<StockRecordDTO>> responseDTO = stockRecordService.getRecords(itemId, recordType, warehouseId, startTime, endTime, pageNum, pageSize);
-        if (responseDTO.getCode() == 200) {
-            return Result.success(responseDTO.getData());
-        } else {
-            return Result.error(responseDTO.getCode(), responseDTO.getMessage());
-        }
+        PageResult<StockRecordDTO> pageResult = stockRecordService.getRecords(itemId, recordType, warehouseId, startTime, endTime, pageNum, pageSize);
+        return Result.success(pageResult);
     }
 } 

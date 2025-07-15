@@ -26,4 +26,9 @@ public class RegisterResponse implements Serializable {
      * 姓名
      */
     private String name;
+
+    /**
+     * 响应消息
+     */
+    private String message;
 } 

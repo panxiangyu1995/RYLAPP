@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<toolchains>
+    <toolchain>
+        <type>jdk</type>
+        <provides>
+            <version>17</version>
+        </provides>
+        <configuration>
+            <jdkHome>C:\Users\Administrator\AppData\Roaming\Cursor\User\globalStorage\pleiades.java-extension-pack-jdk\java\17</jdkHome>
+        </configuration>
+    </toolchain>
+</toolchains> 

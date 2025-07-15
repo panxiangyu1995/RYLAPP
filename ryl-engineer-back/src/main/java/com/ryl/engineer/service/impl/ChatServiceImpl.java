@@ -1,5 +1,7 @@
 package com.ryl.engineer.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.dto.chat.ConversationDTO;
 import com.ryl.engineer.dto.chat.MessageDTO;
@@ -51,42 +53,18 @@ public class ChatServiceImpl implements ChatService {
     public PageResult<ConversationDTO> getConversationList(Long userId, String type, Boolean isTaskRelated,
                                                       String keyword, Boolean onlyUnread,
                                                       Integer page, Integer size) {
-        // 获取用户的会话列表
-        List<ChatConversation> conversations = conversationMapper.selectByUserId(userId, type, isTaskRelated, keyword);
+        // 1. 创建分页参数
+        Page<ChatConversation> pageRequest = new Page<>(page, size);
         
-        // 过滤只显示有未读消息的会话
-        if (onlyUnread != null && onlyUnread) {
-            conversations = conversations.stream()
-                .filter(conv -> {
-                    ChatConversationMember member = conversationMemberMapper.selectByUserIdAndConversationId(userId, conv.getConversationId());
-                    return member != null && member.getUnreadCount() > 0;
-                })
-                .collect(Collectors.toList());
-        }
+        // 2. 调用Mapper进行分页查询，并传入onlyUnread标志
+        IPage<ChatConversation> conversationPage = conversationMapper.selectByUserId(
+                pageRequest, userId, type, isTaskRelated, keyword, onlyUnread);
         
-        // 总记录数
-        int total = conversations.size();
-        
-        // 分页处理
-        int fromIndex = (page - 1) * size;
-        int toIndex = Math.min(fromIndex + size, total);
-        
-        // 边界检查
-        if (fromIndex >= total) {
-            return new PageResult<>(0, new ArrayList<>(), page, size);
-        }
-        
-        // 分页后的数据
-        List<ChatConversation> pagedConversations = conversations.subList(fromIndex, toIndex);
-        
-        // 转换为DTO
-        List<ConversationDTO> result = new ArrayList<>();
-        for (ChatConversation conversation : pagedConversations) {
-            ConversationDTO dto = convertToDTO(conversation, userId);
-            result.add(dto);
-        }
-        
-        return new PageResult<>(total, result, page, size);
+        // 3. 结果转换为DTO
+        IPage<ConversationDTO> dtoPage = conversationPage.convert(conv -> convertToDTO(conv, userId));
+
+        // 4. 封装并返回分页结果
+        return PageResult.fromPage(dtoPage);
     }
 
     @Override
@@ -147,38 +125,24 @@ public class ChatServiceImpl implements ChatService {
     public PageResult<MessageDTO> getMessageList(Long userId, String conversationId,
                                             Integer page, Integer size,
                                             String startTime, String endTime) {
-        // 获取会话消息
-        List<ChatMessage> messages = messageMapper.selectByConversationId(conversationId, startTime, endTime);
+        // 1. 创建分页参数
+        Page<ChatMessage> pageRequest = new Page<>(page, size);
+
+        // 2. 调用Mapper进行分页查询
+        IPage<ChatMessage> messagePage = messageMapper.selectByConversationId(pageRequest, conversationId, startTime, endTime);
         
-        // 总记录数
-        int total = messages.size();
-        
-        // 分页处理
-        int fromIndex = (page - 1) * size;
-        int toIndex = Math.min(fromIndex + size, total);
-        
-        // 边界检查
-        if (fromIndex >= total) {
-            return new PageResult<>(0, new ArrayList<>(), page, size);
-        }
-        
-        // 分页后的数据
-        List<ChatMessage> pagedMessages = messages.subList(fromIndex, toIndex);
-        
-        // 转换为DTO
-        List<MessageDTO> result = new ArrayList<>();
-        for (ChatMessage message : pagedMessages) {
-            MessageDTO dto = convertToDTO(message, userId);
-            result.add(dto);
-        }
-        
-        // 标记消息为已读
-        if (!pagedMessages.isEmpty()) {
-            String lastMessageId = pagedMessages.get(pagedMessages.size() - 1).getMessageId();
+        // 3. 转换为DTO
+        IPage<MessageDTO> dtoPage = messagePage.convert(message -> convertToDTO(message, userId));
+        List<MessageDTO> messageDTOs = dtoPage.getRecords();
+
+        // 4. 标记消息为已读
+        if (!messageDTOs.isEmpty()) {
+            String lastMessageId = messageDTOs.get(messageDTOs.size() - 1).getMessageId();
             markMessageRead(userId, conversationId, lastMessageId);
         }
         
-        return new PageResult<>(total, result, page, size);
+        // 5. 封装并返回分页结果
+        return PageResult.fromPage(dtoPage);
     }
 
     @Override
@@ -427,6 +391,53 @@ public class ChatServiceImpl implements ChatService {
         }
         
         return false;
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> sendSystemMessage(Long recipientId, String content) {
+        // 1. 动态获取系统用户（管理员）
+        User systemUser = userMapper.findFirstByRole("ROLE_ADMIN");
+        if (systemUser == null) {
+            // 在实际应用中，这里应该有更健壮的错误处理，例如抛出自定义异常或记录严重错误日志
+            // 为了简化，我们这里抛出运行时异常
+            throw new RuntimeException("未能找到系统管理员用户，无法发送系统消息。");
+        }
+        final Long systemUserId = systemUser.getId();
+
+        // 2. 查找系统与该用户的单聊会话
+        ChatConversation conversation = conversationMapper.findPrivateConversationByMemberIds(systemUserId, recipientId);
+
+        String conversationId;
+
+        // 3. 如果会话不存在，则创建一个新的
+        if (conversation == null) {
+            User recipient = userMapper.selectById(recipientId);
+            String conversationName = "系统通知";
+            if (recipient != null) {
+                conversationName = "与 " + recipient.getName() + " 的对话";
+            }
+            
+            List<Long> memberIds = new ArrayList<>();
+            memberIds.add(recipientId);
+            // 注意：创建会话时，创建者（系统用户）会自动被加入
+
+            ConversationDTO newConvDto = createConversation(
+                    systemUserId, 
+                    "single", 
+                    conversationName, 
+                    memberIds, 
+                    false, 
+                    null, 
+                    null); // 系统消息使用默认头像
+            
+            conversationId = newConvDto.getConversationId();
+        } else {
+            conversationId = conversation.getConversationId();
+        }
+
+        // 4. 发送消息
+        return sendMessage(systemUserId, conversationId, content, "system", "text", null);
     }
     
     /**

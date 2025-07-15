@@ -1,7 +1,7 @@
 package com.ryl.engineer.service.impl;
 
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.dto.contact.ContactDTO;
 import com.ryl.engineer.dto.contact.ContactGroupDTO;
@@ -13,7 +13,6 @@ import com.ryl.engineer.exception.ServiceException;
 import com.ryl.engineer.mapper.ContactsGroupMapper;
 import com.ryl.engineer.mapper.ContactsGroupRelationMapper;
 import com.ryl.engineer.mapper.ContactsRelationMapper;
-import com.ryl.engineer.mapper.UserMapper;
 import com.ryl.engineer.service.ContactsService;
 import com.ryl.engineer.service.UserService;
 import org.slf4j.Logger;
@@ -53,66 +52,37 @@ public class ContactsServiceImpl implements ContactsService {
     private UserService userService;
     
     @Autowired
-    private UserMapper userMapper;
-    
-    @Autowired
     private JdbcTemplate jdbcTemplate;
     
     @Override
-    public PageResult<ContactDTO> getContactsList(Long userId, Integer page, Integer size, 
+    public PageResult<ContactDTO> getContactsList(Long userId, Integer pageNum, Integer pageSize,
                                                  String keyword, String department, Integer status) {
-        PageHelper.startPage(page, size);
-        Page<ContactsRelation> relationPage = (Page<ContactsRelation>) contactsRelationMapper.selectByCondition(
-            userId, keyword, department, status);
-        
-        List<ContactDTO> contactDTOList = relationPage.getResult().stream()
-            .map(this::convertToContactDTO)
-            .collect(Collectors.toList());
-        
-        return new PageResult<>(relationPage.getTotal(), contactDTOList);
+        // 使用MyBatis-Plus的分页对象
+        Page<ContactsRelation> page = new Page<>(pageNum, pageSize);
+        IPage<ContactsRelation> relationPage = contactsRelationMapper.selectByCondition(
+            page, userId, keyword, department, status);
+
+        // 使用stream转换DTO
+        IPage<ContactDTO> dtoPage = relationPage.convert(this::convertToContactDTO);
+
+        return PageResult.fromPage(dtoPage);
     }
     
     @Override
-    public PageResult<ContactDTO> getOtherContactsList(Long userId, Integer page, Integer size, String keyword) {
-        logger.info("获取其它联系人列表 - 页码: {}, 每页大小: {}, 关键词: {}", page, size, keyword);
+    public PageResult<ContactDTO> getOtherContactsList(Long userId, Integer pageNum, Integer pageSize, String keyword) {
+        logger.info("获取其它联系人列表 - 页码: {}, 每页大小: {}, 关键词: {}", pageNum, pageSize, keyword);
         
         try {
-        PageHelper.startPage(page, size);
-            logger.debug("执行查询前 - 已设置分页参数");
+            // 使用MyBatis-Plus的分页对象
+            Page<User> page = new Page<>(pageNum, pageSize);
+            IPage<User> userPage = contactsRelationMapper.selectOtherContacts(page, keyword);
             
-            // 执行查询，不再传递userId参数
-            List<User> userList = contactsRelationMapper.selectOtherContacts(keyword);
-            
-            // 直接输出查询结果
-            logger.info("查询结果大小: {}", userList != null ? userList.size() : 0);
-            if (userList != null && !userList.isEmpty()) {
-                logger.info("第一条记录: id={}, name={}, workId={}", 
-                    userList.get(0).getId(), 
-                    userList.get(0).getName(),
-                    userList.get(0).getWorkId());
-            } else {
-                logger.warn("查询结果为空");
-            }
-            
-            if (userList instanceof Page) {
-                Page<User> userPage = (Page<User>) userList;
-                logger.info("查询成功 - 总记录数: {}, 当前页记录数: {}", userPage.getTotal(), userPage.size());
-                
-                // 转换为DTO
-                List<ContactDTO> contactDTOList = userPage.getResult().stream()
-                    .map(this::convertUserToContactDTO)
-                    .collect(Collectors.toList());
-                
-                return new PageResult<>(userPage.getTotal(), contactDTOList);
-            } else {
-                // 处理非Page类型的结果（兼容性处理）
-                logger.warn("查询结果不是Page类型，无法获取总数，使用列表大小作为总数");
-                List<ContactDTO> contactDTOList = userList.stream()
-                    .map(this::convertUserToContactDTO)
-            .collect(Collectors.toList());
-        
-                return new PageResult<>((long) contactDTOList.size(), contactDTOList);
-            }
+            logger.info("查询成功 - 总记录数: {}, 当前页记录数: {}", userPage.getTotal(), userPage.getRecords().size());
+
+            // 转换为DTO
+            IPage<ContactDTO> contactDTOPage = userPage.convert(this::convertUserToContactDTO);
+
+            return PageResult.fromPage(contactDTOPage);
         } catch (Exception e) {
             // 增强错误日志
             if (e.getCause() instanceof java.sql.SQLException) {
@@ -125,7 +95,13 @@ public class ContactsServiceImpl implements ContactsService {
                 logger.error("获取其它联系人列表异常", e);
             }
             // 返回空列表而不是抛出异常
-            return new PageResult<>(0L, new ArrayList<>());
+            PageResult<ContactDTO> errorResult = new PageResult<>();
+            errorResult.setTotal(0L);
+            errorResult.setList(new ArrayList<>());
+            errorResult.setCurrent(pageNum);
+            errorResult.setSize(pageSize);
+            errorResult.setPages(0L);
+            return errorResult;
         }
     }
     

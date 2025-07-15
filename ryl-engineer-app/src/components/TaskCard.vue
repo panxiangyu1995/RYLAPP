@@ -105,6 +105,7 @@ export default {
       
       switch(status) {
         case 'pending': return 'status-pending'
+        case '待确认': return 'status-confirming'
         case 'in-progress': return 'status-progress'
         case 'completed': return 'status-completed'
         default: return 'status-pending'
@@ -115,6 +116,7 @@ export default {
       
       switch(status) {
         case 'pending': return '待处理'
+        case '待确认': return '待确认'
         case 'in-progress': return '进行中'
         case 'completed': return '已完成'
         default: return status || '待处理'
@@ -276,6 +278,19 @@ export default {
 .status-completed {
   background-color: #d1fae5;
   color: #059669;
+}
+
+.task-status.status-progress {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+.task-status.status-confirming {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+.task-status.status-completed {
+  background-color: #dcfce7;
+  color: #22c55e;
 }
 
 .task-details {

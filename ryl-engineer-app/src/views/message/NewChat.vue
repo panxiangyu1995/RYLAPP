@@ -80,7 +80,7 @@
 </template>
 
 <script>
-import { getContactsList } from '@/api/contacts'
+import { getEngineerStatusList } from '@/api/contacts'
 import { createConversation } from '@/api/chat'
 
 export default {
@@ -123,7 +123,7 @@ export default {
           keyword: this.searchText
         }
         
-        const response = await getContactsList(params)
+        const response = await getEngineerStatusList(params)
         
         if (response.code === 200 && response.data) {
           this.allContacts = response.data.list || []

@@ -47,8 +47,21 @@
           </div>
 
           <div class="message-content">
+            <!-- 解析后的交互式消息 -->
+            <div v-if="getParsedContent(message).isInteractive" class="interactive-message">
+              <div class="text-message">{{ getParsedContent(message).text }}</div>
+              <div class="message-actions" v-if="getParsedContent(message).actions">
+                <button 
+                  v-for="(action, i) in getParsedContent(message).actions" 
+                  :key="i"
+                  :class="['action-btn', action.primary ? 'primary' : '']"
+                  @click="handleAction(action)">
+                  {{ action.label }}
+                </button>
+              </div>
+            </div>
             <!-- 文本消息 -->
-            <div v-if="message.contentType === 'text'" class="text-message">
+            <div v-else-if="message.contentType === 'text'" class="text-message">
               {{ message.content }}
             </div>
 
@@ -109,14 +122,37 @@
         </div>
       </div>
     </div>
+    
+    <!-- 弹窗组件 -->
+    <RejectReasonDialog
+      v-if="showRejectDialog"
+      :task-id="currentOperatingTask?.id"
+      @close="closeRejectDialog"
+      @submit="handleRejectSubmit"
+    />
+
+    <TaskAssignDialog
+      v-if="showAssignDialog"
+      :task-id="currentOperatingTask?.id"
+      @close="closeAssignDialog"
+      @assign="handleAssignSubmit"
+    />
   </div>
 </template>
 
 <script>
 import { getMessageList, sendMessage, markMessageRead, uploadMessageImage } from '@/api/chat'
+import { acceptTask, rejectTask } from '@/api/task'
+import RejectReasonDialog from '@/components/task/dialogs/RejectReasonDialog.vue'
+import TaskAssignDialog from '@/components/task/dialogs/TaskAssignDialog.vue'
+
 
 export default {
   name: 'ChatDetailPage',
+  components: {
+    RejectReasonDialog,
+    TaskAssignDialog
+  },
   data() {
     return {
       conversationId: this.$route.params.id,
@@ -134,7 +170,12 @@ export default {
       page: 1,
       pageSize: 20,
       hasMoreMessages: false,
-      sending: false
+      sending: false,
+      // 新增状态
+      showRejectDialog: false,
+      showAssignDialog: false,
+      currentOperatingTask: null,
+      rejectionData: null
     }
   },
   created() {
@@ -412,7 +453,95 @@ export default {
     // 显示更多选项
     showOptions() {
       // 实现显示更多选项功能
-    }
+    },
+
+    getParsedContent(message) {
+      if (message.contentType === 'text') {
+        try {
+          const content = JSON.parse(message.content);
+          if (content && typeof content === 'object' && content.actions) {
+            return { ...content, isInteractive: true };
+          }
+        } catch (e) {
+          // 不是JSON，是普通文本
+        }
+      }
+      return { text: message.content, isInteractive: false };
+    },
+    async handleAction(action) {
+        if (!action || !action.type) return;
+
+        this.currentOperatingTask = { id: action.taskId };
+
+        switch (action.type) {
+            case 'accept-task':
+                try {
+                    await acceptTask(action.taskId);
+                    // 可以在这里显示一个toast提示
+                    console.log(`任务 ${action.taskId} 已接受`);
+                    // 可选：刷新页面或更新此消息的状态
+                } catch (error) {
+                    console.error('接受任务失败', error);
+                }
+                break;
+            case 'reject-task':
+                this.showRejectDialog = true;
+                break;
+            default:
+                console.warn('未知的操作类型:', action.type);
+        }
+    },
+    closeRejectDialog() {
+      this.showRejectDialog = false;
+      this.currentOperatingTask = null;
+      this.rejectionData = null;
+    },
+    async handleRejectSubmit(data) {
+        this.showRejectDialog = false;
+        this.rejectionData = { reason: data.reason }; // 暂存拒绝理由
+
+        if (data.transferType === 'admin') {
+            try {
+                await rejectTask(data.taskId, { 
+                    reason: data.reason, 
+                    transferTarget: 'admin' 
+                });
+                console.log(`任务 ${data.taskId} 已拒绝并转派给管理员`);
+            } catch (error) {
+                console.error('拒绝任务失败', error);
+            }
+            this.currentOperatingTask = null;
+            this.rejectionData = null;
+        } else if (data.transferType === 'engineer') {
+            // 打开工程师选择对话框
+            this.showAssignDialog = true;
+        }
+    },
+    closeAssignDialog() {
+      this.showAssignDialog = false;
+      this.currentOperatingTask = null;
+      this.rejectionData = null;
+    },
+    async handleAssignSubmit(assignData) {
+        this.showAssignDialog = false;
+        if (!this.rejectionData) {
+            console.error('无法转派，缺少拒绝理由');
+            return;
+        }
+
+        try {
+            await rejectTask(assignData.taskId, {
+                reason: this.rejectionData.reason,
+                transferTarget: assignData.engineerId.toString()
+            });
+            console.log(`任务 ${assignData.taskId} 已转派给工程师 ${assignData.engineerId}`);
+        } catch (error) {
+            console.error('转派任务失败', error);
+        }
+
+        this.currentOperatingTask = null;
+        this.rejectionData = null;
+    },
   }
 }
 </script>

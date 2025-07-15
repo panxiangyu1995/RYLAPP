@@ -127,6 +127,7 @@ public class TaskController {
             task.setDeviceName(taskDTO.getDevice().getName());
             task.setDeviceBrand(taskDTO.getDevice().getBrand());
             task.setDeviceModel(taskDTO.getDevice().getModel());
+            task.setDeviceType(taskDTO.getDevice().getType()); // 新增：设置仪器类型
             // 移除故障描述和需求描述字段，避免与description重复
             task.setQuantity(taskDTO.getDevice().getQuantity());
             task.setVerificationType(taskDTO.getDevice().getVerificationType());

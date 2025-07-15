@@ -63,11 +63,29 @@
             
             <div class="form-group">
               <label>所属部门</label>
-              <select v-model="userInfo.department" class="form-select">
-                <option v-for="(dept, index) in departments" :key="index" :value="dept">
-                  {{ dept }}
-                </option>
-              </select>
+              <input type="text" v-model="userInfo.department" class="form-input" placeholder="请输入所属部门">
+            </div>
+          </div>
+        </div>
+
+        <!-- 技术分类 (仅工程师可见) -->
+        <div v-if="isEngineer" class="info-card">
+          <div class="info-section">
+            <h3 class="section-title">技术分类</h3>
+            <p class="section-subtitle">请选择您擅长的技术领域</p>
+            <div class="category-grid">
+              <div v-for="category in technicalCategoryOptions" :key="category" class="form-check">
+                <input 
+                  class="form-check-input" 
+                  type="checkbox" 
+                  :value="category" 
+                  :id="'cat_' + category"
+                  v-model="userInfo.technicalCategory"
+                >
+                <label class="form-check-label" :for="'cat_' + category">
+                  {{ category }}
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -82,10 +100,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeMount } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import { useAuthStore } from '../../stores/auth'
+import { toast } from 'vue-toastification'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -97,7 +116,8 @@ const userInfo = reactive({
   name: '',
   department: '',
   mobile: '',
-  avatar: ''
+  avatar: '',
+  technicalCategory: [], // 使用数组存储技术分类
 })
 
 // 表单错误
@@ -117,6 +137,13 @@ const departments = [
   '仓库管理员',
   '客户经理',
 ]
+
+// 选项
+const technicalCategoryOptions = ref([
+  '质谱', '色谱', '光谱', '电化学', '生命科学', '物性测试', '样品前处理', '通用设备'
+])
+
+const isEngineer = computed(() => userInfo.department === '工程师')
 
 // 检查token状态
 onBeforeMount(() => {
@@ -158,6 +185,12 @@ async function fetchUserProfile() {
       userInfo.department = profile.department
       userInfo.mobile = profile.mobile
       userInfo.avatar = profile.avatar
+      // 将字符串转换为数组
+      if (profile.technicalCategory && typeof profile.technicalCategory === 'string') {
+        userInfo.technicalCategory = profile.technicalCategory.split(',')
+      } else {
+        userInfo.technicalCategory = []
+      }
     } else {
       // API请求失败，但不影响表单显示
       console.error('获取用户信息失败:', result.error)
@@ -217,11 +250,14 @@ async function saveInfo() {
   
   loading.value = true
   try {
-    const result = await userStore.updateProfile({
+    const payload = {
       name: userInfo.name,
       mobile: userInfo.mobile,
-      department: userInfo.department
-    })
+      department: userInfo.department,
+      // 将数组转换回字符串
+      technicalCategory: userInfo.technicalCategory.join(','),
+    }
+    const result = await userStore.updateProfile(payload)
     
     if (result.success) {
       // 更新本地存储中的用户名
@@ -236,10 +272,11 @@ async function saveInfo() {
         console.error('更新本地用户信息失败:', e)
       }
       
-      alert('个人信息更新成功')
+      toast.success('个人信息更新成功')
       router.back()
     } else {
       globalError.value = result.error
+      toast.error(result.error || '更新失败')
     }
   } catch (error) {
     console.error('更新个人信息失败:', error)

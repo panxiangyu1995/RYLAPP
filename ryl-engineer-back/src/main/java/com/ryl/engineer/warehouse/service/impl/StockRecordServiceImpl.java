@@ -1,8 +1,9 @@
 package com.ryl.engineer.warehouse.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ryl.engineer.common.dto.PageDTO;
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.common.utils.UserContext;
 import com.ryl.engineer.entity.User;
@@ -152,12 +153,12 @@ public class StockRecordServiceImpl implements StockRecordService {
     }
 
     @Override
-    public ResponseDTO<PageDTO<StockRecordDTO>> getRecords(Long itemId, Integer recordType, Long warehouseId, 
-                                                         LocalDateTime startTime, LocalDateTime endTime, 
+    public PageResult<StockRecordDTO> getRecords(Long itemId, Integer recordType, Long warehouseId,
+                                                         LocalDateTime startTime, LocalDateTime endTime,
                                                          Integer pageNum, Integer pageSize) {
         // 创建查询条件
         LambdaQueryWrapper<StockRecord> queryWrapper = new LambdaQueryWrapper<>();
-        
+
         // 添加物品ID条件
         if (itemId != null) {
             queryWrapper.eq(StockRecord::getItemId, itemId);
@@ -167,26 +168,20 @@ public class StockRecordServiceImpl implements StockRecordService {
             itemQueryWrapper.eq(WarehouseItem::getWarehouseId, warehouseId);
             List<WarehouseItem> items = warehouseItemMapper.selectList(itemQueryWrapper);
             List<Long> itemIds = items.stream().map(WarehouseItem::getId).collect(Collectors.toList());
-            
+
             if (itemIds.isEmpty()) {
                 // 仓库中没有物品，返回空列表
-                PageDTO<StockRecordDTO> pageDTO = new PageDTO<>();
-                pageDTO.setList(new ArrayList<>());
-                pageDTO.setTotal(0L);
-                pageDTO.setPages(0);
-                pageDTO.setCurrent(pageNum);
-                pageDTO.setSize(pageSize);
-                return ResponseDTO.success(pageDTO);
+                return PageResult.fromPage(new Page<>(pageNum, pageSize));
             }
-            
+
             queryWrapper.in(StockRecord::getItemId, itemIds);
         }
-        
+
         // 添加记录类型条件
         if (recordType != null) {
             queryWrapper.eq(StockRecord::getRecordType, recordType);
         }
-        
+
         // 添加时间范围条件
         if (startTime != null) {
             queryWrapper.ge(StockRecord::getOperationTime, startTime);
@@ -194,26 +189,16 @@ public class StockRecordServiceImpl implements StockRecordService {
         if (endTime != null) {
             queryWrapper.le(StockRecord::getOperationTime, endTime);
         }
-        
+
         // 按操作时间降序排序
         queryWrapper.orderByDesc(StockRecord::getOperationTime);
-        
+
         // 分页查询
         Page<StockRecord> page = new Page<>(pageNum, pageSize);
-        Page<StockRecord> recordPage = stockRecordMapper.selectPage(page, queryWrapper);
-        
-        // 转换为DTO
-        List<StockRecordDTO> recordDTOList = recordPage.getRecords().stream().map(this::convertToDTO).collect(Collectors.toList());
-        
-        // 组装分页结果
-        PageDTO<StockRecordDTO> pageDTO = new PageDTO<>();
-        pageDTO.setList(recordDTOList);
-        pageDTO.setTotal(recordPage.getTotal());
-        pageDTO.setPages((int) recordPage.getPages());
-        pageDTO.setCurrent((int) recordPage.getCurrent());
-        pageDTO.setSize((int) recordPage.getSize());
-        
-        return ResponseDTO.success(pageDTO);
+        IPage<StockRecord> recordPage = stockRecordMapper.selectPage(page, queryWrapper);
+
+        // 转换为DTO并返回
+        return PageResult.fromPage(recordPage.convert(this::convertToDTO));
     }
 
     /**
@@ -237,99 +222,65 @@ public class StockRecordServiceImpl implements StockRecordService {
     }
 
     @Override
-    public ResponseDTO<PageDTO<StockRecordDTO>> getItemRecords(Long itemId, Integer recordType, Integer pageNum, Integer pageSize) {
-        // 参数验证
-        if (itemId == null) {
-            return ResponseDTO.paramError("物品ID不能为空");
-        }
-        
+    public PageResult<StockRecordDTO> getItemRecords(Long itemId, Integer recordType, Integer pageNum, Integer pageSize) {
         // 创建查询条件
         LambdaQueryWrapper<StockRecord> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(StockRecord::getItemId, itemId);
         if (recordType != null) {
             queryWrapper.eq(StockRecord::getRecordType, recordType);
         }
+
+        // 按操作时间降序排序
         queryWrapper.orderByDesc(StockRecord::getOperationTime);
-        
+
         // 分页查询
         Page<StockRecord> page = new Page<>(pageNum, pageSize);
-        Page<StockRecord> recordPage = stockRecordMapper.selectPage(page, queryWrapper);
-        
-        // 转换为DTO
-        List<StockRecordDTO> recordDTOList = recordPage.getRecords().stream().map(this::convertToDTO).collect(Collectors.toList());
-        
-        // 组装分页结果
-        PageDTO<StockRecordDTO> pageDTO = new PageDTO<>();
-        pageDTO.setList(recordDTOList);
-        pageDTO.setTotal(recordPage.getTotal());
-        pageDTO.setPages((int) recordPage.getPages());
-        pageDTO.setCurrent((int) recordPage.getCurrent());
-        pageDTO.setSize((int) recordPage.getSize());
-        
-        return ResponseDTO.success(pageDTO);
+        IPage<StockRecord> recordPage = stockRecordMapper.selectPage(page, queryWrapper);
+
+        // 转换为DTO并返回
+        return PageResult.fromPage(recordPage.convert(this::convertToDTO));
     }
 
     @Override
-    public ResponseDTO<PageDTO<StockRecordDTO>> getWarehouseRecords(Long warehouseId, Integer recordType, 
-                                                                   LocalDate startDate, LocalDate endDate, 
+    public PageResult<StockRecordDTO> getWarehouseRecords(Long warehouseId, Integer recordType,
+                                                                   LocalDate startDate, LocalDate endDate,
                                                                    Integer pageNum, Integer pageSize) {
-        // 参数验证
-        if (warehouseId == null) {
-            return ResponseDTO.paramError("仓库ID不能为空");
-        }
-        
-        // 获取仓库中的物品ID列表
+        // 创建查询条件
+        LambdaQueryWrapper<StockRecord> queryWrapper = new LambdaQueryWrapper<>();
+
+        // 获取仓库下的所有物品ID
         LambdaQueryWrapper<WarehouseItem> itemQueryWrapper = new LambdaQueryWrapper<>();
         itemQueryWrapper.eq(WarehouseItem::getWarehouseId, warehouseId);
         List<WarehouseItem> items = warehouseItemMapper.selectList(itemQueryWrapper);
         List<Long> itemIds = items.stream().map(WarehouseItem::getId).collect(Collectors.toList());
-        
+
         if (itemIds.isEmpty()) {
-            // 仓库中没有物品，返回空列表
-            PageDTO<StockRecordDTO> pageDTO = new PageDTO<>();
-            pageDTO.setList(new ArrayList<>());
-            pageDTO.setTotal(0L);
-            pageDTO.setPages(0);
-            pageDTO.setCurrent(pageNum);
-            pageDTO.setSize(pageSize);
-            return ResponseDTO.success(pageDTO);
+            return PageResult.fromPage(new Page<>(pageNum, pageSize));
         }
-        
-        // 创建查询条件
-        LambdaQueryWrapper<StockRecord> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(StockRecord::getItemId, itemIds);
+
+        // 添加记录类型条件
         if (recordType != null) {
             queryWrapper.eq(StockRecord::getRecordType, recordType);
         }
-        
-        // 添加日期范围条件
+
+        // 添加时间范围条件
         if (startDate != null) {
-            LocalDateTime startDateTime = LocalDateTime.of(startDate, LocalTime.MIN);
-            queryWrapper.ge(StockRecord::getOperationTime, startDateTime);
+            queryWrapper.ge(StockRecord::getOperationTime, startDate.atStartOfDay());
         }
         if (endDate != null) {
-            LocalDateTime endDateTime = LocalDateTime.of(endDate, LocalTime.MAX);
-            queryWrapper.le(StockRecord::getOperationTime, endDateTime);
+            queryWrapper.le(StockRecord::getOperationTime, endDate.atTime(LocalTime.MAX));
         }
-        
+
+        // 按操作时间降序排序
         queryWrapper.orderByDesc(StockRecord::getOperationTime);
-        
+
         // 分页查询
         Page<StockRecord> page = new Page<>(pageNum, pageSize);
-        Page<StockRecord> recordPage = stockRecordMapper.selectPage(page, queryWrapper);
-        
-        // 转换为DTO
-        List<StockRecordDTO> recordDTOList = recordPage.getRecords().stream().map(this::convertToDTO).collect(Collectors.toList());
-        
-        // 组装分页结果
-        PageDTO<StockRecordDTO> pageDTO = new PageDTO<>();
-        pageDTO.setList(recordDTOList);
-        pageDTO.setTotal(recordPage.getTotal());
-        pageDTO.setPages((int) recordPage.getPages());
-        pageDTO.setCurrent((int) recordPage.getCurrent());
-        pageDTO.setSize((int) recordPage.getSize());
-        
-        return ResponseDTO.success(pageDTO);
+        IPage<StockRecord> recordPage = stockRecordMapper.selectPage(page, queryWrapper);
+
+        // 转换为DTO并返回
+        return PageResult.fromPage(recordPage.convert(this::convertToDTO));
     }
 
     @Override

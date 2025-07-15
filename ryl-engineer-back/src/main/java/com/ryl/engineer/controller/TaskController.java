@@ -7,6 +7,7 @@ import com.ryl.engineer.common.Result;
 import com.ryl.engineer.dto.TaskDTO;
 import com.ryl.engineer.dto.TaskFlowDTO;
 import com.ryl.engineer.dto.request.CreateTaskRequest;
+import com.ryl.engineer.dto.request.RejectTaskRequest;
 import com.ryl.engineer.dto.request.TaskFlowStatusRequest;
 import com.ryl.engineer.dto.request.TaskQueryRequest;
 import com.ryl.engineer.dto.request.TaskStepUpdateRequest;
@@ -444,6 +445,39 @@ public class TaskController {
         } catch (Exception e) {
             log.error("更新任务状态异常: {}", e.getMessage(), e);
             return Result.error(500, "更新任务状态异常: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 工程师接受任务
+     * @param id 任务ID
+     * @return Result
+     */
+    @PostMapping("/{id}/accept")
+    public Result<?> acceptTask(@PathVariable("id") Long id) {
+        try {
+            taskService.acceptTask(id);
+            return Result.success("任务已接受");
+        } catch (Exception e) {
+            log.error("接受任务失败, 任务ID: {}", id, e);
+            return Result.error(500, e.getMessage());
+        }
+    }
+
+    /**
+     * 工程师拒绝任务
+     * @param id 任务ID
+     * @param request 拒绝请求体
+     * @return Result
+     */
+    @PostMapping("/{id}/reject")
+    public Result<?> rejectTask(@PathVariable("id") Long id, @RequestBody RejectTaskRequest request) {
+        try {
+            taskService.rejectTask(id, request);
+            return Result.success("任务已拒绝并处理");
+        } catch (Exception e) {
+            log.error("拒绝任务失败, 任务ID: {}", id, e);
+            return Result.error(500, e.getMessage());
         }
     }
 } 

@@ -1,7 +1,7 @@
 package com.ryl.engineer.controller;
 
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.Result;
-import com.ryl.engineer.common.dto.PageDTO;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.ItemRequestDTO;
 import com.ryl.engineer.warehouse.dto.ItemUsageStatsDTO;
@@ -34,17 +34,13 @@ public class ItemRequestController {
      * @return 申请列表
      */
     @GetMapping("/list")
-    public Result<PageDTO<ItemRequestDTO>> getRequestList(
+    public Result<PageResult<ItemRequestDTO>> getRequestList(
             @RequestParam(required = false) Integer requestType,
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        ResponseDTO<PageDTO<ItemRequestDTO>> responseDTO = itemRequestService.getRequestList(requestType, status, pageNum, pageSize);
-        if (responseDTO.getCode() == 200) {
-            return Result.success(responseDTO.getData());
-        } else {
-            return Result.error(responseDTO.getCode(), responseDTO.getMessage());
-        }
+        PageResult<ItemRequestDTO> pageResult = itemRequestService.getRequestList(requestType, status, pageNum, pageSize);
+        return Result.success(pageResult);
     }
 
     /**
@@ -58,18 +54,14 @@ public class ItemRequestController {
      * @return 申请列表
      */
     @GetMapping("/user/{userId}")
-    public Result<PageDTO<ItemRequestDTO>> getUserRequestList(
+    public Result<PageResult<ItemRequestDTO>> getUserRequestList(
             @PathVariable Long userId,
             @RequestParam(required = false) Integer requestType,
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        ResponseDTO<PageDTO<ItemRequestDTO>> responseDTO = itemRequestService.getUserRequestList(userId, requestType, status, pageNum, pageSize);
-        if (responseDTO.getCode() == 200) {
-            return Result.success(responseDTO.getData());
-        } else {
-            return Result.error(responseDTO.getCode(), responseDTO.getMessage());
-        }
+        PageResult<ItemRequestDTO> pageResult = itemRequestService.getUserRequestList(userId, requestType, status, pageNum, pageSize);
+        return Result.success(pageResult);
     }
 
     /**
@@ -81,16 +73,12 @@ public class ItemRequestController {
      * @return 申请列表
      */
     @GetMapping("/task/{taskId}")
-    public Result<PageDTO<ItemRequestDTO>> getTaskRequestList(
+    public Result<PageResult<ItemRequestDTO>> getTaskRequestList(
             @PathVariable String taskId,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        ResponseDTO<PageDTO<ItemRequestDTO>> responseDTO = itemRequestService.getTaskRequestList(taskId, pageNum, pageSize);
-        if (responseDTO.getCode() == 200) {
-            return Result.success(responseDTO.getData());
-        } else {
-            return Result.error(responseDTO.getCode(), responseDTO.getMessage());
-        }
+        PageResult<ItemRequestDTO> pageResult = itemRequestService.getTaskRequestList(taskId, pageNum, pageSize);
+        return Result.success(pageResult);
     }
 
     /**

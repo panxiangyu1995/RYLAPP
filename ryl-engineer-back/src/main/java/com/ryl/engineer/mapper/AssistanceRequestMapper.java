@@ -1,5 +1,7 @@
 package com.ryl.engineer.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ryl.engineer.entity.AssistanceRequest;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -20,9 +22,10 @@ public interface AssistanceRequestMapper {
     /**
      * 获取用户相关的协助请求列表
      */
-    List<AssistanceRequest> selectByUserId(
-        @Param("userId") Long userId, 
-        @Param("status") String status, 
+    IPage<AssistanceRequest> selectByUserId(
+        Page<AssistanceRequest> page,
+        @Param("userId") Long userId,
+        @Param("status") String status,
         @Param("keyword") String keyword
     );
     

@@ -1,6 +1,6 @@
 package com.ryl.engineer.warehouse.service;
 
-import com.ryl.engineer.common.dto.PageDTO;
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.WarehouseDTO;
 import com.ryl.engineer.warehouse.dto.WarehouseDetailDTO;
@@ -23,7 +23,7 @@ public interface WarehouseService {
      * @param pageSize 每页数量
      * @return 仓库列表
      */
-    ResponseDTO<PageDTO<WarehouseDTO>> getWarehouseList(Integer pageNum, Integer pageSize);
+    PageResult<WarehouseDTO> getWarehouseList(Integer pageNum, Integer pageSize);
 
     /**
      * 获取所有仓库

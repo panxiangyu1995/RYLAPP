@@ -46,7 +46,12 @@ public class UserInfoResponse implements Serializable {
      * 头像
      */
     private String avatar;
-    
+
+    /**
+     * 技术分类
+     */
+    private String technicalCategory;
+
     /**
      * 任务统计信息
      */

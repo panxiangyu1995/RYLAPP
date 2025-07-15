@@ -38,17 +38,6 @@ mybatis:
   # SQL Server特定配置
   config-location: classpath:mybatis-config.xml
 
-pagehelper:
-  helperDialect: sqlserver
-  reasonable: true
-  supportMethodsArguments: true
-  params: count=countSql
-  autoRuntimeDialect: true
-  sqlServerWithNoOrderByTopQuery: true
-  countSuffix: _COUNT
-  dialectAlias: sqlserver=com.github.pagehelper.dialect.helper.SqlServerDialect
-  offsetAsPageNum: true
-
 logging:
   level:
     com.ryl.engineer: debug

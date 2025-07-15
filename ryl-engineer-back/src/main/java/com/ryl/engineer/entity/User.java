@@ -54,7 +54,12 @@ public class User implements Serializable {
      * 头像
      */
     private String avatar;
-    
+
+    /**
+     * 技术分类
+     */
+    private String technicalCategory;
+
     /**
      * 状态（0-禁用，1-启用）
      */

@@ -1,5 +1,7 @@
 package com.ryl.engineer.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.dto.announcement.AnnouncementDTO;
 import com.ryl.engineer.entity.SystemAnnouncement;
@@ -36,42 +38,22 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     @Override
     public PageResult<AnnouncementDTO> getAnnouncementList(Long userId, Integer page, Integer size, 
                                                         Boolean onlyUnread, String keyword) {
-        // 获取公告列表
-        List<SystemAnnouncement> announcements = announcementMapper.selectList(keyword);
-        
-        // 获取用户已读公告ID列表
+        // 1. 创建分页参数
+        Page<SystemAnnouncement> pageRequest = new Page<>(page, size);
+
+        // 2. 调用Mapper进行分页查询
+        IPage<SystemAnnouncement> announcementPage = announcementMapper.selectList(pageRequest, keyword, userId, onlyUnread);
+
+        // 3. 获取当前用户所有已读公告ID，用于后续DTO转换
         List<Long> readAnnouncementIds = announcementReadMapper.selectReadAnnouncementIdsByUserId(userId);
-        
-        // 如果只查询未读，则过滤掉已读公告
-        if (onlyUnread != null && onlyUnread) {
-            announcements = announcements.stream()
-                .filter(announcement -> !readAnnouncementIds.contains(announcement.getId()))
-                .collect(Collectors.toList());
-        }
-        
-        // 总记录数
-        int total = announcements.size();
-        
-        // 分页处理
-        int fromIndex = (page - 1) * size;
-        int toIndex = Math.min(fromIndex + size, total);
-        
-        // 边界检查
-        if (fromIndex >= total) {
-            return new PageResult<>(0, new ArrayList<>(), page, size);
-        }
-        
-        // 分页后的数据
-        List<SystemAnnouncement> pagedAnnouncements = announcements.subList(fromIndex, toIndex);
-        
-        // 转换为DTO
-        List<AnnouncementDTO> result = new ArrayList<>();
-        for (SystemAnnouncement announcement : pagedAnnouncements) {
-            AnnouncementDTO dto = convertToDTO(announcement, readAnnouncementIds, userId);
-            result.add(dto);
-        }
-        
-        return new PageResult<>(total, result, page, size);
+
+        // 4. 结果转换为DTO
+        IPage<AnnouncementDTO> dtoPage = announcementPage.convert(
+                announcement -> convertToDTO(announcement, readAnnouncementIds, userId)
+        );
+
+        // 5. 封装并返回分页结果
+        return PageResult.fromPage(dtoPage);
     }
 
     @Override
@@ -215,7 +197,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     @Transactional
     public int markAllAnnouncementsRead(Long userId) {
         // 获取所有公告
-        List<SystemAnnouncement> announcements = announcementMapper.selectList(null);
+        List<SystemAnnouncement> announcements = announcementMapper.selectAllActive(null);
         
         if (announcements == null || announcements.isEmpty()) {
             return 0;

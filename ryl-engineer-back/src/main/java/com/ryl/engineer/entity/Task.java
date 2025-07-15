@@ -68,6 +68,11 @@ public class Task {
      * 销售人员ID
      */
     private Long salesId;
+
+    /**
+     * 工程师ID
+     */
+    private Integer engineerId;
     
     /**
      * 优先级（low/normal/high）
@@ -118,7 +123,12 @@ public class Task {
      * 设备品牌
      */
     private String deviceBrand;
-    
+
+    /**
+     * 仪器类型
+     */
+    private String deviceType;
+
     /**
      * 设备序列号
      */

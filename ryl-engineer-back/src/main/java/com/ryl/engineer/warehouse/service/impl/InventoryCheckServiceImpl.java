@@ -1,8 +1,9 @@
 package com.ryl.engineer.warehouse.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ryl.engineer.common.dto.PageDTO;
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.InventoryCheckDTO;
 import com.ryl.engineer.warehouse.dto.InventoryCheckDetailDTO;
@@ -46,7 +47,7 @@ public class InventoryCheckServiceImpl implements InventoryCheckService {
     private WarehouseItemMapper warehouseItemMapper;
 
     @Override
-    public ResponseDTO<PageDTO<InventoryCheckDTO>> getCheckList(Long warehouseId, Integer status, Integer pageNum, Integer pageSize) {
+    public PageResult<InventoryCheckDTO> getCheckList(Long warehouseId, Integer status, Integer pageNum, Integer pageSize) {
         // 创建查询条件
         LambdaQueryWrapper<InventoryCheck> queryWrapper = new LambdaQueryWrapper<>();
         if (warehouseId != null) {
@@ -56,46 +57,30 @@ public class InventoryCheckServiceImpl implements InventoryCheckService {
             queryWrapper.eq(InventoryCheck::getStatus, status);
         }
         queryWrapper.orderByDesc(InventoryCheck::getCreateTime);
-        
+
         // 分页查询
         Page<InventoryCheck> page = new Page<>(pageNum, pageSize);
-        Page<InventoryCheck> checkPage = inventoryCheckMapper.selectPage(page, queryWrapper);
-        
+        IPage<InventoryCheck> checkPage = inventoryCheckMapper.selectPage(page, queryWrapper);
+
         // 转换为DTO
-        List<InventoryCheckDTO> checkDTOList = checkPage.getRecords().stream()
-                .map(check -> {
-                    InventoryCheckDTO dto = InventoryCheckDTO.fromEntity(check);
-                    // 查询仓库名称
-                    Warehouse warehouse = warehouseMapper.selectById(check.getWarehouseId());
-                    if (warehouse != null) {
-                        dto.setWarehouseName(warehouse.getName());
-                    }
-                    // 查询盘点物品数量和差异物品数量
-                    // 由于没有实现countByCheckId和countDifferenceByCheckId方法，这里暂时设置为0
-                    dto.setItemCount(0);
-                    dto.setDifferenceCount(0);
-                    return dto;
-                })
-                .collect(Collectors.toList());
-        
-        // 组装分页结果
-        PageDTO<InventoryCheckDTO> pageDTO = new PageDTO<>();
-        pageDTO.setList(checkDTOList);
-        pageDTO.setTotal(checkPage.getTotal());
-        pageDTO.setPages((int) checkPage.getPages());
-        pageDTO.setCurrent((int) checkPage.getCurrent());
-        pageDTO.setSize((int) checkPage.getSize());
-        
-        return ResponseDTO.success(pageDTO);
+        IPage<InventoryCheckDTO> dtoPage = checkPage.convert(check -> {
+            InventoryCheckDTO dto = InventoryCheckDTO.fromEntity(check);
+            // 查询仓库名称
+            Warehouse warehouse = warehouseMapper.selectById(check.getWarehouseId());
+            if (warehouse != null) {
+                dto.setWarehouseName(warehouse.getName());
+            }
+            // 查询盘点物品数量和差异物品数量
+            dto.setItemCount(inventoryCheckDetailMapper.countByCheckId(check.getId()));
+            dto.setDifferenceCount(inventoryCheckDetailMapper.countDifferenceByCheckId(check.getId()));
+            return dto;
+        });
+
+        return PageResult.fromPage(dtoPage);
     }
 
     @Override
-    public ResponseDTO<PageDTO<InventoryCheckDTO>> getUserCheckList(Long userId, Integer status, Integer pageNum, Integer pageSize) {
-        // 参数验证
-        if (userId == null) {
-            return ResponseDTO.paramError("用户ID不能为空");
-        }
-        
+    public PageResult<InventoryCheckDTO> getUserCheckList(Long userId, Integer status, Integer pageNum, Integer pageSize) {
         // 创建查询条件
         LambdaQueryWrapper<InventoryCheck> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryCheck::getCheckerId, userId);
@@ -103,37 +88,26 @@ public class InventoryCheckServiceImpl implements InventoryCheckService {
             queryWrapper.eq(InventoryCheck::getStatus, status);
         }
         queryWrapper.orderByDesc(InventoryCheck::getCreateTime);
-        
+
         // 分页查询
         Page<InventoryCheck> page = new Page<>(pageNum, pageSize);
-        Page<InventoryCheck> checkPage = inventoryCheckMapper.selectPage(page, queryWrapper);
-        
+        IPage<InventoryCheck> checkPage = inventoryCheckMapper.selectPage(page, queryWrapper);
+
         // 转换为DTO
-        List<InventoryCheckDTO> checkDTOList = checkPage.getRecords().stream()
-                .map(check -> {
-                    InventoryCheckDTO dto = InventoryCheckDTO.fromEntity(check);
-                    // 查询仓库名称
-                    Warehouse warehouse = warehouseMapper.selectById(check.getWarehouseId());
-                    if (warehouse != null) {
-                        dto.setWarehouseName(warehouse.getName());
-                    }
-                    // 查询盘点物品数量和差异物品数量
-                    // 由于没有实现countByCheckId和countDifferenceByCheckId方法，这里暂时设置为0
-                    dto.setItemCount(0);
-                    dto.setDifferenceCount(0);
-                    return dto;
-                })
-                .collect(Collectors.toList());
-        
-        // 组装分页结果
-        PageDTO<InventoryCheckDTO> pageDTO = new PageDTO<>();
-        pageDTO.setList(checkDTOList);
-        pageDTO.setTotal(checkPage.getTotal());
-        pageDTO.setPages((int) checkPage.getPages());
-        pageDTO.setCurrent((int) checkPage.getCurrent());
-        pageDTO.setSize((int) checkPage.getSize());
-        
-        return ResponseDTO.success(pageDTO);
+        IPage<InventoryCheckDTO> dtoPage = checkPage.convert(check -> {
+            InventoryCheckDTO dto = InventoryCheckDTO.fromEntity(check);
+            // 查询仓库名称
+            Warehouse warehouse = warehouseMapper.selectById(check.getWarehouseId());
+            if (warehouse != null) {
+                dto.setWarehouseName(warehouse.getName());
+            }
+            // 查询盘点物品数量和差异物品数量
+            dto.setItemCount(inventoryCheckDetailMapper.countByCheckId(check.getId()));
+            dto.setDifferenceCount(inventoryCheckDetailMapper.countDifferenceByCheckId(check.getId()));
+            return dto;
+        });
+
+        return PageResult.fromPage(dtoPage);
     }
 
     @Override
@@ -162,12 +136,12 @@ public class InventoryCheckServiceImpl implements InventoryCheckService {
         // 由于没有实现countByCheckId和countDifferenceByCheckId方法，这里使用查询方式计算
         LambdaQueryWrapper<InventoryCheckDetail> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryCheckDetail::getCheckId, checkId);
-        Integer itemCount = Math.toIntExact(inventoryCheckDetailMapper.selectCount(queryWrapper));
+        Integer itemCount = Math.toIntExact(inventoryCheckDetailMapper.countByCheckId(checkId));
         
         LambdaQueryWrapper<InventoryCheckDetail> diffQueryWrapper = new LambdaQueryWrapper<>();
         diffQueryWrapper.eq(InventoryCheckDetail::getCheckId, checkId);
         diffQueryWrapper.apply("system_quantity != actual_quantity");
-        Integer differenceCount = Math.toIntExact(inventoryCheckDetailMapper.selectCount(diffQueryWrapper));
+        Integer differenceCount = Math.toIntExact(inventoryCheckDetailMapper.countDifferenceByCheckId(checkId));
         
         checkDTO.setItemCount(itemCount);
         checkDTO.setDifferenceCount(differenceCount);
@@ -176,92 +150,61 @@ public class InventoryCheckServiceImpl implements InventoryCheckService {
     }
 
     @Override
-    public ResponseDTO<PageDTO<InventoryCheckDetailDTO>> getCheckDetailList(Long checkId, Integer pageNum, Integer pageSize) {
-        // 参数验证
-        if (checkId == null) {
-            return ResponseDTO.paramError("盘库ID不能为空");
-        }
-        
+    public PageResult<InventoryCheckDetailDTO> getCheckDetailList(Long checkId, Integer pageNum, Integer pageSize) {
         // 创建查询条件
         LambdaQueryWrapper<InventoryCheckDetail> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryCheckDetail::getCheckId, checkId);
-        
+
         // 分页查询
         Page<InventoryCheckDetail> page = new Page<>(pageNum, pageSize);
-        Page<InventoryCheckDetail> detailPage = inventoryCheckDetailMapper.selectPage(page, queryWrapper);
-        
+        IPage<InventoryCheckDetail> detailPage = inventoryCheckDetailMapper.selectPage(page, queryWrapper);
+
         // 转换为DTO
-        List<InventoryCheckDetailDTO> detailDTOList = detailPage.getRecords().stream()
-                .map(detail -> {
-                    InventoryCheckDetailDTO dto = new InventoryCheckDetailDTO();
-                    BeanUtils.copyProperties(detail, dto);
-                    
-                    // 查询物品信息
-                    WarehouseItem item = warehouseItemMapper.selectById(detail.getItemId());
-                    if (item != null) {
-                        dto.setItemName(item.getName());
-                        dto.setModel(item.getModel());
-                        // 设置其他物品信息
-                    }
-                    
-                    return dto;
-                })
-                .collect(Collectors.toList());
-        
-        // 组装分页结果
-        PageDTO<InventoryCheckDetailDTO> pageDTO = new PageDTO<>();
-        pageDTO.setList(detailDTOList);
-        pageDTO.setTotal(detailPage.getTotal());
-        pageDTO.setPages((int) detailPage.getPages());
-        pageDTO.setCurrent((int) detailPage.getCurrent());
-        pageDTO.setSize((int) detailPage.getSize());
-        
-        return ResponseDTO.success(pageDTO);
+        IPage<InventoryCheckDetailDTO> detailDTOPage = detailPage.convert(detail -> {
+            InventoryCheckDetailDTO dto = new InventoryCheckDetailDTO();
+            BeanUtils.copyProperties(detail, dto);
+
+            // 查询物品信息
+            WarehouseItem item = warehouseItemMapper.selectById(detail.getItemId());
+            if (item != null) {
+                dto.setItemName(item.getName());
+                dto.setModel(item.getModel());
+                // 设置其他物品信息
+            }
+
+            return dto;
+        });
+
+        return PageResult.fromPage(detailDTOPage);
     }
 
     @Override
-    public ResponseDTO<PageDTO<InventoryCheckDetailDTO>> getDifferenceDetailList(Long checkId, Integer pageNum, Integer pageSize) {
-        // 参数验证
-        if (checkId == null) {
-            return ResponseDTO.paramError("盘库ID不能为空");
-        }
-        
+    public PageResult<InventoryCheckDetailDTO> getDifferenceDetailList(Long checkId, Integer pageNum, Integer pageSize) {
         // 创建查询条件
         LambdaQueryWrapper<InventoryCheckDetail> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryCheckDetail::getCheckId, checkId);
         queryWrapper.apply("system_quantity != actual_quantity"); // 期望数量不等于实际数量
-        
+
         // 分页查询
         Page<InventoryCheckDetail> page = new Page<>(pageNum, pageSize);
-        Page<InventoryCheckDetail> detailPage = inventoryCheckDetailMapper.selectPage(page, queryWrapper);
-        
+        IPage<InventoryCheckDetail> detailPage = inventoryCheckDetailMapper.selectPage(page, queryWrapper);
+
         // 转换为DTO
-        List<InventoryCheckDetailDTO> detailDTOList = detailPage.getRecords().stream()
-                .map(detail -> {
-                    InventoryCheckDetailDTO dto = new InventoryCheckDetailDTO();
-                    BeanUtils.copyProperties(detail, dto);
-                    
-                    // 查询物品信息
-                    WarehouseItem item = warehouseItemMapper.selectById(detail.getItemId());
-                    if (item != null) {
-                        dto.setItemName(item.getName());
-                        dto.setModel(item.getModel());
-                        // 设置其他物品信息
-                    }
-                    
-                    return dto;
-                })
-                .collect(Collectors.toList());
-        
-        // 组装分页结果
-        PageDTO<InventoryCheckDetailDTO> pageDTO = new PageDTO<>();
-        pageDTO.setList(detailDTOList);
-        pageDTO.setTotal(detailPage.getTotal());
-        pageDTO.setPages((int) detailPage.getPages());
-        pageDTO.setCurrent((int) detailPage.getCurrent());
-        pageDTO.setSize((int) detailPage.getSize());
-        
-        return ResponseDTO.success(pageDTO);
+        IPage<InventoryCheckDetailDTO> detailDTOPage = detailPage.convert(detail -> {
+            InventoryCheckDetailDTO dto = new InventoryCheckDetailDTO();
+            BeanUtils.copyProperties(detail, dto);
+
+            // 查询物品信息
+            WarehouseItem item = warehouseItemMapper.selectById(detail.getItemId());
+            if (item != null) {
+                dto.setItemName(item.getName());
+                dto.setModel(item.getModel());
+                // 设置其他物品信息
+            }
+            return dto;
+        });
+
+        return PageResult.fromPage(detailDTOPage);
     }
 
     @Override

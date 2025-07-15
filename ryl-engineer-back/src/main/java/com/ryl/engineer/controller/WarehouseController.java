@@ -1,7 +1,7 @@
 package com.ryl.engineer.controller;
 
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.Result;
-import com.ryl.engineer.common.dto.PageDTO;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.WarehouseDTO;
 import com.ryl.engineer.warehouse.dto.WarehouseDetailDTO;
@@ -48,15 +48,11 @@ public class WarehouseController {
      * @return 分页仓库列表
      */
     @GetMapping("/page")
-    public Result<PageDTO<WarehouseDTO>> getWarehousePage(
+    public Result<PageResult<WarehouseDTO>> getWarehousePage(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        ResponseDTO<PageDTO<WarehouseDTO>> responseDTO = warehouseService.getWarehouseList(pageNum, pageSize);
-        if (responseDTO.getCode() == 200) {
-            return Result.success(responseDTO.getData());
-        } else {
-            return Result.error(responseDTO.getCode(), responseDTO.getMessage());
-        }
+        PageResult<WarehouseDTO> pageResult = warehouseService.getWarehouseList(pageNum, pageSize);
+        return Result.success(pageResult);
     }
 
     /**

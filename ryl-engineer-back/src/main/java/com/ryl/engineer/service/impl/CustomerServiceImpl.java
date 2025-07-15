@@ -1,7 +1,7 @@
 package com.ryl.engineer.service.impl;
 
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.entity.User;
 import com.ryl.engineer.mapper.CustomerEngineerRelationMapper;
@@ -48,93 +48,51 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public PageResult<Map<String, Object>> getAllCustomersList(Long userId, Map<String, Object> params) {
         // 获取分页参数
-        Integer page = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
-        Integer size = params.get("size") != null ? Integer.parseInt(params.get("size").toString()) : 20;
-        
-        // 查询总记录数
-        int total = customerMapper.countAllCustomers(params);
-        
-        // 计算偏移量
-        int offset = (page - 1) * size;
-        
-        // 添加分页参数
-        params.put("offset", offset);
-        params.put("limit", size);
+        Integer pageNum = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
+        Integer pageSize = params.get("size") != null ? Integer.parseInt(params.get("size").toString()) : 20;
+
+        Page<Map<String, Object>> page = new Page<>(pageNum, pageSize);
         params.put("orderBy", "c.create_time DESC");
-        
-        // 查询数据
-        List<Map<String, Object>> list = customerMapper.selectAllCustomersPage(params);
-        
-        return new PageResult<>(
-            total,
-            list,
-            page,
-            size
-        );
+
+        IPage<Map<String, Object>> pageResult = customerMapper.selectAllCustomersPage(page, params);
+
+        return PageResult.fromPage(pageResult);
     }
     
     @Override
     public PageResult<Map<String, Object>> getSalesCustomersList(Long userId, Map<String, Object> params) {
         // 获取分页参数
-        Integer page = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
-        Integer size = params.get("size") != null ? Integer.parseInt(params.get("size").toString()) : 20;
-        
-        // 查询总记录数
-        int total = customerMapper.countCustomersBySalesId(userId, params);
-        
-        // 计算偏移量
-        int offset = (page - 1) * size;
-        
-        // 添加分页参数
-        params.put("offset", offset);
-        params.put("limit", size);
+        Integer pageNum = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
+        Integer pageSize = params.get("size") != null ? Integer.parseInt(params.get("size").toString()) : 20;
+
+        Page<Map<String, Object>> page = new Page<>(pageNum, pageSize);
         params.put("orderBy", "c.create_time DESC");
-        
-        // 查询数据
-        List<Map<String, Object>> list = customerMapper.selectCustomersBySalesId(userId, params);
-        
-        return new PageResult<>(
-            total,
-            list,
-            page,
-            size
-        );
+
+        IPage<Map<String, Object>> pageResult = customerMapper.selectCustomersBySalesId(page, userId, params);
+
+        return PageResult.fromPage(pageResult);
     }
     
     @Override
     public PageResult<Map<String, Object>> getEngineerCustomersList(Long userId, Map<String, Object> params) {
         // 获取分页参数
-        Integer page = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
-        Integer size = params.get("size") != null ? Integer.parseInt(params.get("size").toString()) : 20;
-        
+        Integer pageNum = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
+        Integer pageSize = params.get("size") != null ? Integer.parseInt(params.get("size").toString()) : 20;
+
         // 获取工程师关联的客户ID列表
         List<Long> customerIds = customerEngineerRelationMapper.selectCustomerIdsByEngineerId(userId);
-        
+
         // 如果没有关联客户，直接返回空列表
         if (customerIds.isEmpty()) {
-            return new PageResult<>(0, new ArrayList<>(), page, size);
+            return PageResult.fromPage(new Page<>(pageNum, pageSize));
         }
-        
-        // 查询总记录数
-        int total = customerMapper.countCustomersByIds(customerIds, params);
-        
-        // 计算偏移量
-        int offset = (page - 1) * size;
-        
-        // 添加分页参数
-        params.put("offset", offset);
-        params.put("limit", size);
+
+        Page<Map<String, Object>> page = new Page<>(pageNum, pageSize);
         params.put("orderBy", "c.create_time DESC");
-        
-        // 查询关联的客户
-        List<Map<String, Object>> list = customerMapper.selectCustomersByIds(customerIds, params);
-        
-        return new PageResult<>(
-            total,
-            list,
-            page,
-            size
-        );
+
+        IPage<Map<String, Object>> pageResult = customerMapper.selectCustomersByIds(page, customerIds, params);
+
+        return PageResult.fromPage(pageResult);
     }
     
     @Override

@@ -1,7 +1,7 @@
 package com.ryl.engineer.controller;
 
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.Result;
-import com.ryl.engineer.common.dto.PageDTO;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.InventoryStatsDTO;
 import com.ryl.engineer.warehouse.dto.WarehouseItemDTO;
@@ -33,18 +33,14 @@ public class WarehouseItemController {
      * @return 物品列表
      */
     @GetMapping("/list")
-    public Result<PageDTO<WarehouseItemDTO>> getItemList(
+    public Result<PageResult<WarehouseItemDTO>> getItemList(
             @RequestParam Long warehouseId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        ResponseDTO<PageDTO<WarehouseItemDTO>> responseDTO = warehouseItemService.getItemList(warehouseId, categoryId, keyword, pageNum, pageSize);
-        if (responseDTO.getCode() == 200) {
-            return Result.success(responseDTO.getData());
-        } else {
-            return Result.error(responseDTO.getCode(), responseDTO.getMessage());
-        }
+        PageResult<WarehouseItemDTO> pageResult = warehouseItemService.getItemList(warehouseId, categoryId, keyword, pageNum, pageSize);
+        return Result.success(pageResult);
     }
 
     /**

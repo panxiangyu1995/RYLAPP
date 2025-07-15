@@ -1,8 +1,9 @@
 package com.ryl.engineer.warehouse.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ryl.engineer.common.dto.PageDTO;
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.WarehouseDTO;
 import com.ryl.engineer.warehouse.dto.WarehouseDetailDTO;
@@ -37,29 +38,20 @@ public class WarehouseServiceImpl implements WarehouseService {
     private WarehouseItemMapper warehouseItemMapper;
 
     @Override
-    public ResponseDTO<PageDTO<WarehouseDTO>> getWarehouseList(Integer pageNum, Integer pageSize) {
+    public PageResult<WarehouseDTO> getWarehouseList(Integer pageNum, Integer pageSize) {
         // 创建分页对象
         Page<Warehouse> page = new Page<>(pageNum, pageSize);
         // 查询条件
         LambdaQueryWrapper<Warehouse> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.orderByAsc(Warehouse::getId);
         // 执行查询
-        Page<Warehouse> warehousePage = warehouseMapper.selectPage(page, queryWrapper);
-        
+        IPage<Warehouse> warehousePage = warehouseMapper.selectPage(page, queryWrapper);
+
         // 转换为DTO
-        List<WarehouseDTO> warehouseDTOList = warehousePage.getRecords().stream().map(warehouse -> {
-            return WarehouseDTO.fromEntity(warehouse);
-        }).collect(Collectors.toList());
-        
+        IPage<WarehouseDTO> warehouseDTOPage = warehousePage.convert(WarehouseDTO::fromEntity);
+
         // 组装分页结果
-        PageDTO<WarehouseDTO> pageDTO = new PageDTO<>();
-        pageDTO.setList(warehouseDTOList);
-        pageDTO.setTotal(warehousePage.getTotal());
-        pageDTO.setPages((int) warehousePage.getPages());
-        pageDTO.setCurrent((int) warehousePage.getCurrent());
-        pageDTO.setSize((int) warehousePage.getSize());
-        
-        return ResponseDTO.success(pageDTO);
+        return PageResult.fromPage(warehouseDTOPage);
     }
 
     @Override

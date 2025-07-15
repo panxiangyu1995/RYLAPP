@@ -141,3 +141,12 @@ export function deleteUserVehicle(id) {
 export function getSalesList(params) {
   return http.get('/api/v1/user/sales', { params })
 } 
+
+/**
+ * 获取工程师列表
+ * @param {Object} params 查询参数
+ * @returns {Promise<Object>} 工程师列表
+ */
+export function getEngineersList(params) {
+  return http.get('/api/v1/user/engineers', { params })
+} 

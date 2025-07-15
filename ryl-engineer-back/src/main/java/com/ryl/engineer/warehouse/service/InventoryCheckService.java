@@ -1,6 +1,6 @@
 package com.ryl.engineer.warehouse.service;
 
-import com.ryl.engineer.common.dto.PageDTO;
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.InventoryCheckDTO;
 import com.ryl.engineer.warehouse.dto.InventoryCheckDetailDTO;
@@ -23,7 +23,7 @@ public interface InventoryCheckService {
      * @param pageSize    每页数量
      * @return 盘库记录列表
      */
-    ResponseDTO<PageDTO<InventoryCheckDTO>> getCheckList(Long warehouseId, Integer status, Integer pageNum, Integer pageSize);
+    PageResult<InventoryCheckDTO> getCheckList(Long warehouseId, Integer status, Integer pageNum, Integer pageSize);
 
     /**
      * 获取用户的盘库记录列表
@@ -34,7 +34,7 @@ public interface InventoryCheckService {
      * @param pageSize 每页数量
      * @return 盘库记录列表
      */
-    ResponseDTO<PageDTO<InventoryCheckDTO>> getUserCheckList(Long userId, Integer status, Integer pageNum, Integer pageSize);
+    PageResult<InventoryCheckDTO> getUserCheckList(Long userId, Integer status, Integer pageNum, Integer pageSize);
 
     /**
      * 获取盘库记录详情
@@ -52,7 +52,7 @@ public interface InventoryCheckService {
      * @param pageSize 每页数量
      * @return 盘库明细列表
      */
-    ResponseDTO<PageDTO<InventoryCheckDetailDTO>> getCheckDetailList(Long checkId, Integer pageNum, Integer pageSize);
+    PageResult<InventoryCheckDetailDTO> getCheckDetailList(Long checkId, Integer pageNum, Integer pageSize);
 
     /**
      * 获取盘库差异明细列表
@@ -62,7 +62,7 @@ public interface InventoryCheckService {
      * @param pageSize 每页数量
      * @return 盘库差异明细列表
      */
-    ResponseDTO<PageDTO<InventoryCheckDetailDTO>> getDifferenceDetailList(Long checkId, Integer pageNum, Integer pageSize);
+    PageResult<InventoryCheckDetailDTO> getDifferenceDetailList(Long checkId, Integer pageNum, Integer pageSize);
 
     /**
      * 创建盘库任务

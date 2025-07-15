@@ -129,4 +129,12 @@ public interface ChatService {
      * @return 退出结果
      */
     boolean exitConversation(Long userId, String conversationId);
+
+    /**
+     * 发送系统消息给指定用户
+     * @param recipientId 接收者用户ID
+     * @param content 消息内容
+     * @return 发送的消息信息
+     */
+    Map<String, Object> sendSystemMessage(Long recipientId, String content);
 } 

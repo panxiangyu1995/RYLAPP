@@ -1,8 +1,9 @@
 package com.ryl.engineer.warehouse.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ryl.engineer.common.dto.PageDTO;
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.InventoryStatsDTO;
 import com.ryl.engineer.warehouse.dto.WarehouseItemDTO;
@@ -60,12 +61,7 @@ public class WarehouseItemServiceImpl implements WarehouseItemService {
     private ItemRequestMapper itemRequestMapper;
     
     @Override
-    public ResponseDTO<PageDTO<WarehouseItemDTO>> getItemList(Long warehouseId, Long categoryId, String keyword, Integer pageNum, Integer pageSize) {
-        // 参数验证
-        if (warehouseId == null) {
-            return ResponseDTO.paramError("仓库ID不能为空");
-        }
-        
+    public PageResult<WarehouseItemDTO> getItemList(Long warehouseId, Long categoryId, String keyword, Integer pageNum, Integer pageSize) {
         // 创建查询条件
         LambdaQueryWrapper<WarehouseItem> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WarehouseItem::getWarehouseId, warehouseId);
@@ -83,33 +79,24 @@ public class WarehouseItemServiceImpl implements WarehouseItemService {
                     .like(WarehouseItem::getItemCode, keyword)
             );
         }
-        
+
         // 分页查询
         Page<WarehouseItem> page = new Page<>(pageNum, pageSize);
-        Page<WarehouseItem> itemPage = warehouseItemMapper.selectPage(page, queryWrapper);
-        
+        IPage<WarehouseItem> itemPage = warehouseItemMapper.selectPage(page, queryWrapper);
+
         // 转换为DTO
-        List<WarehouseItemDTO> itemDTOList = itemPage.getRecords().stream()
-                .map(item -> {
-                    WarehouseItemDTO dto = WarehouseItemDTO.fromEntity(item);
-                    // 查询分类名称
-                    ItemCategory category = itemCategoryMapper.selectById(item.getCategoryId());
-                    if (category != null) {
-                        dto.setCategoryName(category.getName());
-                    }
-                    return dto;
-                })
-                .collect(Collectors.toList());
-        
+        IPage<WarehouseItemDTO> itemDTOPage = itemPage.convert(item -> {
+            WarehouseItemDTO dto = WarehouseItemDTO.fromEntity(item);
+            // 查询分类名称
+            ItemCategory category = itemCategoryMapper.selectById(item.getCategoryId());
+            if (category != null) {
+                dto.setCategoryName(category.getName());
+            }
+            return dto;
+        });
+
         // 组装分页结果
-        PageDTO<WarehouseItemDTO> pageDTO = new PageDTO<>();
-        pageDTO.setList(itemDTOList);
-        pageDTO.setTotal(itemPage.getTotal());
-        pageDTO.setPages((int) itemPage.getPages());
-        pageDTO.setCurrent((int) itemPage.getCurrent());
-        pageDTO.setSize((int) itemPage.getSize());
-        
-        return ResponseDTO.success(pageDTO);
+        return PageResult.fromPage(itemDTOPage);
     }
 
     @Override

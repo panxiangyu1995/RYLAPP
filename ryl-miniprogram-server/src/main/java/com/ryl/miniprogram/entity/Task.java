@@ -127,7 +127,13 @@ public class Task {
      */
     @TableField("device_brand")
     private String deviceBrand;
-    
+
+    /**
+     * 仪器类型
+     */
+    @TableField("device_type")
+    private String deviceType;
+
     /**
      * 设备序列号
      */

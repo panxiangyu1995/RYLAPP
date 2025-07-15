@@ -57,7 +57,24 @@
     </select>
     
     <select id="selectList" resultMap="BaseResultMap">
-        SELECT 
+        SELECT
+            a.*
+        FROM dbo.system_announcement a
+        <if test="onlyUnread != null and onlyUnread">
+            LEFT JOIN dbo.announcement_read ar ON a.id = ar.announcement_id AND ar.user_id = #{userId}
+        </if>
+        WHERE a.status = 'active'
+        <if test="keyword != null and keyword != ''">
+            AND (a.title LIKE '%' + #{keyword} + '%' OR a.content LIKE '%' + #{keyword} + '%')
+        </if>
+        <if test="onlyUnread != null and onlyUnread">
+            AND ar.id IS NULL
+        </if>
+        ORDER BY a.start_time DESC
+    </select>
+
+    <select id="selectAllActive" resultMap="BaseResultMap">
+        SELECT
             <include refid="Base_Column_List" />
         FROM dbo.system_announcement
         WHERE status = 'active'

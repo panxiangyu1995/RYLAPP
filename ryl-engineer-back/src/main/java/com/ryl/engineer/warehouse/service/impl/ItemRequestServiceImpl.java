@@ -1,8 +1,9 @@
 package com.ryl.engineer.warehouse.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ryl.engineer.common.dto.PageDTO;
+import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.common.dto.ResponseDTO;
 import com.ryl.engineer.warehouse.dto.ItemRequestDTO;
 import com.ryl.engineer.warehouse.dto.ItemUsageStatsDTO;
@@ -42,7 +43,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     private StockRecordMapper stockRecordMapper;
 
     @Override
-    public ResponseDTO<PageDTO<ItemRequestDTO>> getRequestList(Integer requestType, Integer status, Integer pageNum, Integer pageSize) {
+    public PageResult<ItemRequestDTO> getRequestList(Integer requestType, Integer status, Integer pageNum, Integer pageSize) {
         // 创建查询条件
         LambdaQueryWrapper<ItemRequest> queryWrapper = new LambdaQueryWrapper<>();
         if (requestType != null) {
@@ -52,32 +53,20 @@ public class ItemRequestServiceImpl implements ItemRequestService {
             queryWrapper.eq(ItemRequest::getStatus, status);
         }
         queryWrapper.orderByDesc(ItemRequest::getCreateTime);
-        
+
         // 分页查询
         Page<ItemRequest> page = new Page<>(pageNum, pageSize);
-        Page<ItemRequest> requestPage = itemRequestMapper.selectPage(page, queryWrapper);
-        
-        // 转换为DTO
-        List<ItemRequestDTO> requestDTOList = requestPage.getRecords().stream()
-                .map(ItemRequestDTO::fromEntity)
-                .collect(Collectors.toList());
-        
-        // 组装分页结果
-        PageDTO<ItemRequestDTO> pageDTO = new PageDTO<>();
-        pageDTO.setList(requestDTOList);
-        pageDTO.setTotal(requestPage.getTotal());
-        pageDTO.setPages((int) requestPage.getPages());
-        pageDTO.setCurrent((int) requestPage.getCurrent());
-        pageDTO.setSize((int) requestPage.getSize());
-        
-        return ResponseDTO.success(pageDTO);
+        IPage<ItemRequest> requestPage = itemRequestMapper.selectPage(page, queryWrapper);
+
+        // 转换为DTO并返回
+        return PageResult.fromPage(requestPage.convert(ItemRequestDTO::fromEntity));
     }
 
     @Override
-    public ResponseDTO<PageDTO<ItemRequestDTO>> getUserRequestList(Long userId, Integer requestType, Integer status, Integer pageNum, Integer pageSize) {
+    public PageResult<ItemRequestDTO> getUserRequestList(Long userId, Integer requestType, Integer status, Integer pageNum, Integer pageSize) {
         // 参数验证
         if (userId == null) {
-            return ResponseDTO.paramError("用户ID不能为空");
+            return PageResult.fromPage(new Page<>(pageNum, pageSize));
         }
         
         // 创建查询条件
@@ -90,57 +79,33 @@ public class ItemRequestServiceImpl implements ItemRequestService {
             queryWrapper.eq(ItemRequest::getStatus, status);
         }
         queryWrapper.orderByDesc(ItemRequest::getCreateTime);
-        
+
         // 分页查询
         Page<ItemRequest> page = new Page<>(pageNum, pageSize);
-        Page<ItemRequest> requestPage = itemRequestMapper.selectPage(page, queryWrapper);
-        
-        // 转换为DTO
-        List<ItemRequestDTO> requestDTOList = requestPage.getRecords().stream()
-                .map(ItemRequestDTO::fromEntity)
-                .collect(Collectors.toList());
-        
-        // 组装分页结果
-        PageDTO<ItemRequestDTO> pageDTO = new PageDTO<>();
-        pageDTO.setList(requestDTOList);
-        pageDTO.setTotal(requestPage.getTotal());
-        pageDTO.setPages((int) requestPage.getPages());
-        pageDTO.setCurrent((int) requestPage.getCurrent());
-        pageDTO.setSize((int) requestPage.getSize());
-        
-        return ResponseDTO.success(pageDTO);
+        IPage<ItemRequest> requestPage = itemRequestMapper.selectPage(page, queryWrapper);
+
+        // 转换为DTO并返回
+        return PageResult.fromPage(requestPage.convert(ItemRequestDTO::fromEntity));
     }
 
     @Override
-    public ResponseDTO<PageDTO<ItemRequestDTO>> getTaskRequestList(String taskId, Integer pageNum, Integer pageSize) {
+    public PageResult<ItemRequestDTO> getTaskRequestList(String taskId, Integer pageNum, Integer pageSize) {
         // 参数验证
         if (taskId == null || taskId.isEmpty()) {
-            return ResponseDTO.paramError("任务ID不能为空");
+            return PageResult.fromPage(new Page<>(pageNum, pageSize));
         }
         
         // 创建查询条件
         LambdaQueryWrapper<ItemRequest> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ItemRequest::getTaskId, taskId);
         queryWrapper.orderByDesc(ItemRequest::getCreateTime);
-        
+
         // 分页查询
         Page<ItemRequest> page = new Page<>(pageNum, pageSize);
-        Page<ItemRequest> requestPage = itemRequestMapper.selectPage(page, queryWrapper);
-        
-        // 转换为DTO
-        List<ItemRequestDTO> requestDTOList = requestPage.getRecords().stream()
-                .map(ItemRequestDTO::fromEntity)
-                .collect(Collectors.toList());
-        
-        // 组装分页结果
-        PageDTO<ItemRequestDTO> pageDTO = new PageDTO<>();
-        pageDTO.setList(requestDTOList);
-        pageDTO.setTotal(requestPage.getTotal());
-        pageDTO.setPages((int) requestPage.getPages());
-        pageDTO.setCurrent((int) requestPage.getCurrent());
-        pageDTO.setSize((int) requestPage.getSize());
-        
-        return ResponseDTO.success(pageDTO);
+        IPage<ItemRequest> requestPage = itemRequestMapper.selectPage(page, queryWrapper);
+
+        // 转换为DTO并返回
+        return PageResult.fromPage(requestPage.convert(ItemRequestDTO::fromEntity));
     }
 
     @Override

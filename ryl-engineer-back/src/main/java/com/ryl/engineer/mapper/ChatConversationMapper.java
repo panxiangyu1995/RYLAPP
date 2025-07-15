@@ -1,5 +1,7 @@
 package com.ryl.engineer.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ryl.engineer.entity.ChatConversation;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -20,11 +22,13 @@ public interface ChatConversationMapper {
     /**
      * 获取用户的会话列表
      */
-    List<ChatConversation> selectByUserId(
+    IPage<ChatConversation> selectByUserId(
+        Page<ChatConversation> page,
         @Param("userId") Long userId,
         @Param("type") String type,
         @Param("isTaskRelated") Boolean isTaskRelated,
-        @Param("keyword") String keyword
+        @Param("keyword") String keyword,
+        @Param("onlyUnread") Boolean onlyUnread
     );
     
     /**
@@ -46,4 +50,9 @@ public interface ChatConversationMapper {
      * 根据关联任务ID查找会话
      */
     ChatConversation selectByTaskId(@Param("taskId") String taskId);
+
+    /**
+     * 根据两个成员ID查找他们之间的私聊会话
+     */
+    ChatConversation findPrivateConversationByMemberIds(@Param("userId1") Long userId1, @Param("userId2") Long userId2);
 } 

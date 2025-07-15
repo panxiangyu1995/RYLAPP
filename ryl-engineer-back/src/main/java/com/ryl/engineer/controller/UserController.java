@@ -75,14 +75,15 @@ public class UserController {
      */
     @PostMapping("/register")
     public Result<RegisterResponse> register(@RequestBody @Validated RegisterRequest request) {
-        // 验证密码和确认密码是否一致
+        // 密码验证移至Service层，但此处保留以快速失败
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             return Result.error("两次输入的密码不一致");
         }
         
         RegisterResponse response = userService.register(request);
         if (response == null || !response.getRegistered()) {
-            return Result.error("注册失败，工号或手机号已存在");
+            String message = (response != null && response.getMessage() != null) ? response.getMessage() : "注册失败，请检查输入信息";
+            return Result.error(message);
         }
         return Result.success(response);
     }
@@ -196,6 +197,7 @@ public class UserController {
         response.setDepartment(user.getDepartment());
         response.setLocation(user.getLocation());
         response.setAvatar(user.getAvatar());
+        response.setTechnicalCategory(user.getTechnicalCategory());
 
         // 添加任务统计信息（如果需要的话）
         Map<String, Object> taskStats = new HashMap<>();
@@ -245,6 +247,7 @@ public class UserController {
         response.setDepartment(user.getDepartment());
         response.setLocation(user.getLocation());
         response.setAvatar(user.getAvatar());
+        response.setTechnicalCategory(user.getTechnicalCategory());
         
         return Result.success(response);
     }
@@ -258,46 +261,37 @@ public class UserController {
      */
     @PutMapping("/profile")
     public Result<Map<String, Object>> updateUserProfile(@RequestBody @Validated UserInfoRequest request, HttpServletRequest httpRequest) {
-        // 从请求头中获取token
-        String token = httpRequest.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        
-        if (token == null || token.isEmpty()) {
-            return Result.error("未登录");
-        }
-        
         // 从token中获取用户ID
+        String token = httpRequest.getHeader("Authorization").substring(7);
         Long userId = JwtUtil.getUserId(token);
         if (userId == null) {
             return Result.error("无效的token");
         }
         
-        // 获取用户信息
-        User user = userService.getUserById(userId);
-        if (user == null) {
+        // 获取当前用户信息
+        User currentUser = userService.getUserById(userId);
+        if (currentUser == null) {
             return Result.error("用户不存在");
         }
         
         // 更新用户信息
-        user.setName(request.getName());
-        user.setMobile(request.getMobile());
-        user.setDepartment(request.getDepartment());
-        if (request.getLocation() != null) {
-            user.setLocation(request.getLocation());
-        }
+        currentUser.setName(request.getName());
+        currentUser.setMobile(request.getMobile());
+        currentUser.setDepartment(request.getDepartment());
+        currentUser.setLocation(request.getLocation());
+        // 更新技术分类
+        currentUser.setTechnicalCategory(request.getTechnicalCategory());
         
-        boolean success = userService.updateUser(user);
+        boolean success = userService.updateUser(currentUser);
         if (!success) {
             return Result.error("更新失败");
         }
         
-        // 构建响应
-        Map<String, Object> response = new HashMap<>();
-        response.put("updated", true);
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("message", "更新成功");
         
-        return Result.success(response);
+        return Result.success(result);
     }
     
     /**
@@ -309,48 +303,42 @@ public class UserController {
      */
     @PostMapping("/info")
     public Result<UserInfoResponse> updateUserInfo(@RequestBody @Validated UserInfoRequest request, HttpServletRequest httpRequest) {
-        // 从请求头中获取token
-        String token = httpRequest.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        
-        if (token == null || token.isEmpty()) {
-            return Result.error("未登录");
-        }
-        
         // 从token中获取用户ID
+        String token = httpRequest.getHeader("Authorization").substring(7);
         Long userId = JwtUtil.getUserId(token);
         if (userId == null) {
             return Result.error("无效的token");
         }
-        
-        // 获取用户信息
-        User user = userService.getUserById(userId);
-        if (user == null) {
+
+        // 获取当前用户信息
+        User currentUser = userService.getUserById(userId);
+        if (currentUser == null) {
             return Result.error("用户不存在");
         }
-        
+
         // 更新用户信息
-        user.setName(request.getName());
-        user.setMobile(request.getMobile());
-        user.setDepartment(request.getDepartment());
-        user.setLocation(request.getLocation());
-        
-        boolean success = userService.updateUser(user);
+        currentUser.setName(request.getName());
+        currentUser.setMobile(request.getMobile());
+        currentUser.setDepartment(request.getDepartment());
+        currentUser.setLocation(request.getLocation());
+        // 更新技术分类
+        currentUser.setTechnicalCategory(request.getTechnicalCategory());
+
+        boolean success = userService.updateUser(currentUser);
         if (!success) {
             return Result.error("更新失败");
         }
-        
+
         // 构建响应
         UserInfoResponse response = new UserInfoResponse();
-        response.setWorkId(user.getWorkId());
-        response.setName(user.getName());
-        response.setMobile(user.getMobile());
-        response.setDepartment(user.getDepartment());
-        response.setLocation(user.getLocation());
-        response.setAvatar(user.getAvatar());
-        
+        response.setWorkId(currentUser.getWorkId());
+        response.setName(currentUser.getName());
+        response.setMobile(currentUser.getMobile());
+        response.setDepartment(currentUser.getDepartment());
+        response.setLocation(currentUser.getLocation());
+        response.setAvatar(currentUser.getAvatar());
+        response.setTechnicalCategory(currentUser.getTechnicalCategory());
+
         return Result.success(response);
     }
     

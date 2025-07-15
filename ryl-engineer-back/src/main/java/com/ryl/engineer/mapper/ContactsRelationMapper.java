@@ -1,5 +1,7 @@
 package com.ryl.engineer.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ryl.engineer.entity.ContactsRelation;
 import com.ryl.engineer.entity.User;
 import org.apache.ibatis.annotations.Mapper;
@@ -21,17 +23,18 @@ public interface ContactsRelationMapper {
     /**
      * 根据条件分页查询联系人
      */
-    List<ContactsRelation> selectByCondition(
-        @Param("userId") Long userId, 
-        @Param("keyword") String keyword,
-        @Param("department") String department,
-        @Param("status") Integer status
+    IPage<ContactsRelation> selectByCondition(
+            Page<ContactsRelation> page,
+            @Param("userId") Long userId,
+            @Param("keyword") String keyword,
+            @Param("department") String department,
+            @Param("status") Integer status
     );
     
     /**
      * 获取非工程师角色的联系人列表
      */
-    List<User> selectOtherContacts(@Param("keyword") String keyword);
+    IPage<User> selectOtherContacts(Page<User> page, @Param("keyword") String keyword);
     
     /**
      * 获取用户的联系人数量

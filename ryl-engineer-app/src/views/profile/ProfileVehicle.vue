@@ -94,6 +94,63 @@
         <i class="icon-plus"></i>新建打卡记录
       </button>
     </div>
+
+    <!-- 新建打卡记录模态框 -->
+    <div v-if="isModalVisible" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>新建打卡记录</h3>
+          <button class="close-btn" @click="closeModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="handleSubmit">
+            <div class="form-group">
+              <label for="taskId">任务ID</label>
+              <input type="text" id="taskId" v-model="newRecordForm.taskId" required>
+            </div>
+             <div class="form-group">
+              <label for="taskName">任务名称</label>
+              <input type="text" id="taskName" v-model="newRecordForm.taskName" required>
+            </div>
+            <div class="form-group">
+              <label>打卡类型</label>
+              <div class="radio-group">
+                <label><input type="radio" v-model="newRecordForm.type" :value="1"> 出发</label>
+                <label><input type="radio" v-model="newRecordForm.type" :value="2"> 到达</label>
+                <label><input type="radio" v-model="newRecordForm.type" :value="3"> 返程</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>交通方式</label>
+              <div class="radio-group">
+                <label><input type="radio" v-model="newRecordForm.transportType" value="company"> 公车</label>
+                <label><input type="radio" v-model="newRecordForm.transportType" value="private"> 私车</label>
+                <label><input type="radio" v-model="newRecordForm.transportType" value="public"> 公共交通</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>定位</label>
+              <div class="location-actions">
+                <button type="button" @click="getGaodeLocation">获取高德定位</button>
+                <button type="button" @click="getBaiduLocation">获取百度定位</button>
+              </div>
+              <p v-if="newRecordForm.location" class="location-result">
+                {{ newRecordForm.location }}
+              </p>
+            </div>
+            <div class="form-group">
+              <label for="remark">备注</label>
+              <textarea id="remark" v-model="newRecordForm.remark"></textarea>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="cancel-btn" @click="closeModal">取消</button>
+              <button type="submit" class="submit-btn" :disabled="!newRecordForm.location">确认打卡</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -101,10 +158,26 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useVehicleRecordStore } from '../../stores/vehicleRecord'
+import { useToast } from 'vue-toastification'
 
-    const router = useRouter()
+const router = useRouter()
 const vehicleRecordStore = useVehicleRecordStore()
 const loading = ref(false)
+const toast = useToast()
+
+const isModalVisible = ref(false)
+const newRecordForm = reactive({
+  taskId: '',
+  taskName: '',
+  type: 1,
+  location: '',
+  longitude: '',
+  latitude: '',
+  photos: '',
+  distance: 0,
+  transportType: 'company',
+  remark: ''
+})
 
 const currentMonth = ref('')
 const stats = reactive({
@@ -274,9 +347,288 @@ function viewDetail(recordId) {
   // router.push(`/profile/vehicle/detail/${recordId}`)
 }
 
-// 新建打卡记录
 function addNewRecord() {
-  router.push('/location')
+  isModalVisible.value = true
+}
+
+function closeModal() {
+  isModalVisible.value = false
+  // 重置表单
+  Object.assign(newRecordForm, {
+    taskId: '',
+    taskName: '',
+    type: 1,
+    location: '',
+    longitude: '',
+    latitude: '',
+    photos: '',
+    distance: 0,
+    transportType: 'company',
+    remark: ''
+  })
+}
+
+async function handleSubmit() {
+  if (!newRecordForm.taskId || !newRecordForm.taskName) {
+    toast.error('任务ID和任务名称不能为空')
+    return
+  }
+  loading.value = true
+  try {
+    const result = await vehicleRecordStore.addVehicleRecord(newRecordForm)
+    if (result.success) {
+      toast.success('打卡成功！')
+      closeModal()
+      await fetchRecords()
+      await fetchCurrentMonthStats()
+    } else {
+      toast.error(result.error || '打卡失败')
+    }
+  } catch (error) {
+    toast.error('打卡时发生错误')
+  } finally {
+    loading.value = false
+  }
+}
+
+// --- 定位功能 ---
+
+// 请在此处替换为您申请的高德地图JS API Key
+const GAODE_MAP_KEY = "YOUR_GAODE_MAP_KEY_SHOULD_BE_HERE";
+// 请在此处替换为您申请的百度地图JS API Key
+const BAIDU_MAP_KEY = "YOUR_BAIDU_MAP_KEY_SHOULD_BE_HERE";
+
+const loadScript = (url) => {
+  return new Promise((resolve, reject) => {
+    // 避免重复加载
+    if (document.querySelector(`script[src="${url}"]`)) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = url;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+};
+
+const getGaodeLocation = async () => {
+  newRecordForm.location = '正在使用高德地图获取位置...';
+  try {
+    if (!window.AMap) {
+      await loadScript(`https://webapi.amap.com/maps?v=2.0&key=${GAODE_MAP_KEY}`);
+    }
+
+    await new Promise((resolve, reject) => {
+        window.AMap.plugin(['AMap.Geolocation', 'AMap.Geocoder'], function() {
+            const geolocation = new window.AMap.Geolocation({
+                enableHighAccuracy: true,
+                timeout: 10000,
+            });
+
+            geolocation.getCurrentPosition((status, result) => {
+                if (status === 'complete') {
+                    const geocoder = new window.AMap.Geocoder();
+                    const lnglat = [result.position.lng, result.position.lat];
+                    geocoder.getAddress(lnglat, (status, geoResult) => {
+                        if (status === 'complete' && geoResult.info === 'OK') {
+                            newRecordForm.longitude = result.position.lng;
+                            newRecordForm.latitude = result.position.lat;
+                            newRecordForm.location = geoResult.regeocode.formattedAddress;
+                            toast.success('高德定位成功！');
+                        } else {
+                            toast.error('高德地图逆地理编码失败');
+                            newRecordForm.location = '高德地图逆地理编码失败';
+                        }
+                        resolve();
+                    });
+                } else {
+                    const errorMsg = `高德地图定位失败: ${result.message}`;
+                    toast.error(errorMsg);
+                    newRecordForm.location = errorMsg;
+                    reject(new Error(result.message));
+                }
+            });
+        });
+    });
+
+  } catch (err) {
+    const errorMsg = '加载高德地图SDK失败，请检查网络或API Key。';
+    toast.error(errorMsg);
+    newRecordForm.location = errorMsg;
+    console.error(err);
+  }
+};
+
+let resolveBaiduMapLoading;
+const baiduPromise = new Promise(resolve => {
+    resolveBaiduMapLoading = resolve;
+});
+
+const getBaiduLocation = async () => {
+  newRecordForm.location = '正在使用百度地图获取位置...';
+  try {
+    if (!window.BMap) {
+      window.onBaiduMapLoaded = () => {
+        resolveBaiduMapLoading();
+      };
+      await loadScript(`https://api.map.baidu.com/api?v=2.0&ak=${BAIDU_MAP_KEY}&callback=onBaiduMapLoaded`);
+      await baiduPromise;
+    }
+    
+    const geolocation = new window.BMap.Geolocation();
+    geolocation.getCurrentPosition((r) => {
+        if (geolocation.getStatus() == window.BMAP_STATUS_SUCCESS) {
+            const geocoder = new window.BMap.Geocoder();
+            geocoder.getLocation(r.point, (rs) => {
+                newRecordForm.longitude = r.point.lng;
+                newRecordForm.latitude = r.point.lat;
+                newRecordForm.location = rs.address;
+                toast.success('百度定位成功！');
+            });
+        } else {
+            let errorMsg = '百度地图定位失败';
+            switch(geolocation.getStatus()){
+                case window.BMAP_STATUS_PERMISSION_DENIED:
+                    errorMsg += ": 用户拒绝授权";
+                    break;
+                case window.BMAP_STATUS_SERVICE_UNAVAILABLE:
+                    errorMsg += ": 定位服务不可用";
+                    break;
+                case window.BMAP_STATUS_TIMEOUT:
+                    errorMsg += ": 定位超时";
+                    break;
+            }
+            toast.error(errorMsg);
+            newRecordForm.location = errorMsg;
+        }
+    });
+  } catch (err) {
+      const errorMsg = '加载百度地图SDK失败，请检查网络或API Key。';
+      toast.error(errorMsg);
+      newRecordForm.location = errorMsg;
+      console.error(err);
+  }
+};
+
+
+// 格式化日期时间
+function formatDateTime(dateTimeStr) {
+  if (!dateTimeStr) return ''
+  const date = new Date(dateTimeStr)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).replace(/\//g, '-')
+}
+
+// 格式化月份
+function formatMonth(date) {
+  return `${date.getFullYear()}年${date.getMonth() + 1}月`
+}
+
+// 根据打卡类型获取图标
+function getCheckInIcon(type) {
+  switch (type) {
+    case '出发打卡': return 'icon-departure'
+    case '到达打卡': return 'icon-arrival'
+    case '返程打卡': return 'icon-return'
+    default: return 'icon-check'
+  }
+}
+
+// 返回上一页
+function goBack() {
+  router.back()
+}
+
+// 查看详情
+function viewDetail(recordId) {
+  console.log('查看详情:', recordId)
+  // 后续实现查看详情功能
+  // router.push(`/profile/vehicle/detail/${recordId}`)
+}
+
+function addNewRecord() {
+  isModalVisible.value = true
+}
+
+function closeModal() {
+  isModalVisible.value = false
+  // 重置表单
+  Object.assign(newRecordForm, {
+    taskId: '',
+    taskName: '',
+    type: 1,
+    location: '',
+    longitude: '',
+    latitude: '',
+    photos: '',
+    distance: 0,
+    transportType: 'company',
+    remark: ''
+  })
+}
+
+async function handleSubmit() {
+  if (!newRecordForm.taskId || !newRecordForm.taskName) {
+    toast.error('任务ID和任务名称不能为空')
+    return
+  }
+  loading.value = true
+  try {
+    const result = await vehicleRecordStore.addVehicleRecord(newRecordForm)
+    if (result.success) {
+      toast.success('打卡成功！')
+      closeModal()
+      await fetchRecords()
+      await fetchCurrentMonthStats()
+    } else {
+      toast.error(result.error || '打卡失败')
+    }
+  } catch (error) {
+    toast.error('打卡时发生错误')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 获取高德定位
+async function getGaodeLocation() {
+  try {
+    const result = await vehicleRecordStore.getGaodeLocation()
+    if (result.success) {
+      newRecordForm.location = result.location
+      newRecordForm.longitude = result.longitude
+      newRecordForm.latitude = result.latitude
+      toast.success('高德定位成功！')
+    } else {
+      toast.error(result.error || '高德定位失败')
+    }
+  } catch (error) {
+    toast.error('高德定位时发生错误')
+  }
+}
+
+// 获取百度定位
+async function getBaiduLocation() {
+  try {
+    const result = await vehicleRecordStore.getBaiduLocation()
+    if (result.success) {
+      newRecordForm.location = result.location
+      newRecordForm.longitude = result.longitude
+      newRecordForm.latitude = result.latitude
+      toast.success('百度定位成功！')
+    } else {
+      toast.error(result.error || '百度定位失败')
+    }
+  } catch (error) {
+    toast.error('百度定位时发生错误')
+  }
 }
 </script>
 
@@ -570,5 +922,198 @@ function addNewRecord() {
   font-family: 'Font Awesome 6 Free';
   font-weight: 900;
   margin-right: 8px;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.modal-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #111827;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.radio-group input[type="radio"] {
+  margin-right: 6px;
+  accent-color: #3b82f6;
+}
+
+.location-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.location-actions button {
+  flex: 1;
+  padding: 10px 12px;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.location-actions button:first-child {
+  background-color: #3b82f6;
+}
+.location-actions button:first-child:hover {
+  background-color: #2563eb;
+}
+.location-actions button:last-child {
+  background-color: #10b981;
+}
+.location-actions button:last-child:hover {
+  background-color: #059669;
+}
+
+.location-result {
+  margin-top: 12px;
+  padding: 10px;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #166534;
+  word-break: break-all;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.cancel-btn, .submit-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-btn {
+  background-color: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.cancel-btn:hover {
+  background-color: #f9fafb;
+}
+
+.submit-btn {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.submit-btn:hover {
+  background-color: #2563eb;
+}
+
+.submit-btn:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
 }
 </style> 

@@ -107,10 +107,6 @@
         <if test="params != null and params.orderBy != null">
             ORDER BY ${params.orderBy}
         </if>
-        <if test="params != null and params.offset != null and params.limit != null">
-            OFFSET #{params.offset} ROWS
-            FETCH NEXT #{params.limit} ROWS ONLY
-        </if>
     </select>
     
     <select id="selectCustomersBySalesId" resultType="java.util.Map">
@@ -148,10 +144,6 @@
         </if>
         <if test="params != null and params.orderBy != null">
             ORDER BY ${params.orderBy}
-        </if>
-        <if test="params != null and params.offset != null and params.limit != null">
-            OFFSET #{params.offset} ROWS
-            FETCH NEXT #{params.limit} ROWS ONLY
         </if>
     </select>
     
@@ -193,10 +185,6 @@
         </if>
         <if test="params != null and params.orderBy != null">
             ORDER BY ${params.orderBy}
-        </if>
-        <if test="params != null and params.offset != null and params.limit != null">
-            OFFSET #{params.offset} ROWS
-            FETCH NEXT #{params.limit} ROWS ONLY
         </if>
     </select>
     

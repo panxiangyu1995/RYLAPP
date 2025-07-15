@@ -40,4 +40,9 @@ public class UserInfoRequest implements Serializable {
      * 工作地点
      */
     private String location;
+
+    /**
+     * 技术分类
+     */
+    private String technicalCategory;
 } 

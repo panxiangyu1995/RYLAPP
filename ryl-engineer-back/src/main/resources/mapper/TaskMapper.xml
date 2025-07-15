@@ -1,20 +1,45 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ryl.engineer.mapper.TaskMapper">
-    <select id="findByEngineerId" resultType="com.ryl.engineer.entity.Task">
+
+    <resultMap id="BaseResultMap" type="com.ryl.engineer.entity.Task">
+        <id column="id" property="id"/>
+        <result column="task_id" property="taskId"/>
+        <result column="title" property="title"/>
+        <result column="task_type" property="taskType"/>
+        <result column="customer_id" property="customerId"/>
+        <result column="customer" property="customer"/>
+        <result column="customer_level" property="customerLevel"/>
+        <result column="location" property="location"/>
+        <result column="contact_person" property="contactPerson"/>
+        <result column="contact_phone" property="contactPhone"/>
+        <result column="sales_id" property="salesId"/>
+        <result column="engineer_id" property="engineerId"/>
+        <result column="priority" property="priority"/>
+        <result column="status" property="status"/>
+        <result column="device_name" property="deviceName"/>
+        <result column="device_model" property="deviceModel"/>
+        <result column="device_brand" property="deviceBrand"/>
+        <result column="device_type" property="deviceType"/>
+        <result column="device_sn" property="deviceSn"/>
+        <result column="create_time" property="createTime"/>
+        <!-- 其他字段映射 -->
+    </resultMap>
+
+    <select id="findByEngineerId" resultMap="BaseResultMap">
         SELECT t.*
         FROM dbo.task t
         INNER JOIN dbo.task_engineer te ON t.task_id = te.task_id
         WHERE te.engineer_id = #{engineerId}
     </select>
     
-    <select id="findByCustomerId" resultType="com.ryl.engineer.entity.Task">
+    <select id="findByCustomerId" resultMap="BaseResultMap">
         SELECT *
         FROM dbo.task
         WHERE customer_id = #{customerId}
     </select>
     
-    <select id="findBySalesId" resultType="com.ryl.engineer.entity.Task">
+    <select id="findBySalesId" resultMap="BaseResultMap">
         SELECT *
         FROM dbo.task
         WHERE sales_id = #{salesId}
@@ -36,4 +61,23 @@
         ORDER BY 
             timestamp DESC
     </select>
-</mapper> 
+
+    <select id="findPendingTasks" resultMap="BaseResultMap">
+        SELECT * FROM dbo.task
+        WHERE status = 'pending' AND (engineer_id IS NULL OR engineer_id = 0)
+    </select>
+
+    <select id="countIncompleteTasksByUserId" resultType="int">
+        SELECT COUNT(*) FROM dbo.task
+        WHERE engineer_id = #{userId} AND status NOT IN ('completed', 'cancelled')
+    </select>
+
+    <update id="assignTaskToEngineer">
+        UPDATE dbo.task
+        SET engineer_id = #{engineerId},
+            status = 'in-progress',
+            update_time = GETDATE()
+        WHERE id = #{taskId}
+    </update>
+
+</mapper>
