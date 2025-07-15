@@ -171,12 +171,6 @@ ryl-engineer-back/
 - 前后服务的端口设置都是8089
 - 前后端数据字段不要使用任何数据库没有的字段，比如：邮箱、职位等
 - 因为APP使用者都是公司内部员工，所以每个用户的联系人列表默认是所有用户
-- 前后端不要使用模拟数据，也不要使用示例，按实际项目进行代码的编写。且后端数据库已经使用D:\Android\app\RYLAPP\接口文件\仓库模块数据库初始化_sqlserver.sql
-D:\Android\app\RYLAPP\接口文件\联系人模块数据库初始化_sqlserver.sql
-D:\Android\app\RYLAPP\接口文件\任务模块数据库初始化_sqlserver.sql
-D:\Android\app\RYLAPP\接口文件\消息模块数据库初始化_sqlserver.sql
-D:\Android\app\RYLAPP\接口文件\用户模块数据库初始化_sqlserver.sql
-D:\Android\app\RYLAPP\接口文件\combined_tables_sqlserver.sql
-这6个sql文件初始化了
-
+- 前后端不要使用模拟数据，也不要使用示例，按实际项目进行代码的编写。
+- 后端数据库初始化文件目录：sql
 

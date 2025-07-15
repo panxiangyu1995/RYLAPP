@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>瑞屹林小程序数据流一致性测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #1d4ed8;
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        h2 {
+            color: #1d4ed8;
+            margin-top: 30px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: #f9fafb;
+            border-radius: 6px;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #1d4ed8;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #1e40af;
+        }
+        .results {
+            background-color: #f1f5f9;
+            border: 1px solid #e5e7eb;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: #f1f5f9;
+            margin-right: 5px;
+            border-radius: 4px 4px 0 0;
+            border: 1px solid #e5e7eb;
+            border-bottom: none;
+        }
+        .tab.active {
+            background-color: white;
+            border-bottom: 2px solid white;
+            position: relative;
+            top: 1px;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 0 4px 4px 4px;
+            background-color: white;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .success {
+            color: #10b981;
+        }
+        .error {
+            color: #ef4444;
+        }
+        .summary {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #f8fafc;
+            border-left: 4px solid #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>瑞屹林微信小程序数据流一致性测试</h1>
+        
+        <div class="summary">
+            <p>本测试页面用于验证前端和后端数据流的一致性，包括任务创建、设备信息处理、任务评价等流程。通过这些测试，可以确保前端发送的数据格式与后端期望的格式一致，同时也能验证后端返回的数据能被前端正确处理。</p>
+            <p><strong>注意：</strong> 这是一个模拟测试环境，使用了模拟的API响应。在实际项目中，建议使用Jest、Vitest或Cypress等测试框架进行更完整的测试。</p>
+        </div>
+        
+        <div>
+            <div class="tabs">
+                <button class="tab active" onclick="openTab(event, 'taskFlowTest')">任务流程测试</button>
+                <button class="tab" onclick="openTab(event, 'deviceTest')">设备数据测试</button>
+                <button class="tab" onclick="openTab(event, 'evaluationTest')">评价数据测试</button>
+                <button class="tab" onclick="openTab(event, 'comprehensiveTest')">综合测试</button>
+            </div>
+            
+            <div id="taskFlowTest" class="tab-content active">
+                <h2>任务流程测试</h2>
+                <p>测试任务创建、查询、更新和评价等操作的数据流一致性。</p>
+                
+                <div class="button-group">
+                    <button id="run-all-task-tests">运行所有任务测试</button>
+                    <button id="test-fetch-list">测试获取任务列表</button>
+                    <button id="test-fetch-detail">测试获取任务详情</button>
+                    <button id="test-fetch-steps">测试获取任务步骤</button>
+                    <button id="test-create-task">测试创建任务</button>
+                    <button id="test-upload-image">测试上传任务图片</button>
+                    <button id="test-submit-evaluation">测试提交评价</button>
+                    <button id="test-update-step">测试更新步骤</button>
+                </div>
+                
+                <h3>测试结果</h3>
+                <div id="task-test-results" class="results">测试尚未运行...</div>
+            </div>
+            
+            <div id="deviceTest" class="tab-content">
+                <h2>设备数据测试</h2>
+                <p>测试不同任务类型的设备数据格式是否一致。</p>
+                
+                <div class="button-group">
+                    <button id="run-all-device-tests">运行所有设备测试</button>
+                    <button id="test-device-consistency">测试设备数据一致性</button>
+                    <button id="test-device-validation">测试设备数据验证</button>
+                    <button id="test-device-conversion">测试设备数据转换</button>
+                </div>
+                
+                <h3>测试结果</h3>
+                <div id="device-test-results" class="results">测试尚未运行...</div>
+            </div>
+            
+            <div id="evaluationTest" class="tab-content">
+                <h2>评价数据测试</h2>
+                <p>测试任务评价相关的数据格式和计算是否一致。</p>
+                
+                <div class="button-group">
+                    <button id="run-all-evaluation-tests">运行所有评价测试</button>
+                    <button id="test-evaluation-validity">测试评价数据有效性</button>
+                    <button id="test-evaluation-mapping">测试评价字段映射</button>
+                    <button id="test-evaluation-calculation">测试评分计算</button>
+                </div>
+                
+                <h3>测试结果</h3>
+                <div id="evaluation-test-results" class="results">测试尚未运行...</div>
+            </div>
+            
+            <div id="comprehensiveTest" class="tab-content">
+                <h2>综合测试</h2>
+                <p>测试从任务创建到评价的完整流程数据一致性。</p>
+                
+                <div class="button-group">
+                    <button id="run-all-comprehensive-tests">运行所有综合测试</button>
+                    <button id="test-complete-flow">测试完整任务流程</button>
+                    <button id="test-field-mapping">测试字段映射一致性</button>
+                    <button id="test-error-handling">测试错误处理一致性</button>
+                </div>
+                
+                <h3>测试结果</h3>
+                <div id="comprehensive-test-results" class="results">测试尚未运行...</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import taskStoreTests from './TaskStore.test.js';
+        import deviceTests from './DeviceData.test.js';
+        import evaluationTests from './EvaluationData.test.js';
+        import dataFlowTests from './DataFlowConsistency.test.js';
+        import { useTaskStore } from '../stores/task.js';
+        import { createPinia } from 'pinia';
+        import { createApp } from 'vue';
+        
+        // 创建一个Vue应用实例和Pinia Store
+        const app = createApp({});
+        const pinia = createPinia();
+        app.use(pinia);
+        
+        // 创建TaskStore实例
+        const taskStore = useTaskStore();
+        
+        // 重定向控制台输出到结果区域
+        function setupConsoleOutput(resultsDiv) {
+            let testResults = '';
+            
+            const originalConsoleLog = console.log;
+            const originalConsoleError = console.error;
+            const originalConsoleAssert = console.assert;
+            
+            console.log = function() {
+                const message = Array.from(arguments).join(' ');
+                testResults += message + '\n';
+                resultsDiv.textContent = testResults;
+                originalConsoleLog.apply(console, arguments);
+            };
+            
+            console.error = function() {
+                const message = Array.from(arguments).join(' ');
+                testResults += '❌ ' + message + '\n';
+                resultsDiv.textContent = testResults;
+                originalConsoleError.apply(console, arguments);
+            };
+            
+            console.assert = function(condition, message) {
+                if (!condition) {
+                    testResults += '❌ 断言失败: ' + message + '\n';
+                    resultsDiv.textContent = testResults;
+                } else {
+                    testResults += '✅ 断言通过: ' + message + '\n';
+                    resultsDiv.textContent = testResults;
+                }
+                originalConsoleAssert.apply(console, arguments);
+            };
+            
+            return () => {
+                testResults = '';
+                resultsDiv.textContent = '测试运行中...';
+            };
+        }
+        
+        // 设置各个测试区域的输出重定向
+        const clearTaskResults = setupConsoleOutput(document.getElementById('task-test-results'));
+        const clearDeviceResults = setupConsoleOutput(document.getElementById('device-test-results'));
+        const clearEvaluationResults = setupConsoleOutput(document.getElementById('evaluation-test-results'));
+        const clearComprehensiveResults = setupConsoleOutput(document.getElementById('comprehensive-test-results'));
+        
+        // 任务流程测试按钮
+        document.getElementById('run-all-task-tests').addEventListener('click', async () => {
+            clearTaskResults();
+            await taskStoreTests();
+        });
+        
+        document.getElementById('test-fetch-list').addEventListener('click', async () => {
+            clearTaskResults();
+            try {
+                const tasks = await taskStore.fetchTaskList();
+                console.log('获取任务列表成功:', tasks);
+            } catch (error) {
+                console.error('获取任务列表失败:', error);
+            }
+        });
+        
+        document.getElementById('test-fetch-detail').addEventListener('click', async () => {
+            clearTaskResults();
+            try {
+                const task = await taskStore.fetchTaskDetail(1);
+                console.log('获取任务详情成功:', task);
+            } catch (error) {
+                console.error('获取任务详情失败:', error);
+            }
+        });
+        
+        document.getElementById('test-fetch-steps').addEventListener('click', async () => {
+            clearTaskResults();
+            try {
+                const steps = await taskStore.fetchTaskSteps(1);
+                console.log('获取任务步骤成功:', steps);
+            } catch (error) {
+                console.error('获取任务步骤失败:', error);
+            }
+        });
+        
+        document.getElementById('test-create-task').addEventListener('click', async () => {
+            clearTaskResults();
+            // 创建一个测试任务对象
+            const taskData = {
+                title: '测试维修任务',
+                content: '设备故障描述',
+                taskType: 'repair',
+                description: '测试描述',
+                priority: 1,
+                deviceName: '显微镜',
+                deviceType: '光学设备',
+                deviceBrand: '蔡司',
+                deviceModel: 'Primo Star',
+                faultDescription: '无法对焦',
+                quantity: 1,
+                images: [
+                    new File(['image content'], 'test-image.jpg', { type: 'image/jpeg' })
+                ]
+            };
+            
+            try {
+                const taskId = await taskStore.createTask(taskData);
+                console.log('创建任务成功，返回ID:', taskId);
+            } catch (error) {
+                console.error('创建任务失败:', error);
+            }
+        });
+        
+        document.getElementById('test-upload-image').addEventListener('click', async () => {
+            clearTaskResults();
+            const imageData = {
+                file: new File(['image content'], 'test-image.jpg', { type: 'image/jpeg' }),
+                sort: 1
+            };
+            
+            try {
+                const result = await taskStore.uploadTaskImage(imageData, 999, 1);
+                console.log('上传任务图片成功:', result);
+            } catch (error) {
+                console.error('上传任务图片失败:', error);
+            }
+        });
+        
+        document.getElementById('test-submit-evaluation').addEventListener('click', async () => {
+            clearTaskResults();
+            const evaluationData = {
+                score: 5,
+                content: '服务非常好',
+                serviceAttitudeScore: 5,
+                professionalScore: 4,
+                responseSpeedScore: 5
+            };
+            
+            try {
+                const result = await taskStore.submitEvaluation(999, evaluationData);
+                console.log('提交服务评价成功:', result);
+            } catch (error) {
+                console.error('提交服务评价失败:', error);
+            }
+        });
+        
+        document.getElementById('test-update-step').addEventListener('click', async () => {
+            clearTaskResults();
+            try {
+                const result = await taskStore.updateTaskStep(999, 2, '测试步骤更新');
+                console.log('更新任务步骤成功:', result);
+            } catch (error) {
+                console.error('更新任务步骤失败:', error);
+            }
+        });
+        
+        // 设备数据测试按钮
+        document.getElementById('run-all-device-tests').addEventListener('click', async () => {
+            clearDeviceResults();
+            await deviceTests.runAllTests();
+        });
+        
+        document.getElementById('test-device-consistency').addEventListener('click', async () => {
+            clearDeviceResults();
+            await deviceTests.testDeviceDataConsistency();
+        });
+        
+        document.getElementById('test-device-validation').addEventListener('click', async () => {
+            clearDeviceResults();
+            deviceTests.testDeviceDataValidation();
+        });
+        
+        document.getElementById('test-device-conversion').addEventListener('click', async () => {
+            clearDeviceResults();
+            deviceTests.testDeviceDataConversion();
+        });
+        
+        // 评价数据测试按钮
+        document.getElementById('run-all-evaluation-tests').addEventListener('click', async () => {
+            clearEvaluationResults();
+            await evaluationTests.runAllTests();
+        });
+        
+        document.getElementById('test-evaluation-validity').addEventListener('click', async () => {
+            clearEvaluationResults();
+            await evaluationTests.testEvaluationDataValidity();
+        });
+        
+        document.getElementById('test-evaluation-mapping').addEventListener('click', async () => {
+            clearEvaluationResults();
+            evaluationTests.testEvaluationFieldMapping();
+        });
+        
+        document.getElementById('test-evaluation-calculation').addEventListener('click', async () => {
+            clearEvaluationResults();
+            evaluationTests.testScoreCalculation();
+        });
+        
+        // 综合测试按钮
+        document.getElementById('run-all-comprehensive-tests').addEventListener('click', async () => {
+            clearComprehensiveResults();
+            await dataFlowTests.runAllTests();
+        });
+        
+        document.getElementById('test-complete-flow').addEventListener('click', async () => {
+            clearComprehensiveResults();
+            await dataFlowTests.testCompleteTaskFlow();
+        });
+        
+        document.getElementById('test-field-mapping').addEventListener('click', async () => {
+            clearComprehensiveResults();
+            dataFlowTests.testFieldMappingConsistency();
+        });
+        
+        document.getElementById('test-error-handling').addEventListener('click', async () => {
+            clearComprehensiveResults();
+            await dataFlowTests.testErrorHandlingConsistency();
+        });
+        
+        // 标签页切换功能
+        window.openTab = function(evt, tabName) {
+            // 隐藏所有标签页内容
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+            
+            // 取消所有标签的激活状态
+            const tabs = document.getElementsByClassName('tab');
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            
+            // 显示当前标签页内容并设置标签为激活状态
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.miniprogram.mapper.TaskMapper">
+    
+    <resultMap id="BaseResultMap" type="com.ryl.miniprogram.entity.Task">
+        <id column="id" property="id"/>
+        <result column="task_id" property="taskId"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="task_type" property="taskType"/>
+        <result column="status" property="status"/>
+        <result column="priority" property="priority"/>
+        <result column="start_date" property="startDate"/>
+        <result column="deadline" property="deadline"/>
+        <result column="completed_date" property="completedDate"/>
+        <result column="customer_id" property="customerId"/>
+        <result column="customer" property="customerName"/>
+        <result column="contact_person" property="contactPerson"/>
+        <result column="contact_phone" property="contactPhone"/>
+        <result column="location" property="location"/>
+        <result column="device_name" property="deviceName"/>
+        <result column="device_model" property="deviceModel"/>
+        <result column="device_brand" property="deviceBrand"/>
+        <result column="device_sn" property="deviceSn"/>
+        <result column="quantity" property="quantity"/>
+        <result column="attachments" property="attachments"/>
+        <result column="verification_type" property="verificationType"/>
+        <result column="purpose" property="purpose"/>
+        <result column="requirement_description" property="requirementDescription"/>
+        <result column="appointment_time" property="appointmentTime"/>
+        <result column="current_step" property="currentStep"/>
+        <result column="create_time" property="createTime"/>
+        <result column="engineer_name" property="engineerName"/>
+        <result column="engineer_phone" property="engineerPhone"/>
+    </resultMap>
+    
+    <select id="selectByCustomerId" resultMap="BaseResultMap">
+        SELECT
+            t.*,
+            u.name as engineer_name,
+            u.mobile as engineer_phone
+        FROM
+            task t
+        LEFT JOIN
+            task_engineer te ON t.task_id = te.task_id AND te.is_owner = 1
+        LEFT JOIN
+            [user] u ON te.engineer_id = u.id
+        WHERE
+            t.customer_id = #{customerId}
+        ORDER BY
+            t.create_time DESC
+    </select>
+    
+    <select id="selectDetailById" resultMap="BaseResultMap">
+        SELECT
+            t.*,
+            u.name as engineer_name,
+            u.mobile as engineer_phone
+        FROM
+            task t
+        LEFT JOIN
+            task_engineer te ON t.task_id = te.task_id AND te.is_owner = 1
+        LEFT JOIN
+            [user] u ON te.engineer_id = u.id
+        WHERE
+            t.id = #{id}
+    </select>
+
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT * FROM task WHERE status = #{status} ORDER BY create_time DESC
+    </select>
+    
+    <select id="countDuplicateTask" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM task
+        WHERE title = #{title}
+        AND description = #{description}
+        AND task_type = #{taskType}
+        AND customer_id = #{customerId}
+    </select>
+    
+</mapper> 

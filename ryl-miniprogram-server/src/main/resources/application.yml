@@ -1,0 +1,79 @@
+server:
+  port: 8085
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: ryl-miniprogram-server
+  profiles:
+    active: dev
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  datasource:
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    url: jdbc:sqlserver://localhost:1433;databaseName=ryl_engineer;encrypt=false
+    username: sa
+    password: zxcv1234
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 15
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: HikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 15MB
+      
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.ryl.miniprogram.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+      
+pagehelper:
+  helper-dialect: sqlserver
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countSql
+
+# 微信小程序配置
+wx:
+  miniapp:
+    appid: ${WX_MINIAPP_APPID:wx123456789}
+    secret: ${WX_MINIAPP_SECRET:your_miniapp_secret}
+    token: ${WX_MINIAPP_TOKEN:your_miniapp_token}
+    aesKey: ${WX_MINIAPP_AES_KEY:your_miniapp_aes_key}
+    msgDataFormat: JSON
+    
+# JWT配置
+jwt:
+  secret: ${JWT_SECRET:ryl_miniprogram_jwt_secret_key}
+  expiration: ${JWT_EXPIRATION:86400000}
+  header: Authorization
+  tokenHead: Bearer
+
+logging:
+  level:
+    com.ryl.miniprogram: debug
+
+file:
+  upload:
+    path: ${FILE_UPLOAD_DIR:../uploads}
+    url-prefix: ${FILE_URL_PREFIX:http://localhost:8085/uploads}
+  allowed-file-types: ${FILE_ALLOWED_TYPES:.jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx}
+  max-file-size: ${FILE_MAX_SIZE:10485760} 

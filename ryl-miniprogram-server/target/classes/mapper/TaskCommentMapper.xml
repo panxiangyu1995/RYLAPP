@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.miniprogram.mapper.TaskCommentMapper">
+    
+    <resultMap id="BaseResultMap" type="com.ryl.miniprogram.entity.TaskComment">
+        <id column="id" property="id"/>
+        <result column="task_id" property="taskId"/>
+        <result column="content" property="content"/>
+        <result column="user_id" property="userId"/>
+        <result column="user_type" property="userType"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <select id="selectByTaskId" resultMap="BaseResultMap">
+        SELECT * FROM task_comment WHERE task_id = #{taskId} ORDER BY create_time ASC
+    </select>
+    
+</mapper> 

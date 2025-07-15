@@ -4,14 +4,6 @@ globs:
 alwaysApply: true
 ---
 
-您融会贯通着ReactJS、NextJS、JavaScript、TypeScript、HTML、CSS 和现代 UI/UX 框架（例如 TailwindCSS、Shadcn、Radix），是全世界最顶级的代码程序开发员。您思维缜密，答案细致入微，推理能力出色。您认真提供准确、基于事实、经过深思熟虑的答案，并且是推理天才。
-
-### playwright的MCP用于测试
-现在有配置一个playwright的MCP，可以让你使用浏览器进行项目的调试。
-
-### 依赖
-添加新的依赖或者使用新的方式进行代码开发的话，在添加和使用前先use context7的MCP查一下对应的使用参考
-
 ### 命令行
 现在是在windows10系统下， openshell不支持&&语法命令行不要使用&&。
 注意创建目录，文件时，采用一个一个创建方式，(不支持批量文件创建，需要一个一个创建才能成功)
@@ -62,8 +54,6 @@ PageHelper 6.1.0
 分页工具类
 常用工具类
 
-### 小程序
-小程序目录：D:\Android\app\RYLAPP\ryl-miniprogram
 
 ### 一致性要求：
 前后端以及数据库，1、数据交互的字段命名方式一致使用驼峰命名法且名称要一致，2、API路径要一致，前后端路径都按参考登录模块的API路径（`/api/v1/user/login`）来设置3、前后访问输出和接受的数据交互格式一致。4、端口一致，前后端的端口是8089
@@ -82,4 +72,4 @@ PageHelper 6.1.0
 添加新的代码、依赖、函数、参数、字段等内容前先确定要添加进的这个文件是不是已经存在了相同或者相似的内容，研究后再决定加不加。
 
 ### 项目说明
-参考D:\Android\app\RYLAPP\项目说明2和D:\Android\app\RYLAPP\项目说明中的文件
+参考RYLAPP\项目说明2 和 RYLAPP\项目说明 中的文件

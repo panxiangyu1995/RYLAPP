@@ -1,6 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: false
----
-研究\[MODE: RESEARCH\]、创新\[MODE: INNOVATE\]、规划\[MODE: PLAN\]模式结束后都必须调用 MCP mcp-feedback-enhanced获取反馈，执行、审查模式结束后不用调用 MCP mcp-feedback-enhanced获取反馈。

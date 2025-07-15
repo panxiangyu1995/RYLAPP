@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>瑞屹林小程序前端测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #1d4ed8;
+        }
+        .test-section {
+            margin-bottom: 30px;
+        }
+        button {
+            background-color: #1d4ed8;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #1e40af;
+        }
+        .results {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>瑞屹林小程序前端测试</h1>
+        
+        <div class="test-section">
+            <h2>数据流一致性测试</h2>
+            <p>以下测试用例检查前端Store与后端API之间的数据流一致性。</p>
+            
+            <div>
+                <button id="run-all-tests">运行所有测试</button>
+                <button id="test-fetch-list">测试获取任务列表</button>
+                <button id="test-fetch-detail">测试获取任务详情</button>
+                <button id="test-fetch-steps">测试获取任务步骤</button>
+                <button id="test-create-task">测试创建任务</button>
+                <button id="test-upload-image">测试上传任务图片</button>
+                <button id="test-submit-evaluation">测试提交评价</button>
+                <button id="test-update-step">测试更新步骤</button>
+            </div>
+            
+            <h3>测试结果</h3>
+            <div id="test-results" class="results">测试尚未运行...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import runAllTests from './TaskStore.test.js';
+        
+        // 重定向控制台输出到结果区域
+        const resultsDiv = document.getElementById('test-results');
+        let testResults = '';
+        
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleAssert = console.assert;
+        
+        console.log = function() {
+            const message = Array.from(arguments).join(' ');
+            testResults += message + '\n';
+            resultsDiv.textContent = testResults;
+            originalConsoleLog.apply(console, arguments);
+        };
+        
+        console.error = function() {
+            const message = Array.from(arguments).join(' ');
+            testResults += '❌ ' + message + '\n';
+            resultsDiv.textContent = testResults;
+            originalConsoleError.apply(console, arguments);
+        };
+        
+        console.assert = function(condition, message) {
+            if (!condition) {
+                testResults += '❌ 断言失败: ' + message + '\n';
+                resultsDiv.textContent = testResults;
+            } else {
+                testResults += '✅ 断言通过: ' + message + '\n';
+                resultsDiv.textContent = testResults;
+            }
+            originalConsoleAssert.apply(console, arguments);
+        };
+        
+        // 获取测试引用
+        import { useTaskStore } from '../stores/task.js';
+        import { createPinia } from 'pinia';
+        import { createApp } from 'vue';
+        
+        // 创建一个Vue应用实例和Pinia Store
+        const app = createApp({});
+        const pinia = createPinia();
+        app.use(pinia);
+        
+        // 创建TaskStore实例
+        const taskStore = useTaskStore();
+        
+        // 绑定按钮事件
+        document.getElementById('run-all-tests').addEventListener('click', () => {
+            testResults = '';
+            runAllTests();
+        });
+        
+        document.getElementById('test-fetch-list').addEventListener('click', async () => {
+            testResults = '';
+            try {
+                const tasks = await taskStore.fetchTaskList();
+                console.log('获取任务列表成功:', tasks);
+            } catch (error) {
+                console.error('获取任务列表失败:', error);
+            }
+        });
+        
+        document.getElementById('test-fetch-detail').addEventListener('click', async () => {
+            testResults = '';
+            try {
+                const task = await taskStore.fetchTaskDetail(1);
+                console.log('获取任务详情成功:', task);
+            } catch (error) {
+                console.error('获取任务详情失败:', error);
+            }
+        });
+        
+        document.getElementById('test-fetch-steps').addEventListener('click', async () => {
+            testResults = '';
+            try {
+                const steps = await taskStore.fetchTaskSteps(1);
+                console.log('获取任务步骤成功:', steps);
+            } catch (error) {
+                console.error('获取任务步骤失败:', error);
+            }
+        });
+        
+        document.getElementById('test-create-task').addEventListener('click', async () => {
+            testResults = '';
+            // 创建一个测试任务对象
+            const taskData = {
+                title: '测试维修任务',
+                content: '设备故障描述',
+                taskType: 'repair',
+                description: '测试描述',
+                priority: 1,
+                deviceName: '显微镜',
+                deviceType: '光学设备',
+                deviceBrand: '蔡司',
+                deviceModel: 'Primo Star',
+                faultDescription: '无法对焦',
+                quantity: 1,
+                images: [
+                    new File(['image content'], 'test-image.jpg', { type: 'image/jpeg' })
+                ]
+            };
+            
+            try {
+                const taskId = await taskStore.createTask(taskData);
+                console.log('创建任务成功，返回ID:', taskId);
+            } catch (error) {
+                console.error('创建任务失败:', error);
+            }
+        });
+        
+        document.getElementById('test-upload-image').addEventListener('click', async () => {
+            testResults = '';
+            const imageData = {
+                file: new File(['image content'], 'test-image.jpg', { type: 'image/jpeg' }),
+                sort: 1
+            };
+            
+            try {
+                const result = await taskStore.uploadTaskImage(imageData, 999, 1);
+                console.log('上传任务图片成功:', result);
+            } catch (error) {
+                console.error('上传任务图片失败:', error);
+            }
+        });
+        
+        document.getElementById('test-submit-evaluation').addEventListener('click', async () => {
+            testResults = '';
+            const evaluationData = {
+                score: 5,
+                content: '服务非常好',
+                serviceAttitudeScore: 5,
+                professionalScore: 4,
+                responseSpeedScore: 5
+            };
+            
+            try {
+                const result = await taskStore.submitEvaluation(999, evaluationData);
+                console.log('提交服务评价成功:', result);
+            } catch (error) {
+                console.error('提交服务评价失败:', error);
+            }
+        });
+        
+        document.getElementById('test-update-step').addEventListener('click', async () => {
+            testResults = '';
+            try {
+                const result = await taskStore.updateTaskStep(999, 2, '测试步骤更新');
+                console.log('更新任务步骤成功:', result);
+            } catch (error) {
+                console.error('更新任务步骤失败:', error);
+            }
+        });
+    </script>
+</body>
+</html>

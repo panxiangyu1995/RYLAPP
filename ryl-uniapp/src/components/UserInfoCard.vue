@@ -1,0 +1,94 @@
+<template>
+  <view class="bg-white rounded-lg shadow-md overflow-hidden p-4 mb-6 border border-neutral-light">
+    <!-- 未登录状态 -->
+    <view v-if="!userStore.isLoggedIn" class="flex items-center justify-between">
+      <view>
+        <view class="font-medium text-lg text-primary-dark">欢迎使用</view>
+        <view class="text-sm text-gray-600">登录后可提交订单及查看订单进展</view>
+      </view>
+      <button @click="goToLogin" class="px-4 py-2 rounded-lg font-medium transition-colors bg-primary-medium text-white hover:bg-primary-dark flex items-center">
+        <text class="lucide lucide-log-in mr-1" style="font-size: 18px;"></text>
+        登录
+      </button>
+    </view>
+    
+    <!-- 已登录状态 -->
+    <view v-else class="flex items-center">
+      <view class="relative">
+        <image 
+          :src="getUserAvatar()" 
+          class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-primary-light"
+          alt="用户头像"
+        />
+        <view class="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs border-2 border-white">
+          <text class="lucide lucide-check" style="font-size: 14px;"></text>
+        </view>
+      </view>
+      <view class="flex-1">
+        <view class="font-medium text-lg">{{ userStore.userInfo.contact || '未设置姓名' }}</view>
+        <view class="text-sm text-gray-600 flex items-center">
+          <text class="lucide lucide-building-2 mr-1" style="font-size: 14px;"></text>
+          {{ userStore.userInfo.name || '未设置公司' }}
+        </view>
+        <view class="text-sm text-gray-600 flex items-center">
+          <text class="lucide lucide-phone mr-1" style="font-size: 14px;"></text>
+          {{ userStore.userInfo.phone || '未设置电话' }}
+        </view>
+      </view>
+      <view class="flex flex-col space-y-2 justify-center">
+        <button @click="goToProfile" class="px-4 py-2 rounded-lg font-medium transition-colors border border-primary-medium text-primary-medium hover:bg-primary-light hover:text-white text-sm flex items-center w-20 justify-center">
+          <text class="lucide lucide-edit mr-1" style="font-size: 14px;"></text>
+          编辑
+        </button>
+        <button @click="logout" class="px-4 py-2 rounded-lg font-medium transition-colors border border-primary-medium text-primary-medium hover:bg-primary-light hover:text-white text-sm flex items-center w-20 justify-center text-red-500 hover:bg-red-50">
+          <text class="lucide lucide-log-out mr-1" style="font-size: 14px;"></text>
+          退出
+        </button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup>
+import { useUserStore } from '@/stores/user';
+
+const userStore = useUserStore();
+
+// 获取用户头像URL，优先使用avatarUrl，然后是wechat_avatar_url，最后是默认头像
+const getUserAvatar = () => {
+  const userInfo = userStore.userInfo;
+  if (!userInfo) return '/static/images/avatar-placeholder.png';
+
+  let avatarUrl = userInfo.avatarUrl || userInfo.wechat_avatar_url;
+  if (!avatarUrl || avatarUrl.startsWith('blob:')) {
+    return '/static/images/avatar-placeholder.png';
+  }
+  
+  // 检查URL是否为相对路径（不包含http或https），如果是则确保路径正确
+  if (!avatarUrl.startsWith('http')) {
+    return avatarUrl.startsWith('/') ? avatarUrl : `/${avatarUrl}`;
+  }
+  
+  return avatarUrl;
+};
+
+const goToLogin = () => {
+  if (userStore.isLoggedIn) {
+    // 如果已登录，则跳转到个人中心
+    uni.navigateTo({ url: '/pages/profile/profile' });
+  } else {
+    // 如果未登录，则跳转到登录页
+    uni.navigateTo({ url: '/pages/login/login' });
+  }
+};
+
+const goToProfile = () => {
+  uni.navigateTo({ url: '/pages/profile/profile' });
+};
+
+// 退出登录
+const logout = () => {
+  userStore.logout();
+  uni.reLaunch({ url: '/pages/login/login' });
+};
+</script> 

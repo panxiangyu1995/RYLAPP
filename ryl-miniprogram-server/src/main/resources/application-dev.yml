@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    url: jdbc:sqlserver://localhost:1433;databaseName=ryl_engineer;encrypt=false
+    username: sa
+    password: zxcv1234
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      pool-name: RylHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      
+logging:
+  level:
+    com.ryl.miniprogram: debug
+    org.springframework.web: info
+    org.mybatis: debug 

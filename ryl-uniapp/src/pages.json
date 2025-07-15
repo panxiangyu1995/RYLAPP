@@ -1,0 +1,56 @@
+{
+  "pages": [
+    {
+      "path": "pages/home/home",
+      "style": {
+        "navigationBarTitleText": "首页"
+      }
+    },
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/register/register",
+      "style": {
+        "navigationBarTitleText": "注册"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "个人中心"
+      },
+      "needLogin": true
+    },
+    {
+      "path": "pages/taskcreate/taskcreate",
+      "style": {
+        "navigationBarTitleText": "创建任务"
+      },
+      "needLogin": true
+    },
+    {
+      "path": "pages/taskprogress/taskprogress",
+      "style": {
+        "navigationBarTitleText": "任务进度"
+      },
+      "needLogin": true
+    },
+    {
+      "path": "pages/taskdetail/taskdetail",
+      "style": {
+        "navigationBarTitleText": "任务详情"
+      },
+      "needLogin": true
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "任务管理",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  }
+} 
