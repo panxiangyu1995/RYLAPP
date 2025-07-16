@@ -100,15 +100,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onBeforeMount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import { useAuthStore } from '../../stores/auth'
-import { toast } from 'vue-toastification'
+import { useToast } from 'vue-toastification'
 
 const router = useRouter()
 const userStore = useUserStore()
 const authStore = useAuthStore()
+const toast = useToast()
 
 // 用户信息
 const userInfo = reactive({

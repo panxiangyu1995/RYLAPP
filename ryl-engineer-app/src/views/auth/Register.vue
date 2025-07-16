@@ -228,10 +228,11 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
-import { toast } from 'vue-toastification'
+import { useToast } from 'vue-toastification'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const toast = useToast()
 const loading = computed(() => authStore.loading)
 const registerError = computed(() => authStore.error)
 
