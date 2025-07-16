@@ -234,7 +234,7 @@
         <!-- 提交按钮 -->
         <button 
           form-type="submit"
-          class="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light disabled:opacity-50"
+          class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light disabled:opacity-50"
           :disabled="isSubmitting || !userStore.isLoggedIn"
           :loading="isSubmitting"
         >

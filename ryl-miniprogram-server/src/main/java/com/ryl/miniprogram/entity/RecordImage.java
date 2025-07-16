@@ -21,16 +21,10 @@ public class RecordImage {
     private Long id;
 
     /**
-     * 关联ID（任务ID、步骤ID等）
+     * 记录ID
      */
-    @TableField("relation_id")
-    private Long relationId;
-
-    /**
-     * 关联类型（0：任务，1：步骤，2：评价）
-     */
-    @TableField("relation_type")
-    private Integer relationType;
+    @TableField("record_id")
+    private Long recordId;
 
     /**
      * 图片URL

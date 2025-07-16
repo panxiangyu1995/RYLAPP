@@ -14,6 +14,6 @@ import java.util.List;
 @Mapper
 public interface RecordFileMapper extends BaseMapper<RecordFile> {
 
-    @Select("SELECT * FROM record_file WHERE relation_id = #{relationId} AND relation_type = #{relationType}")
-    List<RecordFile> selectByRelationIdAndType(@Param("relationId") Long relationId, @Param("relationType") int relationType);
+    @Select("SELECT * FROM record_file WHERE record_id = #{relationId}")
+    List<RecordFile> selectByRelationIdAndType(@Param("relationId") Long relationId);
 }

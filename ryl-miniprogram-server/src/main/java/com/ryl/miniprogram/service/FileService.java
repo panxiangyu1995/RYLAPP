@@ -16,13 +16,12 @@ public interface FileService {
      * 上传文件
      *
      * @param file          文件
-     * @param relationId    关联ID
-     * @param relationType  关联类型
+     * @param recordId      记录ID
      * @param uploadUserId  上传人ID
      * @param uploadUserType 上传人类型
      * @return 文件信息
      */
-    RecordFile uploadFile(MultipartFile file, Long relationId, Integer relationType, Long uploadUserId, Integer uploadUserType);
+    RecordFile uploadFile(MultipartFile file, Long recordId, Long uploadUserId, Integer uploadUserType);
     
     /**
      * 上传图片

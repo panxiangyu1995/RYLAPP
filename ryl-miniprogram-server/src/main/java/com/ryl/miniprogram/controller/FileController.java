@@ -43,8 +43,7 @@ public class FileController {
      * 上传文件
      *
      * @param file          文件
-     * @param relationId    关联ID
-     * @param relationType  关联类型
+     * @param recordId      记录ID
      * @param uploadUserId  上传人ID
      * @param uploadUserType 上传人类型
      * @return 文件信息
@@ -52,12 +51,11 @@ public class FileController {
     @PostMapping("/upload")
     public ResultVO<FileInfoDTO> uploadFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("relationId") Long relationId,
-            @RequestParam("relationType") Integer relationType,
+            @RequestParam("recordId") Long recordId,
             @RequestParam("uploadUserId") Long uploadUserId,
             @RequestParam("uploadUserType") Integer uploadUserType) {
         try {
-            RecordFile recordFile = fileService.uploadFile(file, relationId, relationType, uploadUserId, uploadUserType);
+            RecordFile recordFile = fileService.uploadFile(file, recordId, uploadUserId, uploadUserType);
             FileInfoDTO fileInfoDTO = new FileInfoDTO();
             BeanUtils.copyProperties(recordFile, fileInfoDTO);
             return ResultVO.success(fileInfoDTO);

@@ -11,6 +11,6 @@ import java.util.List;
 @Mapper
 public interface RecordImageMapper extends BaseMapper<RecordImage> {
 
-    @Select("SELECT * FROM record_image WHERE relation_id = #{relationId} AND relation_type = #{relationType}")
-    List<RecordImage> selectByRelationIdAndType(@Param("relationId") Long relationId, @Param("relationType") int relationType);
+    @Select("SELECT * FROM record_image WHERE record_id = #{relationId}")
+    List<RecordImage> selectByRelationIdAndType(@Param("relationId") Long relationId);
 } 

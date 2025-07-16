@@ -37,7 +37,7 @@
       <view v-else>
         <TaskCard 
           v-for="task in tasks" 
-          :key="task.task_id" 
+          :key="task.id" 
           :task="task" 
         />
       </view>

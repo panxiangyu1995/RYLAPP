@@ -122,7 +122,7 @@ public class TaskFlowServiceImpl extends ServiceImpl<TaskFlowMapper, TaskFlow> i
             BeanUtils.copyProperties(taskStep, vo);
 
             // 查询图片
-            List<RecordImage> images = recordImageMapper.selectByRelationIdAndType(taskStep.getId(), 1); // relationType 1 for step
+            List<RecordImage> images = recordImageMapper.selectByRelationIdAndType(taskStep.getId()); // relationType 1 for step
             if (images != null) {
                 vo.setImages(images.stream().map(image -> {
                     ImageVO imageVO = new ImageVO();
@@ -133,7 +133,7 @@ public class TaskFlowServiceImpl extends ServiceImpl<TaskFlowMapper, TaskFlow> i
             }
 
             // 查询附件
-            List<RecordFile> files = recordFileMapper.selectByRelationIdAndType(taskStep.getId(), 1); // relationType 1 for step
+            List<RecordFile> files = recordFileMapper.selectByRelationIdAndType(taskStep.getId()); // relationType 1 for step
             if (files != null) {
                 vo.setFiles(files.stream().map(file -> {
                     FileVO fileVO = new FileVO();

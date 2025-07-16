@@ -288,8 +288,7 @@
 
 **请求参数**：
 - `file`：文件（multipart/form-data）
-- `relationId`：关联ID
-- `relationType`：关联类型（0：任务，1：步骤，2：评价）
+- `recordId`：关联的记录ID
 - `uploadUserId`：上传人ID
 - `uploadUserType`：上传人类型（0：系统用户，1：客户）
 
@@ -300,8 +299,7 @@
   "message": "success",
   "data": {
     "id": 1,
-    "relationId": 1,
-    "relationType": 0,
+    "recordId": 1,
     "fileName": "test.jpg",
     "filePath": "2023/06/01/abc123.jpg",
     "fileSize": 1024,

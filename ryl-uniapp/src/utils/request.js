@@ -9,7 +9,7 @@
 		 let header = options.header || {};
 		 const token = uni.getStorageSync('token');
 		 if (token) {
-			 header['Authorization'] = `${token}`;
+			 header['Authorization'] = `Bearer ${token}`;
 		 }
 		 
 		 uni.request({

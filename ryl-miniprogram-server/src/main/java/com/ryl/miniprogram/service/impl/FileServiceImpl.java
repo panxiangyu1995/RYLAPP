@@ -49,7 +49,7 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
     
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RecordFile uploadFile(MultipartFile file, Long relationId, Integer relationType, Long uploadUserId, Integer uploadUserType) {
+    public RecordFile uploadFile(MultipartFile file, Long recordId, Long uploadUserId, Integer uploadUserType) {
         // 检查参数
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("文件不能为空");
@@ -76,8 +76,7 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             
             // 保存文件记录
             RecordFile recordFile = new RecordFile();
-            recordFile.setRelationId(relationId);
-            recordFile.setRelationType(relationType);
+            recordFile.setRecordId(recordId);
             recordFile.setFileName(originalFilename);
             recordFile.setFilePath(datePath + "/" + newFilename);
             recordFile.setFileSize(file.getSize() / 1024); // 转换为KB

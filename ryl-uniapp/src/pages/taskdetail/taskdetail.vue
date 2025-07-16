@@ -104,8 +104,6 @@ import ChevronLeftIcon from '@/components/icons/ChevronLeftIcon.vue';
 import FileTextIcon from '@/components/icons/FileTextIcon.vue';
 import { onLoad } from '@dcloudio/uni-app';
 
-const router = useRouter();
-const route = useRoute();
 const taskStore = useTaskStore();
 
 const taskId = ref(null);

@@ -62,7 +62,7 @@ const getCurrentStepName = () => {
 };
 
 // 前往订单详情
-const goToTaskDetail = () => {
+const goToDetail = () => {
   uni.navigateTo({
     url: `/pages/taskdetail/taskdetail?id=${props.task.id}`
   });
