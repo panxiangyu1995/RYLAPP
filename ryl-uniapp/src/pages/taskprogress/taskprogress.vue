@@ -3,7 +3,7 @@
     <!-- 顶部导航 -->
     <view class="flex items-center mb-4">
       <button @click="goBack" class="mr-2">
-        <text class="lucide lucide-chevron-left"></text>
+        <ChevronLeftIcon :size="24" color="#0E4472" />
       </button>
       <view class="text-xl font-medium">订单进展</view>
     </view>
@@ -50,6 +50,7 @@ import { ref } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { useTaskStore } from '@/stores/task';
 import TaskCard from '@/components/TaskCard.vue';
+import ChevronLeftIcon from '@/components/icons/ChevronLeftIcon.vue';
 import { onShow } from '@dcloudio/uni-app';
 
 const userStore = useUserStore();

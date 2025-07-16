@@ -65,7 +65,7 @@
                     />
                     <view class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-1 transition-opacity flex justify-center">
                       <button @click.stop="downloadImage(image.url, image.id)" class="text-white text-xs mx-1">
-                        <text class="lucide lucide-download" style="font-size: 16px;"></text>
+                        <DownloadIcon :size="16" color="white" />
                       </button>
                     </view>
                   </view>
@@ -160,6 +160,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { useTaskStore } from '@/stores/task';
+import DownloadIcon from '@/components/icons/DownloadIcon.vue';
 
 const taskStore = useTaskStore();
 

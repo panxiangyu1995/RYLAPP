@@ -7,13 +7,14 @@
       <view class="mb-4">
         <view class="text-sm font-medium mb-1 text-primary-dark">服务态度 <text class="text-red-500">*</text></view>
         <view class="flex items-center">
-          <text
+          <StarIcon
             v-for="i in 5"
             :key="i"
             @click="evaluation.serviceAttitude = i"
-            class="lucide lucide-star cursor-pointer p-1"
-            :style="{ color: i <= evaluation.serviceAttitude ? '#FFC107' : '#D1D5DB' }"
-          ></text>
+            :size="24"
+            :color="i <= evaluation.serviceAttitude ? '#FFC107' : '#D1D5DB'"
+            class="cursor-pointer p-1"
+          />
         </view>
         <view v-if="errors.serviceAttitude" class="text-red-500 text-xs mt-1">{{ errors.serviceAttitude }}</view> 
       </view>
@@ -22,13 +23,14 @@
       <view class="mb-4">
         <view class="text-sm font-medium mb-1 text-primary-dark">服务质量 <text class="text-red-500">*</text></view>
         <view class="flex items-center">
-          <text
+          <StarIcon
             v-for="i in 5"
             :key="i"
             @click="evaluation.serviceQuality = i"
-            class="lucide lucide-star cursor-pointer p-1"
-            :style="{ color: i <= evaluation.serviceQuality ? '#FFC107' : '#D1D5DB' }"
-          ></text>
+            :size="24"
+            :color="i <= evaluation.serviceQuality ? '#FFC107' : '#D1D5DB'"
+            class="cursor-pointer p-1"
+          />
         </view>
         <view v-if="errors.serviceQuality" class="text-red-500 text-xs mt-1">{{ errors.serviceQuality }}</view>   
       </view>
@@ -37,13 +39,14 @@
       <view class="mb-4">
         <view class="text-sm font-medium mb-1 text-primary-dark">总体评价 <text class="text-red-500">*</text></view>
         <view class="flex items-center">
-          <text
+          <StarIcon
             v-for="i in 5"
             :key="i"
             @click="evaluation.overallRating = i"
-            class="lucide lucide-star cursor-pointer p-1"
-            :style="{ color: i <= evaluation.overallRating ? '#FFC107' : '#D1D5DB' }"
-          ></text>
+            :size="24"
+            :color="i <= evaluation.overallRating ? '#FFC107' : '#D1D5DB'"
+            class="cursor-pointer p-1"
+          />
         </view>
         <view v-if="errors.overallRating" class="text-red-500 text-xs mt-1">{{ errors.overallRating }}</view>     
       </view>
@@ -73,6 +76,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
+import StarIcon from '@/components/icons/StarIcon.vue';
 
 const props = defineProps({
   taskId: {

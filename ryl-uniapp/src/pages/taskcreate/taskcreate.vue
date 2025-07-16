@@ -5,7 +5,7 @@
       <view class="p-6">
         <view class="flex justify-center mb-4">
           <view class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-            <text class="lucide lucide-check w-10 h-10 text-green-500"></text>
+            <CheckIcon :size="40" color="green" />
           </view>
         </view>
         
@@ -49,7 +49,7 @@
       <!-- 顶部导航 -->
       <view class="flex items-center mb-4">
         <button @click="goBack" class="mr-2">
-          <text class="lucide lucide-chevron-left"></text>
+          <ChevronLeftIcon :size="24" color="#0E4472" />
         </button>
         <view class="text-xl font-medium">提交订单</view>
       </view>
@@ -258,6 +258,8 @@ import DeviceBasicInfo from '@/components/DeviceBasicInfo.vue';
 import UploadImage from '@/components/UploadImage.vue';
 import UploadFile from '@/components/UploadFile.vue';
 import GlobalToast from '@/components/GlobalToast.vue';
+import CheckIcon from '@/components/icons/CheckIcon.vue';
+import ChevronLeftIcon from '@/components/icons/ChevronLeftIcon.vue';
 
 const taskStore = useTaskStore();
 const userStore = useUserStore();

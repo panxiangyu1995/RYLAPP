@@ -3,7 +3,7 @@
     <!-- 顶部导航 -->
     <view class="flex items-center mb-4">
       <button @click="goBack" class="mr-2">
-        <text class="lucide lucide-chevron-left"></text>
+        <ChevronLeftIcon :size="24" color="#0E4472" />
       </button>
       <view class="text-xl font-medium">订单详情</view>
     </view>
@@ -68,7 +68,7 @@
           <view v-if="step.files && step.files.length > 0">
             <view v-for="file in step.files" :key="file.id" class="flex items-center justify-between p-2 bg-neutral-light rounded-md mb-2">
               <view class="flex items-center overflow-hidden">
-                <text class="lucide lucide-file-text text-lg text-primary-medium mr-2"></text>
+                <FileTextIcon :size="20" color="#286B9C" class="mr-2" />
                 <text class="text-sm truncate">{{ file.fileName }}</text>
               </view>
               <button @click="downloadFile(file)" class="px-2 py-1 rounded-md font-medium transition-colors border border-primary-medium text-primary-medium hover:bg-primary-light hover:text-white text-sm ml-2">下载</button>
@@ -100,6 +100,8 @@ import { ref, computed } from 'vue';
 import { useTaskStore } from '@/stores/task';
 import TaskProgress from '@/components/TaskProgress.vue';
 import ServiceEvaluation from '@/components/ServiceEvaluation.vue';
+import ChevronLeftIcon from '@/components/icons/ChevronLeftIcon.vue';
+import FileTextIcon from '@/components/icons/FileTextIcon.vue';
 import { onLoad } from '@dcloudio/uni-app';
 
 const router = useRouter();

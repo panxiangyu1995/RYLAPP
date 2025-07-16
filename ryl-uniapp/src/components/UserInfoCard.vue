@@ -7,7 +7,7 @@
         <view class="text-sm text-gray-600">登录后可提交订单及查看订单进展</view>
       </view>
       <button @click="goToLogin" class="px-4 py-2 rounded-lg font-medium transition-colors bg-primary-medium text-white hover:bg-primary-dark flex items-center">
-        <text class="lucide lucide-log-in mr-1" style="font-size: 18px;"></text>
+        <LogInIcon :size="18" color="white" class="mr-1" />
         登录
       </button>
     </view>
@@ -21,27 +21,27 @@
           alt="用户头像"
         />
         <view class="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs border-2 border-white">
-          <text class="lucide lucide-check" style="font-size: 14px;"></text>
+          <CheckIcon :size="14" color="white" />
         </view>
       </view>
       <view class="flex-1">
         <view class="font-medium text-lg">{{ userStore.userInfo.contact || '未设置姓名' }}</view>
         <view class="text-sm text-gray-600 flex items-center">
-          <text class="lucide lucide-building-2 mr-1" style="font-size: 14px;"></text>
+          <Building2Icon :size="14" class="mr-1" />
           {{ userStore.userInfo.name || '未设置公司' }}
         </view>
         <view class="text-sm text-gray-600 flex items-center">
-          <text class="lucide lucide-phone mr-1" style="font-size: 14px;"></text>
+          <PhoneIcon :size="14" class="mr-1" />
           {{ userStore.userInfo.phone || '未设置电话' }}
         </view>
       </view>
       <view class="flex flex-col space-y-2 justify-center">
         <button @click="goToProfile" class="px-4 py-2 rounded-lg font-medium transition-colors border border-primary-medium text-primary-medium hover:bg-primary-light hover:text-white text-sm flex items-center w-20 justify-center">
-          <text class="lucide lucide-edit mr-1" style="font-size: 14px;"></text>
+          <EditIcon :size="14" class="mr-1" />
           编辑
         </button>
         <button @click="logout" class="px-4 py-2 rounded-lg font-medium transition-colors border border-primary-medium text-primary-medium hover:bg-primary-light hover:text-white text-sm flex items-center w-20 justify-center text-red-500 hover:bg-red-50">
-          <text class="lucide lucide-log-out mr-1" style="font-size: 14px;"></text>
+          <LogOutIcon :size="14" class="mr-1" />
           退出
         </button>
       </view>
@@ -51,6 +51,12 @@
 
 <script setup>
 import { useUserStore } from '@/stores/user';
+import LogInIcon from '@/components/icons/LogInIcon.vue';
+import CheckIcon from '@/components/icons/CheckIcon.vue';
+import Building2Icon from '@/components/icons/Building2Icon.vue';
+import PhoneIcon from '@/components/icons/PhoneIcon.vue';
+import EditIcon from '@/components/icons/EditIcon.vue';
+import LogOutIcon from '@/components/icons/LogOutIcon.vue';
 
 const userStore = useUserStore();
 

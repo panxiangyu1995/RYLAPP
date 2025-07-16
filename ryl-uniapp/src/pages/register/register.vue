@@ -11,7 +11,7 @@
       <view v-if="errorMessage" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
         <view class="block sm:inline">{{ errorMessage }}</view>
         <text class="absolute top-0 bottom-0 right-0 px-4 py-3" @click="errorMessage = ''">
-           <text class="lucide lucide-x" style="font-size: 20px;"></text>
+           <XIcon :size="20" color="#000000" />
         </text>
       </view>
       
@@ -208,6 +208,7 @@
   import { ref, computed, watch } from 'vue';
   import { useUserStore } from '@/stores/user';
   import ContactInput from '@/components/ContactInput.vue';
+  import XIcon from '@/components/icons/XIcon.vue';
   
   const userStore = useUserStore();
   const loading = ref(false);
