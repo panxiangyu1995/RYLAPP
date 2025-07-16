@@ -1,12 +1,12 @@
 <template>
   <view class="p-4">
-    <!-- 顶部导航 -->
+    <!-- 顶部导航
     <view class="flex items-center mb-4">
       <button @click="goBack" class="mr-2">
         <ChevronLeftIcon :size="24" color="#0E4472" />
       </button>
       <view class="text-xl font-medium">订单详情</view>
-    </view>
+    </view> -->
     
     <!-- 加载中状态 -->
     <view v-if="loading" class="text-center py-8">

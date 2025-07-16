@@ -1,12 +1,12 @@
 <template>
   <view class="p-4">
-    <!-- 顶部导航 -->
+    <!-- 顶部导航
     <view class="flex items-center mb-4">
       <button @click="goBack" class="mr-2">
         <ChevronLeftIcon :size="24" color="#0E4472" />
       </button>
       <view class="text-xl font-medium">订单进展</view>
-    </view>
+    </view> -->
     
     <!-- 调试模式提示 -->
     <view v-if="!userStore.isLoggedIn" class="bg-blue-50 border border-blue-300 rounded-lg p-4 mb-6">

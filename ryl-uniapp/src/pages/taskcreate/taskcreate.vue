@@ -46,13 +46,13 @@
 
     <!-- 订单表单 -->
     <view v-else>
-      <!-- 顶部导航 -->
+      <!-- 顶部导航
       <view class="flex items-center mb-4">
         <button @click="goBack" class="mr-2">
           <ChevronLeftIcon :size="24" color="#0E4472" />
         </button>
         <view class="text-xl font-medium">提交订单</view>
-      </view>
+      </view> -->
     
       <!-- 订单类型选择 -->
       <view class="mb-6 bg-white rounded-lg p-4">
