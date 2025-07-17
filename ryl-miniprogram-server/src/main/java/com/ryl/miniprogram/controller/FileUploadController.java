@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 文件上传控制器
@@ -52,13 +50,11 @@ public class FileUploadController {
             // 上传文件
             String fileUrl = fileStorageService.storeAvatar(file, userId);
             
-            // 更新用户头像
-            customerService.updateAvatar(userId, fileUrl);
+            // 更新用户头像并获取最新用户信息
+            Object updatedCustomer = customerService.updateAvatar(userId, fileUrl);
             
-            // 返回文件URL
-            Map<String, String> data = new HashMap<>();
-            data.put("url", fileUrl);
-            return ResultVO.success(data);
+            // 返回更新后的用户信息
+            return ResultVO.success(updatedCustomer);
         } catch (Exception e) {
             log.error("上传头像失败", e);
             return ResultVO.failed("上传头像失败: " + e.getMessage());

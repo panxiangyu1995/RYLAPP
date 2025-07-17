@@ -49,7 +49,9 @@ public class FileStorageServiceImpl implements FileStorageService {
         
         // 保存文件
         Path targetPath = dirPath.resolve(filename);
-        Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+        try (var inputStream = file.getInputStream()) {
+            Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        }
         
         // 返回文件URL
         if (urlPrefix.endsWith("/")) {

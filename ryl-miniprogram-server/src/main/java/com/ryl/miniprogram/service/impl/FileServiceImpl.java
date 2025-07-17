@@ -9,9 +9,14 @@ import com.ryl.miniprogram.mapper.RecordFileMapper;
 import com.ryl.miniprogram.mapper.TaskAttachmentMapper;
 import com.ryl.miniprogram.mapper.TaskImageMapper;
 import com.ryl.miniprogram.service.FileService;
+import com.ryl.miniprogram.dto.FileDownloadResource;
+import com.ryl.miniprogram.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -19,10 +24,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.net.MalformedURLException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -34,68 +37,66 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> implements FileService {
-    
+
+    private final TaskImageMapper taskImageMapper;
+    private final TaskAttachmentMapper taskAttachmentMapper;
+    private final String uploadPath;
+    private final String urlPrefix;
+
     @Autowired
-    private TaskImageMapper taskImageMapper;
-    
-    @Autowired
-    private TaskAttachmentMapper taskAttachmentMapper;
-    
-    @Value("${file.upload.path:/upload}")
-    private String uploadPath;
-    
-    @Value("${file.upload.url-prefix:/files}")
-    private String urlPrefix;
-    
+    public FileServiceImpl(TaskImageMapper taskImageMapper,
+                           TaskAttachmentMapper taskAttachmentMapper,
+                           @Qualifier("uploadPath") String uploadPath,
+                           @Value("${file.upload.url-prefix}") String urlPrefix) {
+        this.taskImageMapper = taskImageMapper;
+        this.taskAttachmentMapper = taskAttachmentMapper;
+        this.uploadPath = uploadPath;
+        this.urlPrefix = urlPrefix;
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RecordFile uploadFile(MultipartFile file, Long recordId, Long uploadUserId, Integer uploadUserType) {
+    public RecordFile uploadFile(MultipartFile file, Long recordId, Long uploadUserId, Integer uploadUserType) throws IOException {
         // 检查参数
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("文件不能为空");
         }
-        
-        try {
-            // 创建上传目录
-            String datePath = new SimpleDateFormat("yyyy/MM/dd").format(new Date());
-            String dirPath = uploadPath + "/" + datePath;
-            Path directory = Paths.get(dirPath);
-            if (!Files.exists(directory)) {
-                Files.createDirectories(directory);
-            }
-            
-            // 生成文件名
-            String originalFilename = file.getOriginalFilename();
-            String fileType = getFileType(originalFilename);
-            String newFilename = UUID.randomUUID().toString().replaceAll("-", "") + "." + fileType;
-            String filePath = dirPath + "/" + newFilename;
-            
-            // 保存文件
-            File destFile = new File(filePath);
-            file.transferTo(destFile);
-            
-            // 保存文件记录
-            RecordFile recordFile = new RecordFile();
-            recordFile.setRecordId(recordId);
-            recordFile.setFileName(originalFilename);
-            recordFile.setFilePath(datePath + "/" + newFilename);
-            recordFile.setFileSize(file.getSize() / 1024); // 转换为KB
-            recordFile.setFileType(fileType);
-            recordFile.setUploadUserId(uploadUserId);
-            recordFile.setUploadUserType(uploadUserType);
-            recordFile.setCreateTime(new Date());
-            
-            this.save(recordFile);
-            
-            return recordFile;
-        } catch (IOException e) {
-            throw new RuntimeException("文件上传失败", e);
+
+        // 创建上传目录
+        String datePath = new SimpleDateFormat("yyyy/MM/dd").format(new Date());
+        File directory = new File(this.uploadPath, datePath);
+        if (!directory.exists() && !directory.mkdirs()) {
+            throw new IOException("无法创建目录: " + directory.getAbsolutePath());
         }
+
+        // 生成文件名
+        String originalFilename = file.getOriginalFilename();
+        String fileType = getFileType(originalFilename);
+        String newFilename = UUID.randomUUID().toString().replaceAll("-", "") + "." + fileType;
+        
+        // 保存文件
+        File destFile = new File(directory, newFilename);
+        file.transferTo(destFile);
+
+        // 保存文件记录
+        RecordFile recordFile = new RecordFile();
+        recordFile.setRecordId(recordId);
+        recordFile.setFileName(originalFilename);
+        recordFile.setFilePath(datePath + "/" + newFilename);
+        recordFile.setFileSize(file.getSize() / 1024); // 转换为KB
+        recordFile.setFileType(fileType);
+        recordFile.setUploadUserId(uploadUserId);
+        recordFile.setUploadUserType(uploadUserType);
+        recordFile.setCreateTime(new Date());
+
+        this.save(recordFile);
+
+        return recordFile;
     }
-    
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public TaskImage uploadTaskImage(MultipartFile file, String taskId, Integer imageType, Integer sort) {
+    public TaskImage uploadTaskImage(MultipartFile file, String taskId, Integer imageType, Integer sort) throws IOException {
         log.info("开始上传任务图片，taskId: {}, imageType: {}, sort: {}", taskId, imageType, sort);
         
         // 检查参数
@@ -128,20 +129,17 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
         try {
             // 创建上传目录
             String datePath = new SimpleDateFormat("yyyy/MM/dd").format(new Date());
-            String dirPath = uploadPath + "/images/" + datePath;
-            Path directory = Paths.get(dirPath);
-            if (!Files.exists(directory)) {
-                log.info("创建上传目录: {}", dirPath);
-                Files.createDirectories(directory);
+            File directory = new File(this.uploadPath, "images/" + datePath);
+            if (!directory.exists() && !directory.mkdirs()) {
+                throw new IOException("无法创建目录: " + directory.getAbsolutePath());
             }
             
             // 生成文件名
             String newFilename = "task_" + taskId + "_" + UUID.randomUUID().toString().replaceAll("-", "") + "." + fileType;
-            Path targetPath = directory.resolve(newFilename);
+            File destinationFile = new File(directory, newFilename);
             
-            // 保存文件 - 使用Files.copy替代file.transferTo以获得更好的错误处理
-            log.info("保存文件到: {}", targetPath);
-            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+            // 保存文件
+            file.transferTo(destinationFile);
             
             // 构建URL
             String imageUrl;
@@ -168,13 +166,13 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             return taskImage;
         } catch (IOException e) {
             log.error("任务图片上传失败", e);
-            throw new RuntimeException("图片上传失败: " + e.getMessage(), e);
+            throw new IOException("图片上传失败: " + e.getMessage(), e);
         }
     }
     
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public TaskAttachment uploadTaskAttachment(MultipartFile file, String taskId, Integer sort) {
+    public TaskAttachment uploadTaskAttachment(MultipartFile file, String taskId, Integer sort) throws IOException {
         log.info("开始上传任务附件，taskId: {}, sort: {}", taskId, sort);
         
         // 检查参数
@@ -204,20 +202,17 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
         try {
             // 创建上传目录
             String datePath = new SimpleDateFormat("yyyy/MM/dd").format(new Date());
-            String dirPath = uploadPath + "/attachments/" + datePath;
-            Path directory = Paths.get(dirPath);
-            if (!Files.exists(directory)) {
-                log.info("创建上传目录: {}", dirPath);
-                Files.createDirectories(directory);
+            File directory = new File(this.uploadPath, "attachments/" + datePath);
+            if (!directory.exists() && !directory.mkdirs()) {
+                throw new IOException("无法创建目录: " + directory.getAbsolutePath());
             }
             
             // 生成文件名
             String newFilename = "task_" + taskId + "_" + UUID.randomUUID().toString().replaceAll("-", "") + "." + fileType;
-            Path targetPath = directory.resolve(newFilename);
+            File destinationFile = new File(directory, newFilename);
             
             // 保存文件
-            log.info("保存文件到: {}", targetPath);
-            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+            file.transferTo(destinationFile);
             
             // 构建URL
             String fileUrl;
@@ -246,13 +241,31 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             return taskAttachment;
         } catch (IOException e) {
             log.error("任务附件上传失败", e);
-            throw new RuntimeException("附件上传失败: " + e.getMessage(), e);
+            throw new IOException("附件上传失败: " + e.getMessage(), e);
         }
     }
     
     @Override
-    public RecordFile getFile(Long fileId) {
-        return this.getById(fileId);
+    public FileDownloadResource getFile(Long fileId) {
+        RecordFile recordFile = this.getById(fileId);
+        if (recordFile == null) {
+            throw new BusinessException("文件未找到，ID: " + fileId);
+        }
+
+        try {
+            Path filePath = new File(this.uploadPath, recordFile.getFilePath()).toPath();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                return new FileDownloadResource(resource, recordFile.getFileName());
+            } else {
+                log.warn("无法读取文件: {}", filePath);
+                throw new BusinessException("无法读取文件: " + recordFile.getFileName());
+            }
+        } catch (MalformedURLException ex) {
+            log.error("文件路径格式错误: {}", recordFile.getFilePath(), ex);
+            throw new BusinessException("文件未找到: " + recordFile.getFileName(), ex);
+        }
     }
     
     @Override

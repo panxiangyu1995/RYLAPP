@@ -11,8 +11,9 @@
       <!-- 头像 -->
       <view class="flex flex-col items-center mb-6">
         <button 
+          open-type="chooseAvatar" 
+          @chooseavatar="onChooseAvatar"
           class="w-20 h-20 rounded-full overflow-hidden bg-neutral-light mb-2 p-0 border-none"
-          @click="chooseAndUpdateAvatar"
         >
           <image 
             :src="formData.avatarUrl || '/static/images/avatar-placeholder.png'" 
@@ -26,14 +27,17 @@
       <!-- 姓名 -->
       <view class="mb-4">
         <view for="name" class="block text-sm font-medium text-ui-text-black mb-1">姓名 <text class="text-red-500">*</text></view>
-        <input 
-          id="name"
-          v-model="formData.contact"
-          type="text"
-          class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-ui-blue-end focus:border-ui-blue-end sm:text-sm"
-          placeholder="请输入您的姓名"
-          required
-        />
+        <view class="mt-1 flex justify-between items-center w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+          <text>{{ formData.contact }}</text>
+          <button 
+            type="primary" 
+            size="mini" 
+            @click.prevent="openNicknameModal"
+            class="bg-blue-500 text-white"
+          >
+            修改
+          </button>
+        </view>
         <view v-if="errors.name" class="text-red-500 text-xs mt-1">{{ errors.name }}</view>
       </view>
       
@@ -125,6 +129,24 @@
         {{ loading ? '保存中...' : '保存' }}
       </button>
     </form>
+    
+    <!-- 昵称修改模态框 -->
+    <view v-if="showNicknameModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <view class="bg-white rounded-lg p-6 w-11/12 max-w-sm">
+        <h3 class="text-lg font-bold text-center mb-4">修改昵称</h3>
+        <input 
+          type="nickname" 
+          v-model="tempNickname"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md mb-4"
+          placeholder="请输入新昵称"
+        />
+        <view class="flex justify-end">
+          <button @click="closeNicknameModal" class="mr-2">取消</button>
+          <button @click="confirmNicknameChange" type="primary" class="bg-blue-500 text-white">确定</button>
+        </view>
+      </view>
+    </view>
+
   </view>
 </template>
 
@@ -135,6 +157,9 @@ import request from '@/utils/request';
 
 const userStore = useUserStore();
 const loading = ref(false);
+
+const showNicknameModal = ref(false);
+const tempNickname = ref('');
 
 // 表单数据
 const formData = reactive({
@@ -157,10 +182,9 @@ const errors = reactive({
   email: ''
 });
 
-// 加载用户信息
-onMounted(async () => {
-  if (userStore.hasUserInfo) {
-    const userInfo = userStore.userInfo;
+// 将用户信息同步到表单数据
+const syncFormData = (userInfo) => {
+  if (userInfo) {
     Object.assign(formData, {
       contact: userInfo.contact || '',
       name: userInfo.name || '',
@@ -171,164 +195,113 @@ onMounted(async () => {
       position: userInfo.position || '',
       avatarUrl: userInfo.avatarUrl || userInfo.wechat_avatar_url || ''
     });
+  }
+};
+
+// 加载用户信息
+onMounted(async () => {
+  if (userStore.hasUserInfo) {
+    syncFormData(userStore.userInfo);
   } else {
     try {
       await userStore.getUserInfo();
-      const userInfo = userStore.userInfo;
-      Object.assign(formData, {
-        contact: userInfo.contact || '',
-        name: userInfo.name || '',
-        phone: userInfo.phone || '',
-        address: userInfo.address || '',
-        email: userInfo.email || '',
-        department: userInfo.department || '',
-        position: userInfo.position || '',
-        avatarUrl: userInfo.avatarUrl || userInfo.wechat_avatar_url || ''
-      });
+      syncFormData(userStore.userInfo);
     } catch (error) {
       console.error('获取用户信息失败:', error);
     }
   }
 });
 
-// 统一的头像选择和上传方法
-const chooseAndUpdateAvatar = () => {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
-    success: (res) => {
-      const tempFilePath = res.tempFilePaths[0];
-      
-      // 显示本地预览
-      formData.avatarUrl = tempFilePath;
-
-      uni.showLoading({
-        title: '上传中...'
-      });
-
-      // 上传头像到服务器
-      uni.uploadFile({
-        url: request.defaults.baseURL + '/upload/avatar', // 使用axios实例的基本URL
-        filePath: tempFilePath,
-        name: 'file',
-        header: {
-          'Authorization': `Bearer ${uni.getStorageSync('token')}`
-        },
-        success(uploadRes) {
-          const result = JSON.parse(uploadRes.data);
-          if (result.code === 200) {
-            formData.avatarUrl = result.data.url; // 更新为服务器返回的最终URL
-            uni.showToast({ title: '头像上传成功', icon: 'success' });
-          } else {
-            uni.showToast({ title: result.message || '上传失败', icon: 'none' });
-          }
-        },
-        fail(err) {
-          console.error('上传头像失败:', err);
-          uni.showToast({ title: '上传头像失败', icon: 'none' });
-        },
-        complete() {
-          uni.hideLoading();
-        }
-      });
-    }
-  });
+const onChooseAvatar = (e) => {
+  const { avatarUrl } = e.detail;
+  uploadAvatar(avatarUrl);
 };
 
-// 验证表单
+// 统一的头像选择和上传方法
+const uploadAvatar = async (tempFilePath) => {
+  uni.showLoading({ title: '上传中...' });
+  try {
+    const result = await request.upload('/upload/avatar', tempFilePath);
+    // 使用后端返回的最新用户信息更新Store
+    userStore.setUserInfo(result.data);
+    // 将更新后的信息同步到本地表单
+    syncFormData(result.data);
+    uni.showToast({ title: '头像上传成功', icon: 'success' });
+  } catch (error) {
+    console.error('上传头像失败:', error);
+    uni.showToast({ title: '上传头像失败', icon: 'none' });
+  } finally {
+    uni.hideLoading();
+  }
+};
+
+const openNicknameModal = () => {
+  tempNickname.value = formData.contact;
+  showNicknameModal.value = true;
+};
+
+const closeNicknameModal = () => {
+  showNicknameModal.value = false;
+};
+
+const confirmNicknameChange = () => {
+  formData.contact = tempNickname.value;
+  closeNicknameModal();
+};
+
 const validateForm = () => {
   let isValid = true;
+  errors.name = '';
+  errors.company = '';
+  errors.phone = '';
+  errors.address = '';
   
-  // 重置所有错误
-  Object.keys(errors).forEach(key => {
-    errors[key] = '';
-  });
-  
-  // 验证姓名
-  if (!formData.contact.trim()) {
+  if (!formData.contact) {
     errors.name = '姓名不能为空';
     isValid = false;
   }
-  
-  // 验证公司名称
-  if (!formData.name.trim()) {
+  if (!formData.name) {
     errors.company = '公司名称不能为空';
     isValid = false;
   }
-  
-  // 验证联系电话
   if (!formData.phone) {
     errors.phone = '联系电话不能为空';
     isValid = false;
-  } else if (!/^1[3-9]\d{9}$/.test(formData.phone)) {
-    errors.phone = '请输入正确的手机号码';
-    isValid = false;
   }
-  
-  // 验证联系地址
-  if (!formData.address.trim()) {
+  if (!formData.address) {
     errors.address = '联系地址不能为空';
     isValid = false;
   }
-  
-  // 验证电子邮箱（可选）
-  if (formData.email && !/^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$/.test(formData.email)) {
-    errors.email = '请输入正确的电子邮箱';
-    isValid = false;
-  }
-  
   return isValid;
 };
 
 // 保存个人资料
 const saveProfile = async () => {
   if (!validateForm()) {
+    uni.showToast({ title: '请填写所有必填项', icon: 'none' });
     return;
   }
   
   loading.value = true;
-  
   try {
-    // 准备更新的数据
-    const updateData = {
-      contact: formData.contact,
-      name: formData.name,
-      phone: formData.phone,
-      address: formData.address,
-      email: formData.email,
-      avatarUrl: formData.avatarUrl,
-      department: formData.department,
-      position: formData.position,
-    };
-    
-    console.log('提交更新用户资料:', updateData);
-    
-    // 调用API更新用户资料
-    await userStore.updateUserInfo(updateData);
-    
-    uni.showToast({
-      title: '个人资料更新成功！',
-      icon: 'success'
-    });
-    
-    // 返回上一页
-    setTimeout(() => {
-      uni.navigateBack();
-    }, 1500);
-
+    const response = await request.put('/user/profile', formData);
+    if (response.code === 200) {
+      userStore.setUserInfo(response.data);
+      uni.showToast({ title: '保存成功', icon: 'success' });
+      setTimeout(() => {
+        uni.navigateBack();
+      }, 1500);
+    } else {
+      uni.showToast({ title: response.message || '保存失败', icon: 'none' });
+    }
   } catch (error) {
-    console.error('更新用户资料失败:', error);
-    uni.showToast({
-      title: error.message || '更新资料失败',
-      icon: 'none'
-    });
+    console.error('保存个人资料失败:', error);
+    uni.showToast({ title: '保存失败，请稍后再试', icon: 'none' });
   } finally {
     loading.value = false;
   }
 };
 
-// 返回上一页
 const goBack = () => {
   uni.navigateBack();
 };

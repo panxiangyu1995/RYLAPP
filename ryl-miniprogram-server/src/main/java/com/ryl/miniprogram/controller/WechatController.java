@@ -41,7 +41,7 @@ public class WechatController {
         }
         
         // 正常微信登录流程
-        Object result = customerService.login(code);
+        Object result = customerService.login(loginDTO.getCode(), loginDTO.getNickname(), loginDTO.getAvatarUrl(), loginDTO.getPhoneCode());
         return ResultVO.success(result);
     }
 } 

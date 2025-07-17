@@ -49,6 +49,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useUserStore } from '@/stores/user';
+import request from '@/utils/request'; // 引入请求工具
 
 const userStore = useUserStore();
 
@@ -156,7 +157,7 @@ const uploadFile = (fileItem) => {
   }
 
   uni.uploadFile({
-    url: `${userStore.apiBase}/upload/file`,
+    url: `${request.baseURL}/upload/file`, // 修正：使用 request.baseURL
     filePath: fileItem.url,
     name: 'file',
     header: {
@@ -202,7 +203,7 @@ const removeFile = async (id) => {
     if (fileToRemove.serverUrl) {
       try {
         await uni.request({
-          url: `${userStore.apiBase}/upload/delete`,
+          url: `${request.baseURL}/upload/delete`, // 修正：使用 request.baseURL
           method: 'POST',
           header: {
             'Authorization': `Bearer ${uni.getStorageSync('token')}`,

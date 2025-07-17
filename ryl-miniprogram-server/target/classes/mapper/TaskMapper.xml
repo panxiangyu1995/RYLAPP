@@ -66,6 +66,21 @@
             t.id = #{id}
     </select>
 
+    <select id="selectByTaskId" resultMap="BaseResultMap">
+        SELECT
+            t.*,
+            u.name as engineer_name,
+            u.mobile as engineer_phone
+        FROM
+            task t
+                LEFT JOIN
+            task_engineer te ON t.task_id = te.task_id AND te.is_owner = 1
+                LEFT JOIN
+            [user] u ON te.engineer_id = u.id
+        WHERE
+            t.task_id = #{taskId}
+    </select>
+
     <select id="selectByStatus" resultMap="BaseResultMap">
         SELECT * FROM task WHERE status = #{status} ORDER BY create_time DESC
     </select>

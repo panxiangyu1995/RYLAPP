@@ -3,6 +3,7 @@ package com.ryl.miniprogram.service;
 import com.ryl.miniprogram.entity.RecordFile;
 import com.ryl.miniprogram.entity.TaskAttachment;
 import com.ryl.miniprogram.entity.TaskImage;
+import com.ryl.miniprogram.dto.FileDownloadResource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public interface FileService {
      * @param uploadUserType 上传人类型
      * @return 文件信息
      */
-    RecordFile uploadFile(MultipartFile file, Long recordId, Long uploadUserId, Integer uploadUserType);
+    RecordFile uploadFile(MultipartFile file, Long recordId, Long uploadUserId, Integer uploadUserType) throws java.io.IOException;
     
     /**
      * 上传图片
@@ -32,7 +33,7 @@ public interface FileService {
      * @param sort      排序
      * @return 图片信息
      */
-    TaskImage uploadTaskImage(MultipartFile file, String taskId, Integer imageType, Integer sort);
+    TaskImage uploadTaskImage(MultipartFile file, String taskId, Integer imageType, Integer sort) throws java.io.IOException;
     
     /**
      * 上传任务附件
@@ -42,15 +43,15 @@ public interface FileService {
      * @param sort      排序
      * @return 附件信息
      */
-    TaskAttachment uploadTaskAttachment(MultipartFile file, String taskId, Integer sort);
+    TaskAttachment uploadTaskAttachment(MultipartFile file, String taskId, Integer sort) throws java.io.IOException;
     
     /**
      * 获取文件
      *
      * @param fileId 文件ID
-     * @return 文件信息
+     * @return 文件
      */
-    RecordFile getFile(Long fileId);
+    FileDownloadResource getFile(Long fileId);
     
     /**
      * 获取任务图片列表

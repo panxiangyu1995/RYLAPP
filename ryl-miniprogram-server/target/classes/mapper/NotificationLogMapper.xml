@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ryl.miniprogram.mapper.NotificationLogMapper">
+
+    <select id="selectByTaskIdAndTemplateId" resultType="com.ryl.miniprogram.entity.NotificationLog">
+        SELECT TOP 1 *
+        FROM notification_log
+        WHERE task_id = #{taskId} AND template_id = #{templateId}
+        ORDER BY create_time DESC
+    </select>
+
+</mapper> 

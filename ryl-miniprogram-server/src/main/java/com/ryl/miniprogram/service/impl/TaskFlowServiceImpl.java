@@ -4,16 +4,20 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ryl.miniprogram.entity.RecordFile;
 import com.ryl.miniprogram.entity.RecordImage;
+import com.ryl.miniprogram.entity.Task;
 import com.ryl.miniprogram.entity.TaskFlow;
 import com.ryl.miniprogram.entity.TaskStep;
 import com.ryl.miniprogram.mapper.RecordFileMapper;
 import com.ryl.miniprogram.mapper.RecordImageMapper;
 import com.ryl.miniprogram.mapper.TaskFlowMapper;
+import com.ryl.miniprogram.mapper.TaskMapper;
 import com.ryl.miniprogram.mapper.TaskStepMapper;
 import com.ryl.miniprogram.service.TaskFlowService;
+import com.ryl.miniprogram.service.WeChatNotificationService;
 import com.ryl.miniprogram.vo.FileVO;
 import com.ryl.miniprogram.vo.ImageVO;
 import com.ryl.miniprogram.vo.StepRecordVO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,6 +31,7 @@ import java.util.stream.Collectors;
 /**
  * 任务流程服务实现类
  */
+@Slf4j
 @Service
 public class TaskFlowServiceImpl extends ServiceImpl<TaskFlowMapper, TaskFlow> implements TaskFlowService {
     
@@ -38,6 +43,12 @@ public class TaskFlowServiceImpl extends ServiceImpl<TaskFlowMapper, TaskFlow> i
 
     @Autowired
     private RecordFileMapper recordFileMapper;
+
+    @Autowired
+    private WeChatNotificationService weChatNotificationService;
+
+    @Autowired
+    private TaskMapper taskMapper;
     
     @Override
     public TaskStep getCurrentStep(String taskId) {
@@ -57,10 +68,9 @@ public class TaskFlowServiceImpl extends ServiceImpl<TaskFlowMapper, TaskFlow> i
         LambdaQueryWrapper<TaskStep> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskStep::getTaskId, taskId)
                 .eq(TaskStep::getStepIndex, currentStep)
-                .orderByDesc(TaskStep::getCreateTime)
-                .last("LIMIT 1");
+                .orderByDesc(TaskStep::getCreateTime);
         
-        return taskStepMapper.selectOne(queryWrapper);
+        return taskStepMapper.selectOne(queryWrapper.last("TOP 1"));
     }
     
     @Override
@@ -97,6 +107,28 @@ public class TaskFlowServiceImpl extends ServiceImpl<TaskFlowMapper, TaskFlow> i
         taskStep.setCreateTime(now);
         
         taskStepMapper.insert(taskStep);
+
+        // 异步发送通知
+        Task taskForNotification = taskMapper.selectByTaskId(taskId);
+        if (taskForNotification == null) {
+            log.error("发送通知失败：找不到任务信息, 任务ID: {}", taskId);
+            return true; // 即使通知失败，主流程也应成功
+        }
+
+        switch (stepIndex) {
+            case 1:
+                weChatNotificationService.sendEngineerAssignedNotification(taskForNotification);
+                break;
+            case 3: // <<<< 修正此处
+                weChatNotificationService.sendQuoteGeneratedNotification(taskForNotification);
+                break;
+            case 4:
+                weChatNotificationService.sendServiceCompletedNotification(taskForNotification);
+                break;
+            case 5:
+                weChatNotificationService.sendEvaluationReceivedNotification(taskForNotification);
+                break;
+        }
         
         return true;
     }

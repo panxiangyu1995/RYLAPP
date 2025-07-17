@@ -465,6 +465,14 @@ const submitTask = async () => {
       taskType: taskData.taskType
     };
 
+    // 在任务创建成功后请求订阅消息
+    try {
+      await taskStore.requestSubscription();
+    } catch (subError) {
+      console.error('订阅消息请求失败:', subError);
+      // 即使用户拒绝或请求失败，也不应中断主流程
+    }
+
   } catch (error) {
     uni.hideLoading();
     console.error('提交订单失败:', error);

@@ -62,4 +62,10 @@ public interface TaskService {
      * 获取当前用户当天提交的订单数量
      */
     int countDailyTasks(Long userId);
+
+    /**
+     * 客户确认任务报价
+     * @param taskId 任务ID
+     */
+    void confirmPrice(String taskId);
 } 

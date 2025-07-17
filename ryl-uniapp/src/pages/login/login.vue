@@ -84,12 +84,13 @@
             <view class="text-center mb-6">使用微信账号快速登录</view>
             
             <button 
-              @click="handleWechatLogin" 
+              open-type="getPhoneNumber"
+              @getphonenumber="handlePhoneLogin"
               class="w-full flex items-center justify-center bg-ui-vibrant-gradient text-white font-bold py-3 rounded-lg shadow-md"
               :disabled="loading"
             >
               <text v-if="loading">登录中...</text>
-              <text v-else>微信一键登录</text>
+              <text v-else>微信手机号一键登录</text>
             </button>
             
             <view class="mt-4 text-center">
@@ -111,15 +112,14 @@
 <script setup>
 import { ref } from 'vue';
 import { useUserStore } from '@/stores/user';
-import { onShow, onLoad } from '@dcloudio/uni-app';
+import { onLoad } from '@dcloudio/uni-app';
 
 const userStore = useUserStore();
 const loading = ref(false);
-const activeTab = ref('password'); // 默认显示账号密码登录
+const activeTab = ref('password');
 const showPassword = ref(false);
 let redirectUrl = '/pages/home/home';
 
-// 登录表单
 const loginForm = ref({
   contact: '',
   password: ''
@@ -131,6 +131,31 @@ onLoad((options) => {
   }
 });
 
+const handlePhoneLogin = async (e) => {
+  if (!e.detail.code) {
+    uni.showToast({ title: '您取消了授权', icon: 'none' });
+    return;
+  }
+  
+  loading.value = true;
+  try {
+    const phoneCode = e.detail.code;
+    
+    const loginRes = await uni.login();
+    const loginCode = loginRes.code;
+    
+    // 调用 store 中的微信登录方法，昵称和头像传 null
+    await userStore.wechatLogin(loginCode, null, null, phoneCode);
+    
+    uni.reLaunch({ url: redirectUrl });
+    
+  } catch (err) {
+    console.error('微信登录流程失败:', err);
+    uni.showToast({ title: '登录失败，请稍后重试', icon: 'none' });
+  } finally {
+    loading.value = false;
+  }
+};
 
 // 处理账号密码登录
 const handlePasswordLogin = async () => {
@@ -147,10 +172,7 @@ const handlePasswordLogin = async () => {
   loading.value = true;
   
   try {
-    // 调用登录API
     await userStore.passwordLogin(loginForm.value.contact, loginForm.value.password);
-    
-    // 登录成功后的跳转
     uni.reLaunch({ url: redirectUrl });
   } catch (error) {
     console.error('账号密码登录失败:', error);
@@ -160,38 +182,29 @@ const handlePasswordLogin = async () => {
   }
 };
 
-// 处理微信登录
-const handleWechatLogin = async () => {
-  loading.value = true;
-  
-  uni.login({
-    provider: 'weixin',
-    success: async (res) => {
-      try {
-        await userStore.wechatLogin(res.code);
-        uni.reLaunch({ url: redirectUrl });
-      } catch (error) {
-        console.error('微信登录失败:', error);
-        uni.showToast({ title: error.message || '微信登录失败', icon: 'none' });
-      } finally {
-        loading.value = false;
-      }
-    },
-    fail: (err) => {
-      console.error('微信登录失败:', err);
-      uni.showToast({ title: '微信登录授权失败', icon: 'none' });
-      loading.value = false;
-    }
-  });
-};
-
-// 前往注册页面
 const goToRegister = () => {
   uni.navigateTo({ url: '/pages/register/register' });
 };
 
-// 返回首页
 const goBack = () => {
   uni.reLaunch({ url: '/pages/home/home' });
 };
-</script> 
+</script>
+
+<style scoped>
+.bg-ui-vibrant-gradient {
+  background-image: linear-gradient(to right, #007aff, #00c6ff);
+}
+.bg-ui-bg-white {
+  background-color: #f8f8f8;
+}
+.text-ui-text-black {
+  color: #1a1a1a;
+}
+.border-ui-blue-end {
+  border-color: #00c6ff;
+}
+.text-ui-blue-start {
+  color: #007aff;
+}
+</style>

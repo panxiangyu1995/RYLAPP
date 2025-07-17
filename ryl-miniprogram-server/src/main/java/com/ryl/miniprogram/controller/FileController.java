@@ -6,6 +6,7 @@ import com.ryl.miniprogram.entity.RecordFile;
 import com.ryl.miniprogram.entity.TaskImage;
 import com.ryl.miniprogram.entity.TaskAttachment;
 import com.ryl.miniprogram.service.FileService;
+import com.ryl.miniprogram.dto.FileDownloadResource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +36,6 @@ public class FileController {
     
     @Autowired
     private FileService fileService;
-    
-    @Value("${file.upload.path:/upload}")
-    private String uploadPath;
     
     /**
      * 上传文件
@@ -190,25 +188,18 @@ public class FileController {
      */
     @GetMapping("/{fileId}")
     public ResponseEntity<Resource> getFile(@PathVariable Long fileId) {
-        RecordFile recordFile = fileService.getFile(fileId);
-        if (recordFile == null) {
-            return ResponseEntity.notFound().build();
-        }
-        
         try {
-            Path filePath = Paths.get(uploadPath).resolve(recordFile.getFilePath());
-            Resource resource = new UrlResource(filePath.toUri());
-            
-            if (!resource.exists() || !resource.isReadable()) {
-                return ResponseEntity.notFound().build();
-            }
-            
+            FileDownloadResource fileDownloadResource = fileService.getFile(fileId);
+            Resource resource = fileDownloadResource.resource();
+            String filename = fileDownloadResource.filename();
+
             String contentType = "application/octet-stream";
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recordFile.getFileName() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                     .body(resource);
-        } catch (MalformedURLException e) {
+        } catch (Exception e) {
+            log.error("获取文件失败，ID: {}", fileId, e);
             return ResponseEntity.notFound().build();
         }
     }

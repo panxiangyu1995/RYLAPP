@@ -20,4 +20,10 @@ logging:
   level:
     com.ryl.miniprogram: info
     org.springframework.web: warn
-    org.mybatis: warn 
+    org.mybatis: warn
+
+file:
+  upload:
+    # 生产环境中，文件上传URL前缀，用于生成公网可访问的URL
+    # 请将其替换为您的服务器公网IP或域名
+    url-prefix: https://your-production-domain.com 

@@ -9,6 +9,7 @@ import com.ryl.miniprogram.exception.BusinessException;
 import com.ryl.miniprogram.mapper.TaskMapper;
 import com.ryl.miniprogram.service.TaskFlowService;
 import com.ryl.miniprogram.service.TaskService;
+import com.ryl.miniprogram.service.WeChatNotificationService;
 import com.ryl.miniprogram.vo.PageVO;
 import com.ryl.miniprogram.vo.StepRecordVO;
 import com.ryl.miniprogram.vo.TaskDetailVO;
@@ -37,6 +38,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
 
     @Autowired
     private TaskFlowService taskFlowService;
+
+    @Autowired
+    private WeChatNotificationService weChatNotificationService;
     
     @Override
     public Task getById(Long id) {
@@ -143,5 +147,31 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         task.setStatus(status);
         task.setUpdateTime(new Date());
         return update(task);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmPrice(String taskId) {
+        Task task = taskMapper.selectByTaskId(taskId);
+        if (task == null) {
+            throw new BusinessException("任务不存在");
+        }
+        if (task.getPriceConfirmed() == 1) {
+            log.warn("任务 {} 的价格已被确认，无需重复操作。", taskId);
+            return;
+        }
+
+        task.setPriceConfirmed(1);
+        task.setUpdateTime(new Date());
+        int updatedRows = taskMapper.updateById(task);
+
+        if (updatedRows > 0) {
+            log.info("任务 {} 价格确认成功。", taskId);
+            // 异步发送价格确认通知
+            weChatNotificationService.sendPriceConfirmedNotification(task);
+        } else {
+            log.error("任务 {} 价格确认失败，更新数据库失败。", taskId);
+            throw new BusinessException("价格确认失败");
+        }
     }
 } 

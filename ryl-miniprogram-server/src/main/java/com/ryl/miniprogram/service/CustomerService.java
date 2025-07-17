@@ -45,10 +45,13 @@ public interface CustomerService {
     
     /**
      * 微信登录
-     * @param code 微信登录code
-     * @return 登录结果，包含token和用户信息
+     * @param code 登录凭证
+     * @param nickname 用户昵称
+     * @param avatarUrl 用户头像
+     * @param phoneCode 手机号加密凭证
+     * @return token及用户信息
      */
-    Object login(String code);
+    Object login(String code, String nickname, String avatarUrl, String phoneCode);
     
     /**
      * 使用测试openid进行登录（开发/测试环境使用）
@@ -93,5 +96,5 @@ public interface CustomerService {
      * @param avatarUrl 头像URL
      * @return 是否更新成功
      */
-    boolean updateAvatar(Long userId, String avatarUrl);
+    Customer updateAvatar(Long userId, String avatarUrl);
 } 

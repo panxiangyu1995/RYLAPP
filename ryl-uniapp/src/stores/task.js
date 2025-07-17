@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import request from '@/utils/request';
 import { API_PATHS } from '@/constants/api';
 import generateTaskId from '@/utils/taskIdGenerator';
+import config from '@/config';
 
 export const useTaskStore = defineStore('task', {
   state: () => ({
@@ -130,6 +131,35 @@ export const useTaskStore = defineStore('task', {
       }
       
       return taskId;
+    },
+
+    // 请求订阅消息
+    async requestSubscription() {
+      const tmplIds = Object.values(config.templateIds);
+      if (tmplIds.length === 0) {
+        console.warn('没有配置任何订阅消息模板ID');
+        return;
+      }
+
+      try {
+        const res = await wx.requestSubscribeMessage({
+          tmplIds: tmplIds,
+        });
+
+        if (res.errMsg === 'requestSubscribeMessage:ok') {
+          console.log('用户授权订阅成功', res);
+          // 可以根据res的具体内容判断哪些模板被接受了
+          for (const key in res) {
+            if (key !== 'errMsg' && res[key] === 'accept') {
+              console.log(`用户同意了模板: ${key}`);
+            }
+          }
+        } else {
+          console.error('请求订阅消息失败', res);
+        }
+      } catch (error) {
+        console.error('调用订阅消息接口时发生异常', error);
+      }
     },
 
     // 提交任务
@@ -643,11 +673,12 @@ export const useTaskStore = defineStore('task', {
     async confirmTaskPrice(taskId) {
       this.loading = true;
       try {
-        // 确保taskId是数字类型
-        const id = typeof taskId === 'string' ? Number(taskId) : taskId;
-        // 修正API路径，使用单数形式/task/而不是/tasks/
-        const response = await request.post(API_PATHS.TASK_CONFIRM_PRICE(taskId), { confirmed: true });
-        return response.data;
+        await request.post(API_PATHS.TASK_CONFIRM_PRICE(taskId));
+        // 成功后更新本地任务状态
+        if (this.currentTask && this.currentTask.taskId === taskId) {
+          this.currentTask.priceConfirmed = 1;
+        }
+        this._updateToast({ message: '报价确认成功', type: 'success' });
       } catch (error) {
         return this.handleError(error, '确认报价失败');
       } finally {
@@ -658,8 +689,10 @@ export const useTaskStore = defineStore('task', {
     // 获取高清图片预览
     async getImagePreview(imageId, options = {}) {
       try {
-        // 直接返回图片URL，不需要额外的API调用
-        return API_PATHS.IMAGE_PREVIEW(imageId);
+        const response = await request.get(API_PATHS.IMAGE_PREVIEW(imageId), {
+          responseType: 'arraybuffer'
+        });
+        return response.data;
       } catch (error) {
         return this.handleError(error, '获取图片预览失败');
       }

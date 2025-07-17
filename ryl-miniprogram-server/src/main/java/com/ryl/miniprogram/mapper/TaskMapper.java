@@ -14,6 +14,11 @@ import java.util.List;
 public interface TaskMapper extends BaseMapper<Task> {
     
     /**
+     * 根据任务ID查询任务
+     */
+    Task selectByTaskId(@Param("taskId") String taskId);
+
+    /**
      * 根据客户ID查询任务列表
      */
     List<Task> selectByCustomerId(@Param("customerId") Long customerId);

@@ -4,16 +4,19 @@ D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\s
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\entity\TaskStep.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\service\FileService.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\controller\UserController.java
+D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\mapper\NotificationLogMapper.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\dto\WxLoginDTO.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\config\WebConfig.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\dto\TaskCommentDTO.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\service\impl\TaskServiceImpl.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\config\FileStorageConfig.java
+D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\controller\TestController.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\config\WxMaConfig.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\exception\GlobalExceptionHandler.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\vo\FileVO.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\vo\ImageVO.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\mapper\RecordImageMapper.java
+D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\service\WeChatNotificationService.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\dto\UserInfoDTO.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\controller\TaskController.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\controller\WechatController.java
@@ -31,6 +34,7 @@ D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\e
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\service\impl\FileServiceImpl.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\entity\Task.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\dto\FileInfoDTO.java
+D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\entity\NotificationLog.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\mapper\CustomerMapper.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\service\FileStorageService.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\vo\StepRecordVO.java
@@ -43,6 +47,7 @@ D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\s
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\mapper\TaskMapper.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\entity\TaskAttachment.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\mapper\TaskAttachmentMapper.java
+D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\service\impl\WeChatNotificationServiceImpl.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\service\impl\FileStorageServiceImpl.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\service\impl\TaskFlowServiceImpl.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\mapper\TaskStepMapper.java
@@ -65,6 +70,7 @@ D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\v
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\security\JwtAuthInterceptor.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\entity\TaskComment.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\controller\TaskCommentController.java
+D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\dto\TestNotificationRequest.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\dto\LoginDTO.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\vo\PageVO.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\converter\TaskConverter.java

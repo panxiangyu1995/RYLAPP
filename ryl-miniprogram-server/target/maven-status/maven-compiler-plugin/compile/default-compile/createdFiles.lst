@@ -14,7 +14,9 @@ com\ryl\miniprogram\entity\TaskStep.class
 com\ryl\miniprogram\service\impl\FileStorageServiceImpl.class
 com\ryl\miniprogram\dto\DeviceDTO.class
 com\ryl\miniprogram\config\WxMaConfig.class
+com\ryl\miniprogram\controller\TestController.class
 com\ryl\miniprogram\vo\StepRecordVO.class
+com\ryl\miniprogram\service\impl\WeChatNotificationServiceImpl.class
 com\ryl\miniprogram\util\JwtTokenUtil.class
 com\ryl\miniprogram\controller\UserController.class
 com\ryl\miniprogram\service\TaskEvaluationService.class
@@ -23,6 +25,7 @@ com\ryl\miniprogram\service\FileStorageService.class
 com\ryl\miniprogram\security\JwtAuthInterceptor.class
 com\ryl\miniprogram\mapper\RecordFileMapper.class
 com\ryl\miniprogram\service\impl\TaskEvaluationServiceImpl.class
+com\ryl\miniprogram\entity\NotificationLog.class
 com\ryl\miniprogram\dto\FileInfoDTO.class
 com\ryl\miniprogram\service\FileService.class
 com\ryl\miniprogram\controller\FileController.class
@@ -42,6 +45,7 @@ com\ryl\miniprogram\vo\PageVO.class
 com\ryl\miniprogram\exception\UnauthorizedException.class
 com\ryl\miniprogram\mapper\TaskStepMapper.class
 com\ryl\miniprogram\exception\BusinessException.class
+com\ryl\miniprogram\service\WeChatNotificationService.class
 com\ryl\miniprogram\entity\RecordImage.class
 com\ryl\miniprogram\entity\Customer.class
 com\ryl\miniprogram\mapper\TaskEvaluationMapper.class
@@ -59,6 +63,7 @@ com\ryl\miniprogram\controller\TaskCommentController.class
 com\ryl\miniprogram\dto\RegisterDTO.class
 com\ryl\miniprogram\service\impl\TaskServiceImpl.class
 com\ryl\miniprogram\converter\TaskFlowConverter.class
+com\ryl\miniprogram\dto\TestNotificationRequest.class
 com\ryl\miniprogram\entity\TaskFlow.class
 com\ryl\miniprogram\vo\ResultVO.class
 com\ryl\miniprogram\dto\LoginDTO.class
@@ -69,4 +74,5 @@ com\ryl\miniprogram\service\impl\CustomerServiceImpl.class
 com\ryl\miniprogram\service\CustomerService.class
 com\ryl\miniprogram\entity\TaskAttachment.class
 com\ryl\miniprogram\converter\TaskConverter.class
+com\ryl\miniprogram\mapper\NotificationLogMapper.class
 com\ryl\miniprogram\service\TaskCommentService.class

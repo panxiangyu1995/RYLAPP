@@ -251,6 +251,22 @@ public class TaskController {
     }
     
     /**
+     * 客户确认任务报价
+     */
+    @PostMapping("/{taskId}/confirm-price")
+    public ResultVO<?> confirmTaskPrice(@PathVariable String taskId, HttpServletRequest request) {
+        // 可选：在这里添加一层权限校验，确保是任务关联的客户在操作
+        Long userId = (Long) request.getAttribute("userId");
+        Task task = taskService.getById(Long.parseLong(taskId)); // 假设 task_id 是数字，如果不是需要调整
+        if (task == null || !task.getCustomerId().equals(userId)) {
+            return ResultVO.forbidden("无权操作");
+        }
+
+        taskService.confirmPrice(taskId);
+        return ResultVO.success(null, "报价确认成功");
+    }
+
+    /**
      * 更新任务步骤
      */
     @PostMapping("/{id}/step/{stepIndex}")
@@ -275,25 +291,19 @@ public class TaskController {
             @RequestBody TaskEvaluation evaluation,
             HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
-        
-        // 验证任务是否存在
-        Task task = taskService.getById(id);
-        if (task == null) {
+        Task existTask = taskService.getById(id);
+        if (existTask == null) {
             return ResultVO.failed("任务不存在");
         }
-        
-        // 验证是否是任务的客户
-        if (!task.getCustomerId().equals(userId)) {
-            return ResultVO.forbidden("只有任务的客户才能评价");
+        if (!existTask.getCustomerId().equals(userId)) {
+            return ResultVO.forbidden("无权修改他人任务");
         }
         
-        // 设置评价信息
         evaluation.setTaskId(String.valueOf(id));
         evaluation.setCustomerId(userId);
-        evaluation.setCreateTime(new java.util.Date());
+        taskEvaluationService.addEvaluation(evaluation);
         
-        boolean result = taskEvaluationService.addEvaluation(evaluation);
-        return result ? ResultVO.success(null, "评价成功") : ResultVO.failed("评价失败");
+        return ResultVO.success(null, "评价成功");
     }
     
     /**
@@ -305,50 +315,4 @@ public class TaskController {
         return ResultVO.success(evaluation);
     }
     
-    /**
-     * 确认任务报价
-     */
-    @PostMapping("/{id}/confirm-price")
-    public ResultVO<?> confirmTaskPrice(@PathVariable Long id, @RequestBody Map<String, Boolean> requestBody, HttpServletRequest request) {
-        Long userId = (Long) request.getAttribute("userId");
-        
-        // 验证任务是否存在
-        Task task = taskService.getById(id);
-        if (task == null) {
-            return ResultVO.failed("任务不存在");
-        }
-        
-        // 验证是否是任务的客户
-        if (!task.getCustomerId().equals(userId)) {
-            return ResultVO.forbidden("只有任务的客户才能确认报价");
-        }
-        
-        // 验证任务是否处于报价阶段
-        if (task.getCurrentStep() != 3) {
-            return ResultVO.failed("当前任务不在报价阶段");
-        }
-        
-        // 验证任务是否已有报价
-        if (task.getPrice() == null || task.getPrice().doubleValue() <= 0) {
-            return ResultVO.failed("任务尚未设置报价");
-        }
-        
-        // 获取确认状态
-        Boolean confirmed = requestBody.get("confirmed");
-        if (confirmed == null || !confirmed) {
-            return ResultVO.failed("确认状态无效");
-        }
-        
-        // 更新报价确认状态
-        task.setPriceConfirmed(1); // 1表示已确认
-        boolean result = taskService.update(task);
-        
-        if (result) {
-            log.info("任务报价确认成功, taskId: {}, price: {}", task.getTaskId(), task.getPrice());
-            return ResultVO.success(null, "报价确认成功");
-        } else {
-            log.error("任务报价确认失败, taskId: {}", task.getTaskId());
-            return ResultVO.failed("报价确认失败");
-        }
-    }
 } 

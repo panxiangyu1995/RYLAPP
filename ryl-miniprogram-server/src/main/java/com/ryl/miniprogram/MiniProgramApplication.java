@@ -6,6 +6,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.io.File;
 
@@ -14,33 +15,11 @@ import java.io.File;
  */
 @SpringBootApplication
 @MapperScan("com.ryl.miniprogram.mapper")
+@EnableAsync
 public class MiniProgramApplication {
-
-    @Value("${file.upload.path:./uploads}")
-    private String uploadPath;
 
     public static void main(String[] args) {
         SpringApplication.run(MiniProgramApplication.class, args);
     }
     
-    /**
-     * 应用启动时创建上传目录
-     */
-    @Bean
-    public CommandLineRunner initUploadDirectory() {
-        return args -> {
-            File uploadDir = new File(uploadPath);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
-            }
-            
-            // 创建头像目录
-            File avatarDir = new File(uploadPath + "/avatars");
-            if (!avatarDir.exists()) {
-                avatarDir.mkdirs();
-            }
-            
-            System.out.println("上传目录已创建: " + uploadDir.getAbsolutePath());
-        };
-    }
 } 

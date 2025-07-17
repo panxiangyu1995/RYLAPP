@@ -71,9 +71,9 @@ export const useUserStore = defineStore('user', {
     },
     
     // 微信登录
-    async wechatLogin(code) {
+    async wechatLogin(code, nickname, avatarUrl, phoneCode) {
       try {
-        const response = await request.post('/wechat/login', { code });
+        const response = await request.post('/wechat/login', { code, nickname, avatarUrl, phoneCode });
         this.setToken(response.data.token);
         if (response.data.userInfo) {
           this.setUserInfo(response.data.userInfo);
@@ -179,7 +179,7 @@ export const useUserStore = defineStore('user', {
         });
       }
       
-      this.userInfo = userInfo;
+      Object.assign(this.userInfo, userInfo);
       // 同时保存到本地存储
       uni.setStorageSync('userInfo', userInfo);
     },

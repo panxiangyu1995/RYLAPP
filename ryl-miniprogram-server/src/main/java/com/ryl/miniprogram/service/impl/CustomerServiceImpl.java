@@ -2,6 +2,7 @@ package com.ryl.miniprogram.service.impl;
 
 import cn.binarywang.wx.miniapp.api.WxMaService;
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
+import cn.binarywang.wx.miniapp.bean.WxMaPhoneNumberInfo;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.crypto.digest.MD5;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -104,17 +105,24 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
     
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Object login(String code) {
+    public Object login(String code, String nickname, String avatarUrl, String phoneCode) {
         try {
-            // 获取微信用户的openid和session_key
+            // 1. 获取微信用户的openid和session_key
             WxMaJscode2SessionResult sessionResult = wxMaService.getUserService().getSessionInfo(code);
             String openid = sessionResult.getOpenid();
             String sessionKey = sessionResult.getSessionKey();
-            
-            // 查询用户是否已存在
+
+            // 2. 解密手机号 (如果提供了phoneCode)
+            String phoneNumber = null;
+            if (phoneCode != null && !phoneCode.isEmpty()) {
+                WxMaPhoneNumberInfo phoneNoInfo = wxMaService.getUserService().getPhoneNoInfo(phoneCode);
+                phoneNumber = phoneNoInfo.getPhoneNumber();
+            }
+
+            // 3. 查询用户是否已存在
             Customer customer = getByOpenid(openid);
-            
-            // 用户不存在，创建新用户
+
+            // 4. 用户不存在，创建新用户
             if (customer == null) {
                 customer = new Customer();
                 customer.setOpenid(openid);
@@ -122,25 +130,33 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
                 customer.setLastLoginTime(new Date());
                 customer.setCreateTime(new Date());
                 customer.setUpdateTime(new Date());
+                
+                // 使用前端传递的信息填充
+                customer.setContact(nickname); // 微信昵称存入contact
+                customer.setAvatarUrl(avatarUrl); // 修正：调用正确的 setAvatarUrl
+                customer.setPhone(phoneNumber); // 真实手机号
+
                 save(customer);
             } else {
-                // 更新session_key和登录时间
+                // 用户已存在，更新session_key和最后登录时间
                 customer.setSessionKey(sessionKey);
                 customer.setLastLoginTime(new Date());
-                updateWechatInfo(customer);
+                updateById(customer);
             }
-            
-            // 生成token
+
+            // 5. 生成token
             String token = jwtTokenUtil.generateToken(openid, customer.getId());
-            
-            // 返回结果
+
+            // 6. 返回token和用户信息
             Map<String, Object> result = new HashMap<>();
             result.put("token", token);
             result.put("userInfo", customer);
+
             return result;
+
         } catch (Exception e) {
             log.error("微信登录失败", e);
-            throw new BusinessException("微信登录失败：" + e.getMessage());
+            throw new BusinessException("微信登录失败: " + e.getMessage());
         }
     }
     
@@ -310,7 +326,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
     
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean updateAvatar(Long userId, String avatarUrl) {
+    public Customer updateAvatar(Long userId, String avatarUrl) {
         log.info("更新用户头像，userId: {}, avatarUrl: {}", userId, avatarUrl);
         try {
             Customer existCustomer = getById(userId);
@@ -325,7 +341,13 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
             
             boolean result = update(existCustomer);
             log.info("用户头像更新结果: {}, userId: {}", result ? "成功" : "失败", userId);
-            return result;
+
+            if (!result) {
+                throw new BusinessException("更新用户头像失败");
+            }
+            
+            // 返回更新后的完整用户信息
+            return getById(userId);
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
