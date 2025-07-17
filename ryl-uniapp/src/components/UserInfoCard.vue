@@ -1,13 +1,13 @@
 <template>
-  <view class="bg-white rounded-lg shadow-md overflow-hidden p-4 mb-6 border border-neutral-light">
+  <view class="bg-ui-vibrant-gradient rounded-lg shadow-md overflow-hidden p-4 mb-6">
     <!-- 未登录状态 -->
     <view v-if="!userStore.isLoggedIn" class="flex items-center justify-between">
       <view>
-        <view class="font-medium text-lg text-primary-dark">欢迎使用</view>
-        <view class="text-sm text-gray-600">登录后可提交订单及查看订单进展</view>
+        <view class="font-medium text-lg text-white">欢迎使用</view>
+        <view class="text-sm text-gray-200">登录后可提交订单及查看订单进展</view>
       </view>
-      <button @click="goToLogin" class="px-4 py-2 rounded-lg font-medium transition-colors bg-primary-medium text-white hover:bg-primary-dark flex items-center">
-        <LogInIcon :size="18" color="white" class="mr-1" />
+      <button @click="goToLogin" class="px-4 py-2 rounded-lg font-bold transition-colors bg-ui-accent-lime text-ui-text-black hover:opacity-90 flex items-center">
+        <LogInIcon :size="18" color="#111827" class="mr-1" />
         登录
       </button>
     </view>
@@ -17,7 +17,7 @@
       <view class="relative">
         <image 
           :src="getUserAvatar()" 
-          class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-primary-light"
+          class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-white/50 bg-white"
           alt="用户头像"
         />
         <view class="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs border-2 border-white">
@@ -25,22 +25,22 @@
         </view>
       </view>
       <view class="flex-1">
-        <view class="font-medium text-lg">{{ userStore.userInfo.contact || '未设置姓名' }}</view>
-        <view class="text-sm text-gray-600 flex items-center">
+        <view class="font-medium text-lg text-white">{{ userStore.userInfo.contact || '未设置姓名' }}</view>
+        <view class="text-sm text-gray-200 flex items-center">
           <Building2Icon :size="14" class="mr-1" />
           {{ userStore.userInfo.name || '未设置公司' }}
         </view>
-        <view class="text-sm text-gray-600 flex items-center">
+        <view class="text-sm text-gray-200 flex items-center">
           <PhoneIcon :size="14" class="mr-1" />
           {{ userStore.userInfo.phone || '未设置电话' }}
         </view>
       </view>
       <view class="flex flex-col space-y-2 justify-center">
-        <button @click="goToProfile" class="px-4 py-2 rounded-lg font-medium transition-colors border border-primary-medium text-primary-medium hover:bg-primary-light hover:text-white text-sm flex items-center w-20 justify-center">
+        <button @click="goToProfile" class="px-4 py-2 rounded-lg font-bold transition-colors bg-ui-accent-lime text-ui-text-black hover:opacity-90 text-sm flex items-center w-20 justify-center">
           <EditIcon :size="14" class="mr-1" />
           编辑
         </button>
-        <button @click="logout" class="px-4 py-2 rounded-lg font-medium transition-colors border border-primary-medium text-primary-medium hover:bg-primary-light hover:text-white text-sm flex items-center w-20 justify-center text-red-500 hover:bg-red-50">
+        <button @click="logout" class="px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 text-sm flex items-center w-20 justify-center">
           <LogOutIcon :size="14" class="mr-1" />
           退出
         </button>

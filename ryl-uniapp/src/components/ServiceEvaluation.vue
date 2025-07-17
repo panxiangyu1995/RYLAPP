@@ -5,7 +5,7 @@
     <form @submit="submitEvaluation">
       <!-- 服务态度评分 -->
       <view class="mb-4">
-        <view class="text-sm font-medium mb-1 text-primary-dark">服务态度 <text class="text-red-500">*</text></view>
+        <view class="text-sm font-medium mb-1 text-ui-blue-start">服务态度 <text class="text-red-500">*</text></view>
         <view class="flex items-center">
           <StarIcon
             v-for="i in 5"
@@ -21,7 +21,7 @@
 
       <!-- 服务质量评分 -->
       <view class="mb-4">
-        <view class="text-sm font-medium mb-1 text-primary-dark">服务质量 <text class="text-red-500">*</text></view>
+        <view class="text-sm font-medium mb-1 text-ui-blue-start">服务质量 <text class="text-red-500">*</text></view>
         <view class="flex items-center">
           <StarIcon
             v-for="i in 5"
@@ -37,7 +37,7 @@
 
       <!-- 总体评价评分 -->
       <view class="mb-4">
-        <view class="text-sm font-medium mb-1 text-primary-dark">总体评价 <text class="text-red-500">*</text></view>
+        <view class="text-sm font-medium mb-1 text-ui-blue-start">总体评价 <text class="text-red-500">*</text></view>
         <view class="flex items-center">
           <StarIcon
             v-for="i in 5"
@@ -53,19 +53,19 @@
 
       <!-- 评价内容 -->
       <view class="mb-4">
-        <view for="comment" class="text-sm font-medium mb-1 text-primary-dark">评价内容</view>
+        <view for="comment" class="text-sm font-medium mb-1 text-ui-blue-start">评价内容</view>
         <textarea
           id="comment"
           v-model="evaluation.comment"
           :rows="3"
-          class="w-full p-2 border border-neutral-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light focus:border-primary-light"
+          class="w-full p-2 border border-neutral-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-ui-blue-end focus:border-ui-blue-end focus:shadow-ui-glow"
           placeholder="请输入您的评价内容（选填）"
         ></textarea>
       </view>
 
       <button
         form-type="submit"
-        class="px-4 py-2 rounded-lg font-medium transition-colors bg-primary-medium text-white hover:bg-primary-dark w-full"
+        class="px-4 py-2 rounded-lg font-medium transition-colors bg-ui-vibrant-gradient text-white hover:opacity-90 w-full"
         :disabled="loading"
       >
         {{ loading ? '提交中...' : '提交评价' }}

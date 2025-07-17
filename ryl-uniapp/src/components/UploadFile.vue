@@ -2,7 +2,7 @@
   <view>
     <view class="mb-2">
       <slot name="label">
-        <view class="text-sm font-medium mb-1 text-primary-dark">上传附件</view>
+        <view class="text-sm font-medium mb-1 text-ui-blue-start">上传附件</view>
       </slot>
     </view>
     
@@ -15,7 +15,7 @@
           </view>
           <view class="flex-1 overflow-hidden">
             <view class="text-sm truncate">{{ file.name }}</view>
-            <view class="text-xs text-gray-500">{{ formatFileSize(file.size) }}</view>
+            <view class="text-xs text-ui-text-black">{{ formatFileSize(file.size) }}</view>
           </view>
         </view>
         <button 
@@ -37,8 +37,8 @@
         @click="handleChooseFile"
       >
         <view class="text-primary-medium mb-1 text-3xl">+</view>
-        <view class="text-gray-500">点击上传附件</view>
-        <view class="text-xs text-gray-400">支持PDF、Word、Excel等，不超过{{ maxSize }}MB</view>
+        <view class="text-ui-text-black">点击上传附件</view>
+        <view class="text-xs text-ui-text-black opacity-75">支持PDF、Word、Excel等，不超过{{ maxSize }}MB</view>
       </view>
     </view>
     

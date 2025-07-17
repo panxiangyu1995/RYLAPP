@@ -1,5 +1,5 @@
 <template>
-  <view>
+  <view class="bg-ui-bg-white">
     <!-- 页面头部 -->
     <Header />
     
@@ -9,8 +9,8 @@
       
       <!-- 服务类型导航 -->
       <view class="mb-6">
-        <view class="text-xl font-medium mb-4 flex items-center">
-          <LayoutGridIcon :size="20" color="#286B9C" class="mr-2" />
+        <view class="text-xl font-medium mb-4 flex items-center text-ui-text-black">
+          <LayoutGridIcon :size="20" color="#111827" class="mr-2" />
           服务项目
         </view>
         <view class="grid grid-cols-2 gap-3">
@@ -20,17 +20,17 @@
             @click="goToTaskCreate(service.id)"
             class="bg-white rounded-lg shadow-md overflow-hidden p-3 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-sm border border-transparent hover:border-primary-light"
           >
-            <view class="w-11 h-11 rounded-full bg-gradient-to-br from-primary-light to-primary-medium bg-opacity-20 flex items-center justify-center text-white mb-2">
-              <ToolIcon v-if="service.icon === 'tool'" :size="20" color="white" />
-              <HammerIcon v-else-if="service.icon === 'hammer'" :size="20" color="white" />
-              <RecycleIcon v-else-if="service.icon === 'recycle'" :size="20" color="white" />
-              <PackageIcon v-else-if="service.icon === 'package'" :size="20" color="white" />
-              <BookOpenIcon v-else-if="service.icon === 'book-open'" :size="20" color="white" />
-              <CheckCircleIcon v-else-if="service.icon === 'check-circle'" :size="20" color="white" />
-              <ListFilterIcon v-else-if="service.icon === 'list-filter'" :size="20" color="white" />
-              <SettingsIcon v-else-if="service.icon === 'settings'" :size="20" color="white" />
+            <view class="w-11 h-11 rounded-full bg-ui-vibrant-gradient flex items-center justify-center text-white mb-2">
+              <ToolIcon v-if="service.icon === 'tool'" :size="20" color="#FFFFFF" />
+              <HammerIcon v-else-if="service.icon === 'hammer'" :size="20" color="#FFFFFF" />
+              <RecycleIcon v-else-if="service.icon === 'recycle'" :size="20" color="#FFFFFF" />
+              <PackageIcon v-else-if="service.icon === 'package'" :size="20" color="#FFFFFF" />
+              <BookOpenIcon v-else-if="service.icon === 'book-open'" :size="20" color="#FFFFFF" />
+              <CheckCircleIcon v-else-if="service.icon === 'check-circle'" :size="20" color="#FFFFFF" />
+              <ListFilterIcon v-else-if="service.icon === 'list-filter'" :size="20" color="#FFFFFF" />
+              <SettingsIcon v-else-if="service.icon === 'settings'" :size="20" color="#FFFFFF" />
             </view>
-            <view class="font-medium text-sm">{{ service.name }}</view>
+            <view class="font-medium text-sm text-ui-text-black">{{ service.name }}</view>
           </view>
         </view>
       </view>
@@ -39,9 +39,9 @@
       <view class="mb-6">
         <button 
           @click="goToTaskProgress" 
-          class="px-4 py-2 rounded-lg font-medium transition-colors bg-primary-medium text-white hover:bg-primary-dark w-full py-3 text-lg flex items-center justify-center"
+          class="px-4 py-2 rounded-lg font-medium transition-colors bg-ui-vibrant-gradient text-white hover:opacity-90 w-full py-3 text-lg flex items-center justify-center"
         >
-          <ClipboardListIcon :size="20" color="white" class="mr-2" />
+          <ClipboardListIcon :size="20" color="#FFFFFF" class="mr-2" />
           查看订单进展
         </button>
       </view>

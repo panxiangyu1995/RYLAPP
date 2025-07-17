@@ -1,19 +1,25 @@
 <template>
   <view class="p-4 bg-white rounded-lg shadow-md mb-4" @click="goToDetail">
     <view class="mb-3">
-      <view class="font-medium">{{ task.deviceName || '未指定设备' }}</view>
+      <view class="font-medium text-ui-text-black">{{ task.deviceName || '未指定设备' }}</view>
       <view class="text-sm text-gray-600 truncate">{{ task.description || '无订单描述' }}</view>
     </view>
 
-    <view class="flex items-center justify-between">
+    <view class="flex items-end justify-between">
       <view>
-        <text>负责人: {{ task.engineerName || '未分配' }}</text>
-        <text class="text-gray-500">联系电话: {{ task.engineerPhone || '未提供' }}</text>
+        <view class="text-sm">
+          <text class="text-gray-500">负责人: </text>
+          <text class="text-ui-text-black">{{ task.engineerName || '未分配' }}</text>
+        </view>
+        <view class="text-sm mt-1">
+          <text class="text-gray-500">联系电话: </text>
+          <text class="text-ui-text-black">{{ task.engineerPhone || '未提供' }}</text>
+        </view>
       </view>
 
       <view class="text-right">
-        <text>当前阶段</text>
-        <text class="text-primary-medium">{{ getCurrentStepName() }}</text>
+        <view class="text-sm text-gray-500">当前阶段</view>
+        <view class="text-ui-blue-start font-semibold mt-1">{{ getCurrentStepName() }}</view>
       </view>
     </view>
   </view>

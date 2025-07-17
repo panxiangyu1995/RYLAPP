@@ -1,9 +1,9 @@
 <template>
-  <view class="p-4 flex flex-col min-h-screen">
+  <view class="p-4 flex flex-col min-h-screen bg-ui-bg-white">
     <view class="flex-1 flex flex-col items-center justify-center">
       <view class="w-full max-w-sm">
         <view class="text-center mb-8">
-          <view class="text-2xl font-bold text-primary-dark">瑞屹林</view>
+          <view class="text-2xl font-bold text-ui-text-black">瑞屹林</view>
           <view class="text-gray-500 mt-2">科研仪器专业服务平台</view>
         </view>
         
@@ -11,14 +11,14 @@
           <!-- 登录方式切换 -->
           <view class="flex mb-6 border-b">
             <button 
-              :class="['flex-1 py-2 text-center', activeTab === 'password' ? 'text-primary-dark border-b-2 border-primary-dark font-bold' : 'text-gray-500']"
+              :class="['flex-1 py-2 text-center', activeTab === 'password' ? 'text-ui-text-black border-b-2 border-ui-blue-end font-bold' : 'text-gray-500']"
               @click="activeTab = 'password'"
             >
               账号密码登录
             </button>
             <block #ifdef MP-WEIXIN>
             <button 
-              :class="['flex-1 py-2 text-center', activeTab === 'wechat' ? 'text-primary-dark border-b-2 border-primary-dark font-bold' : 'text-gray-500']"
+              :class="['flex-1 py-2 text-center', activeTab === 'wechat' ? 'text-ui-text-black border-b-2 border-ui-blue-end font-bold' : 'text-gray-500']"
               @click="activeTab = 'wechat'"
             >
               微信一键登录
@@ -36,7 +36,7 @@
                 id="contact" 
                 v-model="loginForm.contact" 
                 type="text" 
-                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ui-blue-end"
                 placeholder="请输入登录用户名"
               />
             </view>
@@ -50,7 +50,7 @@
                   id="password" 
                   v-model="loginForm.password" 
                   :type="showPassword ? 'text' : 'password'" 
-                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ui-blue-end"
                   placeholder="请输入密码"
                 />
                 <button 
@@ -65,7 +65,7 @@
             
             <button 
               @click="handlePasswordLogin" 
-              class="w-full flex items-center justify-center bg-primary-medium hover:bg-primary-dark text-white font-bold py-3 rounded-lg shadow-md"
+              class="w-full flex items-center justify-center bg-ui-vibrant-gradient text-white font-bold py-3 rounded-lg shadow-md"
               :disabled="loading"
             >
               <text v-if="loading">登录中...</text>
@@ -73,8 +73,8 @@
             </button>
             
             <view class="mt-4 text-center flex justify-between">
-              <button @click="goBack" class="text-primary-medium">返回首页</button>
-              <button @click="goToRegister" class="text-primary-medium">注册新账号</button>
+              <button @click="goBack" class="text-ui-blue-start">返回首页</button>
+              <button @click="goToRegister" class="text-ui-blue-start">注册新账号</button>
             </view>
           </view>
           
@@ -85,7 +85,7 @@
             
             <button 
               @click="handleWechatLogin" 
-              class="w-full flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg shadow-md"
+              class="w-full flex items-center justify-center bg-ui-vibrant-gradient text-white font-bold py-3 rounded-lg shadow-md"
               :disabled="loading"
             >
               <text v-if="loading">登录中...</text>
@@ -93,7 +93,7 @@
             </button>
             
             <view class="mt-4 text-center">
-              <button @click="goBack" class="text-primary-medium">返回首页</button>
+              <button @click="goBack" class="text-ui-blue-start">返回首页</button>
             </view>
           </view>
           </block>

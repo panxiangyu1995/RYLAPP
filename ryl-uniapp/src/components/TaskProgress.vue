@@ -1,10 +1,10 @@
 <template>
   <view class="mb-6">
-    <view class="text-lg font-medium mb-4">订单进度</view>
+    <view class="text-lg font-medium mb-4 text-ui-blue-start">订单进度</view>
     
     <!-- 进度步骤 -->
     <view class="relative">
-      <view class="absolute left-4 top-0 bottom-0 w-0.5 bg-neutral-gray"></view>
+      <view class="absolute left-4 top-0 bottom-0 w-0.5 bg-ui-blue-start"></view>
       
       <view 
         v-for="(step, index) in steps" 
@@ -16,7 +16,7 @@
           class="w-8 h-8 rounded-full flex items-center justify-center z-10 mr-4"
           :class="[
             index <= currentStep 
-              ? 'bg-primary-medium text-white'
+              ? 'bg-ui-vibrant-gradient text-white'
               : 'bg-neutral-light text-neutral-gray'
           ]"
         >
@@ -29,7 +29,7 @@
             class="font-medium mb-1"
             :class="[
               index <= currentStep 
-                ? 'text-primary-medium'
+                ? 'text-ui-blue-start'
                 : 'text-neutral-gray'
             ]"
           >
@@ -37,7 +37,7 @@
           </view>
           
           <!-- 当前步骤的额外内容 -->
-          <view v-if="index === currentStep" class="mt-2 p-3 bg-neutral-light bg-opacity-50 rounded-lg">
+          <view v-if="index === currentStep" class="mt-2 p-3 bg-white border border-gray-200 rounded-lg">
             <!-- 步骤提示信息 -->
             <view class="mb-3 text-sm">
               <view>{{ (stepContent && stepContent.description) ? stepContent.description : getStepPrompt(index) }}</view>
@@ -97,11 +97,11 @@
                   <view class="font-medium text-xs mb-1">报价：</view>
                   <view class="bg-white rounded-lg p-2">
                     <view class="flex justify-between items-center">
-                      <view class="text-primary-dark font-medium">{{ stepContent && (stepContent.estimatedCost || stepContent.cost) ? (stepContent.estimatedCost || stepContent.cost) + ' 元' : '' }}</view>
+                      <view class="text-ui-text-black font-medium">{{ stepContent && (stepContent.estimatedCost || stepContent.cost) ? (stepContent.estimatedCost || stepContent.cost) + ' 元' : '' }}</view>
                       <button 
                         v-if="!props.priceConfirmed && index === 3"
                         @click="confirmPrice"
-                        class="bg-primary-medium text-white text-xs py-1 px-3 rounded-full"
+                        class="bg-ui-vibrant-gradient text-white text-xs py-1 px-3 rounded-full"
                         :disabled="confirmingPrice"
                       >
                         {{ confirmingPrice ? '确认中...' : '确认报价' }}
@@ -122,7 +122,7 @@
                 <view class="font-medium text-sm mb-1">验证报告：</view>
                 <view class="bg-white rounded-lg p-2 flex justify-between items-center">
                   <view class="text-sm">报告编号: {{ stepContent.reportNumber }}</view>
-                  <button class="text-primary-medium text-sm">查看</button>
+                  <button class="text-ui-blue-start text-sm">查看</button>
                 </view>
               </view>
               
@@ -141,11 +141,11 @@
                 :key="fileIndex"
                 class="flex items-center p-2 bg-white rounded-lg mb-1 last:mb-0"
               >
-                <view class="text-primary-medium mr-2">{{ getFileIcon(file.fileName || file.name) }}</view>
+                <view class="text-ui-blue-start mr-2">{{ getFileIcon(file.fileName || file.name) }}</view>
                 <view class="flex-1 truncate text-sm">{{ file.fileName || file.name }}</view>
                 <view class="flex">
-                  <navigator :url="file.fileUrl || file.url" target="miniProgram" class="text-primary-medium text-sm mr-2">查看</navigator>
-                  <button @click="downloadFile(file.fileUrl || file.url, file.id, file.fileName || file.name)" class="text-primary-medium text-sm">下载</button>
+                  <navigator :url="file.fileUrl || file.url" target="miniProgram" class="text-ui-blue-start text-sm mr-2">查看</navigator>
+                  <button @click="downloadFile(file.fileUrl || file.url, file.id, file.fileName || file.name)" class="text-ui-blue-start text-sm">下载</button>
                 </view>
               </view>
             </view>

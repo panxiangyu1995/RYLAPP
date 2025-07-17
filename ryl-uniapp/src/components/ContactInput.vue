@@ -4,7 +4,7 @@
       type="text" 
       :value="inputValue" 
       @input="handleInput" 
-      class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+      class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-ui-blue-end focus:border-ui-blue-end focus:shadow-ui-glow"
       placeholder="请输入登录用户名"
     />
     <view v-if="inputValue && inputValue.length < minLength" class="text-red-500 text-xs mt-1">

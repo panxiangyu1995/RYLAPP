@@ -1,10 +1,10 @@
 <template>
-    <view class="p-4 min-h-screen">
+    <view class="p-4 min-h-screen bg-ui-bg-white">
       <view class="mb-4 flex items-center">
         <button @click="goBack" class="mr-2">
           <text class="text-xl">&larr;</text>
         </button>
-        <view class="text-xl font-bold">注册账号</view>
+        <view class="text-xl font-bold text-ui-text-black">注册账号</view>
       </view>
       
       <!-- 错误提示 -->
@@ -19,11 +19,11 @@
         <form @submit="handleRegister">
           <!-- 账号信息 -->
           <view class="mb-6">
-            <view class="text-lg font-bold mb-4">账号信息</view>
+            <view class="text-lg font-bold mb-4 text-ui-text-black">账号信息</view>
             
             <!-- 用户名 - 简化版 -->
             <view class="mb-4">
-              <view class="block text-gray-700 text-sm font-bold mb-2" for="contact">
+              <view class="block text-ui-text-black text-sm font-bold mb-2" for="contact">
                 登录用户名 <text class="text-red-500">*</text>
               </view>
               <ContactInput 
@@ -34,7 +34,7 @@
             </view>
             
             <view class="mb-4">
-              <view class="block text-gray-700 text-sm font-bold mb-2" for="password">
+              <view class="block text-ui-text-black text-sm font-bold mb-2" for="password">
                 密码 <text class="text-red-500">*</text>
               </view>
               <view class="relative">
@@ -42,7 +42,7 @@
                   id="password" 
                   v-model="form.password" 
                   :type="showPassword ? 'text' : 'password'" 
-                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ui-blue-end"
                   placeholder="请输入密码"
                 />
                 <button 
@@ -58,14 +58,14 @@
             </view>
             
             <view class="mb-4">
-              <view class="block text-gray-700 text-sm font-bold mb-2" for="confirmPassword">
+              <view class="block text-ui-text-black text-sm font-bold mb-2" for="confirmPassword">
                 确认密码 <text class="text-red-500">*</text>
               </view>
               <input 
                 id="confirmPassword" 
                 v-model="form.confirmPassword" 
                 type="password" 
-                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ui-blue-end"
                 placeholder="请再次输入密码"
               />
               <view v-if="passwordMismatch" class="text-red-500 text-xs mt-1">两次输入的密码不一致</view>
@@ -74,96 +74,96 @@
           
           <!-- 客户信息 -->
           <view class="mb-6">
-            <view class="text-lg font-bold mb-4">客户信息</view>
+            <view class="text-lg font-bold mb-4 text-ui-text-black">客户信息</view>
             
             <view class="mb-4">
-              <view class="block text-gray-700 text-sm font-bold mb-2" for="customerName">
+              <view class="block text-ui-text-black text-sm font-bold mb-2" for="customerName">
                 客户姓名 <text class="text-red-500">*</text>
               </view>
               <input 
                 id="customerName" 
                 v-model="form.realName" 
                 type="text" 
-                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ui-blue-end"
                 placeholder="请输入姓名"
               />
             </view>
             
             <view class="mb-4">
-              <view class="block text-gray-700 text-sm font-bold mb-2" for="companyName">
+              <view class="block text-ui-text-black text-sm font-bold mb-2" for="companyName">
                 公司名 <text class="text-red-500">*</text>
               </view>
               <input 
                 id="companyName" 
                 v-model="form.name" 
                 type="text" 
-                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ui-blue-end"
                 placeholder="请输入公司名称"
               />
             </view>
             
             <view class="mb-4">
-              <view class="block text-gray-700 text-sm font-bold mb-2" for="department">
+              <view class="block text-ui-text-black text-sm font-bold mb-2" for="department">
                 部门
               </view>
               <input 
                 id="department" 
                 v-model="form.department" 
                 type="text" 
-                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ui-blue-end"
                 placeholder="请输入部门名称"
               />
             </view>
             
             <view class="mb-4">
-              <view class="block text-gray-700 text-sm font-bold mb-2" for="position">
+              <view class="block text-ui-text-black text-sm font-bold mb-2" for="position">
                 职位
               </view>
               <input 
                 id="position" 
                 v-model="form.position" 
                 type="text" 
-                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ui-blue-end"
                 placeholder="请输入职位"
               />
             </view>
             
             <view class="mb-4">
-              <view class="block text-gray-700 text-sm font-bold mb-2" for="phone">
+              <view class="block text-ui-text-black text-sm font-bold mb-2" for="phone">
                 联系电话 <text class="text-red-500">*</text>
               </view>
               <input 
                 id="phone" 
                 v-model="form.phone" 
                 type="tel" 
-                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ui-blue-end"
                 placeholder="请输入手机号码"
               />
               <view v-if="form.phone && !isValidPhone(form.phone)" class="text-red-500 text-xs mt-1">请输入有效的手机号码</view>
             </view>
             
             <view class="mb-4">
-              <view class="block text-gray-700 text-sm font-bold mb-2" for="address">
+              <view class="block text-ui-text-black text-sm font-bold mb-2" for="address">
                 联系地址
               </view>
               <input 
                 id="address" 
                 v-model="form.address" 
                 type="text" 
-                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ui-blue-end"
                 placeholder="请输入联系地址"
               />
             </view>
             
             <view class="mb-4">
-              <view class="block text-gray-700 text-sm font-bold mb-2" for="email">
+              <view class="block text-ui-text-black text-sm font-bold mb-2" for="email">
                 联系邮箱
               </view>
               <input 
                 id="email" 
                 v-model="form.email" 
                 type="email" 
-                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ui-blue-end"
                 placeholder="请输入电子邮箱"
               />
               <view v-if="form.email && !isValidEmail(form.email)" class="text-red-500 text-xs mt-1">请输入有效的邮箱地址</view>
@@ -177,7 +177,10 @@
                   <checkbox :checked="form.agreement" />
               </checkbox-group>
               <view class="text-sm ml-2">
-                我已阅读并同意《用户协议》和《隐私政策》
+                我已阅读并同意
+                <navigator url="/pages/agreement/agreement" class="text-ui-blue-start inline">《用户协议》</navigator>
+                和
+                <navigator url="/pages/privacy/privacy" class="text-ui-blue-start inline">《隐私政策》</navigator>
               </view>
             </view>
           </view>
@@ -185,7 +188,7 @@
           <button 
             form-type="submit" 
             :disabled="loading || !isFormValid"
-            :class="['w-full py-3 rounded-lg text-white', isFormValid ? 'bg-primary-medium hover:bg-primary-dark' : 'bg-gray-400']"
+            :class="['w-full py-3 rounded-lg text-white', isFormValid ? 'bg-ui-vibrant-gradient' : 'bg-gray-400']"
           >
             {{ loading ? '注册中...' : '注 册' }}
           </button>

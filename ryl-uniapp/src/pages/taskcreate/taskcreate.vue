@@ -1,5 +1,5 @@
 <template>
-  <view class="p-4 pb-20">
+  <view class="p-4 pb-20 bg-ui-bg-white">
     <!-- 成功页面 -->
     <view v-if="isSuccess" class="bg-white rounded-lg shadow-md overflow-hidden">
       <view class="p-6">
@@ -36,7 +36,7 @@
           </button>
           <button 
             @click="finishSubmit"
-            class="flex-1 py-2 px-4 bg-blue-600 border border-transparent rounded-md text-white hover:bg-blue-700"
+            class="flex-1 py-2 px-4 bg-ui-vibrant-gradient border border-transparent rounded-md text-white hover:opacity-90"
           >
             完成提交
           </button>
@@ -56,22 +56,22 @@
     
       <!-- 订单类型选择 -->
       <view class="mb-6 bg-white rounded-lg p-4">
-        <view class="text-lg font-medium mb-3">选择订单类型</view>
-        <scroll-view scroll-x="true" class="flex flex-nowrap pb-2 -mx-1">
-          <button 
-            v-for="type in taskTypes" 
+        <view class="text-lg font-medium mb-3 text-ui-text-black">选择订单类型</view>
+        <view class="grid grid-cols-3 gap-3">
+          <view
+            v-for="type in taskTypes"
             :key="type.id"
             @click="selectTaskType(type.id)"
-            class="flex-shrink-0 px-4 py-2 mr-2 rounded-lg text-sm whitespace-nowrap"
+            class="p-3 rounded-lg text-center text-sm cursor-pointer transition-colors"
             :class="[
               selectedType === type.id
-                ? 'bg-primary-medium text-white'
-                : 'bg-neutral-light text-primary-dark'
+                ? 'bg-ui-vibrant-gradient text-white font-semibold'
+                : 'bg-neutral-light text-ui-text-black'
             ]"
           >
             {{ type.name }}
-          </button>
-        </scroll-view>
+          </view>
+        </view>
       </view>
       
       <!-- 表单区域 -->
@@ -90,63 +90,63 @@
         
         <!-- 客户信息 -->
         <view class="bg-white rounded-lg p-4 mb-6">
-          <view class="text-lg font-medium mb-3">客户信息</view>
+          <view class="text-lg font-medium mb-3 text-ui-blue-start">客户信息</view>
           
           <view class="mb-4">
-            <view for="customerName" class="block text-sm font-medium text-gray-700 mb-1">客户姓名 <text class="text-red-500">*</text></view>
+            <view for="customerName" class="block text-sm font-medium text-ui-blue-start mb-1">客户姓名 <text class="text-red-500">*</text></view>
             <input 
               id="customerName" 
               v-model="formData.customer.contact"
               type="text" 
-              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" 
+              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-ui-blue-end focus:border-ui-blue-end focus:shadow-ui-glow sm:text-sm" 
               placeholder="请输入姓名"
               required
             />
           </view>
           
           <view class="mb-4">
-            <view for="customerCompany" class="block text-sm font-medium text-gray-700 mb-1">公司名称 <text class="text-red-500">*</text></view>
+            <view for="customerCompany" class="block text-sm font-medium text-ui-blue-start mb-1">公司名称 <text class="text-red-500">*</text></view>
             <input 
               id="customerCompany" 
               v-model="formData.customer.name"
               type="text" 
-              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" 
+              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-ui-blue-end focus:border-ui-blue-end focus:shadow-ui-glow sm:text-sm" 
               placeholder="请输入公司名称"
               required
             />
           </view>
           
           <view class="mb-4">
-            <view for="customerPhone" class="block text-sm font-medium text-gray-700 mb-1">联系电话 <text class="text-red-500">*</text></view>
+            <view for="customerPhone" class="block text-sm font-medium text-ui-blue-start mb-1">联系电话 <text class="text-red-500">*</text></view>
             <input 
               id="customerPhone" 
               v-model="formData.customer.phone"
               type="tel" 
-              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" 
+              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-ui-blue-end focus:border-ui-blue-end focus:shadow-ui-glow sm:text-sm" 
               placeholder="请输入联系电话"
               required
             />
           </view>
           
           <view class="mb-4">
-            <view for="customerAddress" class="block text-sm font-medium text-gray-700 mb-1">联系地址 <text class="text-red-500">*</text></view>
+            <view for="customerAddress" class="block text-sm font-medium text-ui-blue-start mb-1">联系地址 <text class="text-red-500">*</text></view>
             <input 
               id="customerAddress" 
               v-model="formData.customer.address"
               type="text" 
-              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" 
+              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-ui-blue-end focus:border-ui-blue-end focus:shadow-ui-glow sm:text-sm" 
               placeholder="请输入联系地址"
               required
             />
           </view>
           
           <view>
-            <view for="customerEmail" class="block text-sm font-medium text-gray-700 mb-1">电子邮箱</view>
+            <view for="customerEmail" class="block text-sm font-medium text-ui-blue-start mb-1">电子邮箱</view>
             <input 
               id="customerEmail" 
               v-model="formData.customer.email"
               type="email" 
-              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" 
+              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-ui-blue-end focus:border-ui-blue-end focus:shadow-ui-glow sm:text-sm" 
               placeholder="请输入电子邮箱"
             />
           </view>
@@ -154,7 +154,7 @@
         
         <!-- 仪器信息 -->
         <view class="bg-white rounded-lg p-4 mb-6">
-          <view class="text-lg font-medium mb-3">仪器信息</view>
+          <view class="text-lg font-medium mb-3 text-ui-blue-start">仪器信息</view>
           
           <view v-if="['repair', 'maintenance', 'recycle', 'leasing', 'training', 'verification', 'installation'].includes(selectedType)">
             <device-basic-info v-model="formData.device" />
@@ -163,20 +163,20 @@
           <!-- 仪器选型 -->
           <view v-else-if="selectedType === 'selection'">
             <view class="mb-4">
-              <view for="devicePurpose" class="block text-sm font-medium text-gray-700 mb-1">仪器用途或名称 <text class="text-red-500">*</text></view>
-              <input id="devicePurpose" v-model="formData.device.purpose" type="text" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" placeholder="请输入仪器用途或名称" required />
+              <view for="devicePurpose" class="block text-sm font-medium text-ui-blue-start mb-1">仪器用途或名称 <text class="text-red-500">*</text></view>
+              <input id="devicePurpose" v-model="formData.device.purpose" type="text" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-ui-blue-end focus:border-ui-blue-end focus:shadow-ui-glow sm:text-sm" placeholder="请输入仪器用途或名称" required />
             </view>
           </view>
 
           <!-- 通用数量字段 -->
            <view v-if="selectedType !== 'installation'" class="mb-4">
-              <view for="deviceQuantity" class="block text-sm font-medium text-gray-700 mb-1">数量 <text class="text-red-500">*</text></view>
-              <input id="deviceQuantity" v-model.number="formData.device.quantity" type="number" min="1" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" required />
+              <view for="deviceQuantity" class="block text-sm font-medium text-ui-blue-start mb-1">数量 <text class="text-red-500">*</text></view>
+              <input id="deviceQuantity" v-model.number="formData.device.quantity" type="number" min="1" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-ui-blue-end focus:border-ui-blue-end focus:shadow-ui-glow sm:text-sm" required />
             </view>
 
           <!-- 培训预约时间 -->
           <view v-if="selectedType === 'training'" class="mb-4">
-            <view for="appointmentTime" class="block text-sm font-medium text-gray-700 mb-1">预约时间 <text class="text-red-500">*</text></view>
+            <view for="appointmentTime" class="block text-sm font-medium text-ui-blue-start mb-1">预约时间 <text class="text-red-500">*</text></view>
             <picker mode="date" :value="formData.device.appointmentTime" @change="(e) => formData.device.appointmentTime = e.detail.value">
               <view class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400">
                 {{ formData.device.appointmentTime || '请选择预约时间' }}
@@ -186,7 +186,7 @@
           
           <!-- 仪器验证类型 -->
           <view v-if="selectedType === 'verification'" class="mb-4">
-            <view class="block text-sm font-medium text-gray-700 mb-1">验证类别 <text class="text-red-500">*</text></view>
+            <view class="block text-sm font-medium text-ui-blue-start mb-1">验证类别 <text class="text-red-500">*</text></view>
             <radio-group @change="(e) => formData.device.verificationType = e.detail.value" class="mt-2">
               <label class="inline-flex items-center mr-4">
                 <radio value="IQ" :checked="formData.device.verificationType === 'IQ'" /><text class="ml-2">IQ安装验证</text>
@@ -203,14 +203,14 @@
         
         <!-- 详细描述 -->
         <view class="bg-white rounded-lg p-4 mb-6">
-          <view class="text-lg font-medium mb-3">订单描述</view>
+          <view class="text-lg font-medium mb-3 text-ui-blue-start">订单描述</view>
           <view class="mb-4">
-            <view for="description" class="block text-sm font-medium text-gray-700 mb-1">详细描述 <text class="text-red-500">*</text></view>
+            <view for="description" class="block text-sm font-medium text-ui-blue-start mb-1">详细描述 <text class="text-red-500">*</text></view>
             <textarea 
               id="description" 
               v-model="formData.description"
               :rows="4" 
-              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" 
+              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-ui-blue-end focus:border-ui-blue-end focus:shadow-ui-glow sm:text-sm" 
               placeholder="请详细描述您的需求"
               required
             ></textarea>
@@ -219,14 +219,14 @@
         
         <!-- 图片上传 -->
         <view class="bg-white rounded-lg p-4 mb-6">
-          <view class="text-lg font-medium mb-3">图片上传</view>
+          <view class="text-lg font-medium mb-3 text-ui-blue-start">图片上传</view>
           <view class="text-sm text-gray-500 mb-2">可上传最多8张图片，自动压缩</view>
           <upload-image v-model="formData.images" @upload-error="handleUploadError" />
         </view>
         
         <!-- 附件上传 -->
         <view class="bg-white rounded-lg p-4 mb-6">
-          <view class="text-lg font-medium mb-3">附件上传</view>
+          <view class="text-lg font-medium mb-3 text-ui-blue-start">附件上传</view>
           <view class="text-sm text-gray-500 mb-2">可上传最多5个文件，单个不超过10MB</view>
           <upload-file v-model="formData.files" @upload-error="handleUploadError" />
         </view>
@@ -234,7 +234,7 @@
         <!-- 提交按钮 -->
         <button 
           form-type="submit"
-          class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light disabled:opacity-50"
+          class="w-full bg-ui-vibrant-gradient text-white font-bold py-3 px-4 rounded-lg shadow-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ui-blue-end disabled:opacity-50"
           :disabled="isSubmitting || !userStore.isLoggedIn"
           :loading="isSubmitting"
         >

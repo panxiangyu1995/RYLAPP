@@ -38,7 +38,7 @@ const toastClasses = computed(() => {
       return `${baseClasses} bg-yellow-100 border-yellow-400 text-yellow-700`;
     case 'info':
     default:
-      return `${baseClasses} bg-blue-100 border-blue-400 text-blue-700`;
+      return `${baseClasses} bg-ui-blue-end/10 border-ui-blue-end/40 text-ui-blue-start`;
   }
 });
 </script>

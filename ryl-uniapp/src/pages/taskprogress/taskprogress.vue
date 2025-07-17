@@ -1,5 +1,5 @@
 <template>
-  <view class="p-4">
+  <view class="p-4 bg-ui-bg-white">
     <!-- 顶部导航
     <view class="flex items-center mb-4">
       <button @click="goBack" class="mr-2">
@@ -14,7 +14,7 @@
       <button 
         type="button"
         @click="goToLogin"
-        class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md"
+        class="px-4 py-2 bg-ui-vibrant-gradient text-white rounded-md"
       >
         登录
       </button>
@@ -30,7 +30,7 @@
       <!-- 无任务状态 -->
       <view v-else-if="tasks.length === 0" class="text-center py-8">
         <view class="text-gray-500 mb-4">您还没有提交任何订单</view>
-        <button @click="goToHome" class="bg-primary text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-dark">创建新订单</button>
+        <button @click="goToHome" class="bg-ui-vibrant-gradient text-white font-bold py-2 px-4 rounded-lg shadow-md hover:opacity-90">创建新订单</button>
       </view>
       
       <!-- 任务列表 -->

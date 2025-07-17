@@ -1,5 +1,5 @@
 <template>
-  <view class="p-4">
+  <view class="p-4 bg-ui-bg-white">
     <!-- 顶部导航
     <view class="flex items-center mb-4">
       <button @click="goBack" class="mr-2">
@@ -24,15 +24,15 @@
       <!-- 基本信息 -->
       <view class="bg-white rounded-lg p-4 mb-6">
         <view class="flex items-center justify-between mb-3">
-          <text class="bg-primary-light text-white px-2 py-1 rounded-lg text-sm">{{ taskTypeInfo.name }}</text>
+          <text class="bg-ui-vibrant-gradient text-white px-2 py-1 rounded-lg text-sm">{{ taskTypeInfo.name }}</text>
           <text class="text-sm text-gray-500">{{ formatDate(task.createTime) }}</text>
         </view>
         
-        <view class="font-medium mb-2 block">{{ task.deviceName || '未指定设备' }}</view>
+        <view class="font-medium mb-2 block text-ui-text-black">{{ task.deviceName || '未指定设备' }}</view>
         <view class="text-sm text-gray-600 mb-3 block">{{ task.description || '无订单描述' }}</view>
         
         <view class="text-sm">
-          <view>负责人: {{ task.engineerName || '未分配' }}</view>
+          <view class="text-ui-text-black">负责人: {{ task.engineerName || '未分配' }}</view>
           <view class="text-gray-500 block">联系电话: {{ task.engineerPhone || '未提供' }}</view>
         </view>
       </view>
@@ -49,10 +49,10 @@
       
       <!-- 步骤记录时间线 -->
       <view v-if="stepsWithDetails.length > 0" class="mt-6">
-        <view class="text-lg font-medium mb-3">服务记录</view>
+        <view class="text-lg font-medium mb-3 text-ui-text-black">服务记录</view>
         <view v-for="step in stepsWithDetails" :key="step.id" class="bg-white rounded-lg shadow-md overflow-hidden p-4 mb-4">
           <view class="flex justify-between items-center mb-2">
-            <text class="font-medium">{{ step.creatorName }}</text>
+            <text class="font-medium text-ui-text-black">{{ step.creatorName }}</text>
             <text class="text-xs text-gray-500">{{ formatDate(step.createTime) }}</text>
           </view>
           <view class="text-gray-700 block mb-3">{{ step.description }}</view>
@@ -68,10 +68,10 @@
           <view v-if="step.files && step.files.length > 0">
             <view v-for="file in step.files" :key="file.id" class="flex items-center justify-between p-2 bg-neutral-light rounded-md mb-2">
               <view class="flex items-center overflow-hidden">
-                <FileTextIcon :size="20" color="#286B9C" class="mr-2" />
-                <text class="text-sm truncate">{{ file.fileName }}</text>
+                <FileTextIcon :size="20" color="#111827" class="mr-2" />
+                <text class="text-sm truncate text-ui-text-black">{{ file.fileName }}</text>
               </view>
-              <button @click="downloadFile(file)" class="px-2 py-1 rounded-md font-medium transition-colors border border-primary-medium text-primary-medium hover:bg-primary-light hover:text-white text-sm ml-2">下载</button>
+              <button @click="downloadFile(file)" class="px-2 py-1 rounded-md font-medium transition-colors border border-ui-blue-start text-ui-blue-start hover:bg-ui-blue-start hover:text-white text-sm ml-2">下载</button>
             </view>
           </view>
         </view>
@@ -90,7 +90,7 @@
     <!-- 订单不存在 -->
     <view v-else class="text-center py-8">
       <view class="text-gray-500">订单不存在或已被删除</view>
-      <button @click="goToTaskProgress" class="px-4 py-2 rounded-lg font-medium transition-colors bg-primary-medium text-white hover:bg-primary-dark mt-4">返回任务列表</button>
+      <button @click="goToTaskProgress" class="px-4 py-2 rounded-lg font-medium transition-colors bg-ui-vibrant-gradient text-white hover:opacity-90 mt-4">返回任务列表</button>
     </view>
   </view>
 </template>

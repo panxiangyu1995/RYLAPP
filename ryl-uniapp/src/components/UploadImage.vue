@@ -2,7 +2,7 @@
   <view>
     <view class="mb-2">
       <slot name="label">
-        <view class="text-sm font-medium mb-1 text-primary-dark">上传图片 (最多{{maxCount}}张)</view>
+        <view class="text-sm font-medium mb-1 text-ui-blue-start">上传图片 (最多{{maxCount}}张)</view>
       </slot>
     </view>
     
@@ -32,12 +32,12 @@
         class="w-full aspect-square border-2 border-dashed border-primary-light rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-neutral-light"
       >
         <view class="text-3xl text-primary-medium mb-1">+</view>
-        <view class="text-xs text-gray-500">上传图片</view>
+        <view class="text-xs text-ui-text-black">上传图片</view>
       </view>
     </view>
     
     <view v-if="error" class="text-red-500 text-xs mt-1">{{ error }}</view>
-    <view class="text-xs text-gray-500 mt-1">支持jpg、png、jpeg格式，单张图片不超过5MB</view>
+    <view class="text-xs text-ui-text-black mt-1">支持jpg、png、jpeg格式，单张图片不超过5MB</view>
   </view>
 </template>
 
