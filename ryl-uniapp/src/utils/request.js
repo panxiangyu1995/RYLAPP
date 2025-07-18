@@ -1,5 +1,5 @@
  // 基于 uni.request 的封装
- const baseURL = 'http://192.168.0.109:8085/api'; // 后端 API 地址
+ const baseURL = 'https://api.jsryl.top/api'; // 后端 API 地址
 
  // 基础请求函数
  const baseRequest = (options) => {

@@ -52,6 +52,8 @@ ryl-miniprogram-server/
    mvn clean install -DskipTests构建跳过测试
 
    mvn clean install -U -DskipTests
+
+   mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Djava.library.path=./lib"
 4. 访问API
    - 接口基础路径：http://localhost:8085/api/v1
    - 微信登录：POST /wechat/login

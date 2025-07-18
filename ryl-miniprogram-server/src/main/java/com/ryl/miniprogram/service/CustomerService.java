@@ -3,6 +3,8 @@ package com.ryl.miniprogram.service;
 import com.ryl.miniprogram.entity.Customer;
 import com.ryl.miniprogram.vo.PageVO;
 
+import java.util.List;
+
 /**
  * 客户服务接口
  */
@@ -43,6 +45,11 @@ public interface CustomerService {
      */
     PageVO<Customer> listByPage(int pageNum, int pageSize);
     
+    /**
+     * 查询所有客户列表
+     */
+    List<Customer> listAll();
+
     /**
      * 微信登录
      * @param code 登录凭证

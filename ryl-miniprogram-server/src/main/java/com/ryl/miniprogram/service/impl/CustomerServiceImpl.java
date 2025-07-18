@@ -102,6 +102,11 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
         pageVO.setList(pageInfo.getList());
         return pageVO;
     }
+
+    @Override
+    public List<Customer> listAll() {
+        return customerMapper.selectList(null);
+    }
     
     @Override
     @Transactional(rollbackFor = Exception.class)

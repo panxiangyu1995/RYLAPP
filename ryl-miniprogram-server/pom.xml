@@ -151,6 +151,8 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <fork>true</fork>
+                    <executable>C:\Users\Administrator\AppData\Roaming\Cursor\User\globalStorage\pleiades.java-extension-pack-jdk\java\17\bin\javac.exe</executable>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>

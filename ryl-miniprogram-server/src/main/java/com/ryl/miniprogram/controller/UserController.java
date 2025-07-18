@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 用户相关接口控制器
@@ -22,6 +23,15 @@ public class UserController {
     
     @Autowired
     private CustomerService customerService;
+
+    /**
+     * 获取所有用户列表（联系人列表）
+     */
+    @GetMapping("/list")
+    public ResultVO<?> getUserList() {
+        List<Customer> list = customerService.listAll();
+        return ResultVO.success(list);
+    }
     
     /**
      * 获取当前用户信息

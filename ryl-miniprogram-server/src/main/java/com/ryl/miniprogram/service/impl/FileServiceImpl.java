@@ -41,17 +41,14 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
     private final TaskImageMapper taskImageMapper;
     private final TaskAttachmentMapper taskAttachmentMapper;
     private final String uploadPath;
-    private final String urlPrefix;
 
     @Autowired
     public FileServiceImpl(TaskImageMapper taskImageMapper,
                            TaskAttachmentMapper taskAttachmentMapper,
-                           @Qualifier("uploadPath") String uploadPath,
-                           @Value("${file.upload.url-prefix}") String urlPrefix) {
+                           @Qualifier("uploadPath") String uploadPath) {
         this.taskImageMapper = taskImageMapper;
         this.taskAttachmentMapper = taskAttachmentMapper;
         this.uploadPath = uploadPath;
-        this.urlPrefix = urlPrefix;
     }
 
     @Override
@@ -141,13 +138,8 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             // 保存文件
             file.transferTo(destinationFile);
             
-            // 构建URL
-            String imageUrl;
-            if (urlPrefix.endsWith("/")) {
-                imageUrl = urlPrefix + "images/" + datePath + "/" + newFilename;
-            } else {
-                imageUrl = urlPrefix + "/images/" + datePath + "/" + newFilename;
-            }
+            // 构建相对URL
+            String imageUrl = "/images/" + datePath + "/" + newFilename;
             
             // 保存图片记录
             TaskImage taskImage = new TaskImage();
@@ -214,13 +206,8 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             // 保存文件
             file.transferTo(destinationFile);
             
-            // 构建URL
-            String fileUrl;
-            if (urlPrefix.endsWith("/")) {
-                fileUrl = urlPrefix + "attachments/" + datePath + "/" + newFilename;
-            } else {
-                fileUrl = urlPrefix + "/attachments/" + datePath + "/" + newFilename;
-            }
+            // 构建相对URL
+            String fileUrl = "/attachments/" + datePath + "/" + newFilename;
             
             // 保存附件记录
             TaskAttachment taskAttachment = new TaskAttachment();
@@ -317,7 +304,8 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
         }
         
         // 从URL中提取文件路径
-        String imagePath = taskImage.getImageUrl().replace(urlPrefix, uploadPath);
+        // 注意：这里的逻辑需要调整，因为URL现在是相对路径
+        String imagePath = uploadPath + taskImage.getImageUrl();
         File file = new File(imagePath);
         if (file.exists()) {
             file.delete();
@@ -336,7 +324,8 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
         }
         
         // 从URL中提取文件路径
-        String filePath = taskAttachment.getFileUrl().replace(urlPrefix, uploadPath);
+        // 注意：这里的逻辑需要调整，因为URL现在是相对路径
+        String filePath = uploadPath + taskAttachment.getFileUrl();
         File file = new File(filePath);
         if (file.exists()) {
             file.delete();

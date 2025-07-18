@@ -1,0 +1,14 @@
+<service>
+    <id>ryl-miniprogram-server</id>
+    <name>RuiYiLin Miniprogram Service</name>
+    <description>瑞屹林微信小程序的后端服务。</description>
+    <executable>java</executable>
+    <arguments>-Djava.library.path="%BASE%\lib" -jar "%BASE%\ryl-miniprogram-server-0.0.1-SNAPSHOT.jar"</arguments>
+    <serviceaccount>
+      <domain>Administrator</domain>
+      <user>Administrator</user>
+      <password>zxcv1234..</password>
+      <allowservicelogon>true</allowservicelogon>
+    </serviceaccount>
+    <logmode>rotate</logmode>
+  </service>

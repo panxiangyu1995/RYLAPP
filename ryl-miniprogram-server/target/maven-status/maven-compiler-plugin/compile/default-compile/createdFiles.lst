@@ -54,6 +54,7 @@ com\ryl\miniprogram\config\JwtConfig.class
 com\ryl\miniprogram\controller\AccountController.class
 com\ryl\miniprogram\config\FileStorageConfig.class
 com\ryl\miniprogram\controller\WechatController.class
+com\ryl\miniprogram\dto\FileDownloadResource.class
 com\ryl\miniprogram\mapper\CustomerMapper.class
 com\ryl\miniprogram\dto\WxLoginDTO.class
 com\ryl\miniprogram\dto\FileInfoDTO$FileInfoDTOBuilder.class

@@ -53,11 +53,7 @@ public class FileStorageServiceImpl implements FileStorageService {
             Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
         }
         
-        // 返回文件URL
-        if (urlPrefix.endsWith("/")) {
-            return urlPrefix + "avatars/" + filename;
-        } else {
-            return urlPrefix + "/avatars/" + filename;
-        }
+        // 返回相对路径URL
+        return "/avatars/" + filename;
     }
 } 

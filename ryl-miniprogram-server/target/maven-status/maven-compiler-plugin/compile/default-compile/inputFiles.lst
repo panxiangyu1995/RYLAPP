@@ -5,6 +5,7 @@ D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\e
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\service\FileService.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\controller\UserController.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\mapper\NotificationLogMapper.java
+D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\dto\FileDownloadResource.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\dto\WxLoginDTO.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\config\WebConfig.java
 D:\Android\app\RYLAPP\ryl-miniprogram-server\src\main\java\com\ryl\miniprogram\dto\TaskCommentDTO.java
