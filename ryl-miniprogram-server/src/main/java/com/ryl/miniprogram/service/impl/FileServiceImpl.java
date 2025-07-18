@@ -38,18 +38,16 @@ import java.util.UUID;
 @Service
 public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> implements FileService {
 
-    private final TaskImageMapper taskImageMapper;
-    private final TaskAttachmentMapper taskAttachmentMapper;
-    private final String uploadPath;
-
     @Autowired
-    public FileServiceImpl(TaskImageMapper taskImageMapper,
-                           TaskAttachmentMapper taskAttachmentMapper,
-                           @Qualifier("uploadPath") String uploadPath) {
-        this.taskImageMapper = taskImageMapper;
-        this.taskAttachmentMapper = taskAttachmentMapper;
-        this.uploadPath = uploadPath;
-    }
+    private TaskImageMapper taskImageMapper;
+    @Autowired
+    private TaskAttachmentMapper taskAttachmentMapper;
+    
+    @Value("${file.upload.path}")
+    private String uploadPath;
+
+    @Value("${file.upload.url-prefix}")
+    private String urlPrefix;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -155,6 +153,7 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             taskImageMapper.insert(taskImage);
             log.info("任务图片上传成功，ID: {}, URL: {}", taskImage.getId(), imageUrl);
             
+            taskImage.setImageUrl(urlPrefix + imageUrl);
             return taskImage;
         } catch (IOException e) {
             log.error("任务图片上传失败", e);
@@ -225,6 +224,7 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             taskAttachmentMapper.insert(taskAttachment);
             log.info("任务附件上传成功，ID: {}, URL: {}", taskAttachment.getId(), fileUrl);
             
+            taskAttachment.setFileUrl(urlPrefix + fileUrl);
             return taskAttachment;
         } catch (IOException e) {
             log.error("任务附件上传失败", e);
@@ -263,8 +263,9 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             queryWrapper.eq(TaskImage::getImageType, imageType);
         }
         queryWrapper.orderByAsc(TaskImage::getSort);
-        
-        return taskImageMapper.selectList(queryWrapper);
+        List<TaskImage> images = taskImageMapper.selectList(queryWrapper);
+        images.forEach(image -> image.setImageUrl(urlPrefix + image.getImageUrl()));
+        return images;
     }
 
     @Override
@@ -272,8 +273,9 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
         LambdaQueryWrapper<TaskAttachment> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskAttachment::getTaskId, taskId);
         queryWrapper.orderByAsc(TaskAttachment::getSort);
-        
-        return taskAttachmentMapper.selectList(queryWrapper);
+        List<TaskAttachment> attachments = taskAttachmentMapper.selectList(queryWrapper);
+        attachments.forEach(attachment -> attachment.setFileUrl(urlPrefix + attachment.getFileUrl()));
+        return attachments;
     }
 
     @Override

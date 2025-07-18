@@ -15,7 +15,7 @@ export default defineConfig({
     port: 4000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8085',
+        target: 'http://api.jsryl.top',
         changeOrigin: true,
         rewrite: (path) => path, // 不修改路径，保留/api前缀
         secure: false, // 接受无效证书
@@ -31,7 +31,7 @@ export default defineConfig({
         }
       },
       '/uploads': {
-        target: 'http://localhost:8085',
+        target: 'http://api.jsryl.top',
         changeOrigin: true,
         secure: false,
         configure: (proxy) => {

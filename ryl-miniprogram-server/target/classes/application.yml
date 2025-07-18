@@ -6,8 +6,6 @@ server:
 spring:
   application:
     name: ryl-miniprogram-server
-  profiles:
-    active: dev
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
@@ -54,19 +52,19 @@ pagehelper:
 # 微信小程序配置
 wx:
   miniapp:
-    appid: ${WX_MINIAPP_APPID:wx6bb03fe65c98cfd0}
-    secret: ${WX_MINIAPP_SECRET:8579cf94da60c6892a61c918e4624f4f}
-    token: ${WX_MINIAPP_TOKEN:your_miniapp_token}
-    aesKey: ${WX_MINIAPP_AES_KEY:your_miniapp_aes_key}
-    msgDataFormat: JSON
+    appid: wx6bb03fe65c98cfd0 # 示例AppID，请替换为您的真实AppID
+    secret: 8579cf94da60c6892a61c918e4624f4f # 示例Secret，请替换为您的真实Secret
+    test-openid: 'obtYJ7p_U1Tn9PNUR2IPk3SOOsNc' # 请替换为您的测试openid
+    miniprogram-state: 'formal' # 可选值: developer(开发版), trial(体验版), formal(正式版)
     template-ids:
-      engineer-assigned: 'YOUR_TEMPLATE_ID_HERE'
-      quote-generated: 'YOUR_TEMPLATE_ID_HERE'
-      price-confirmed: 'YOUR_TEMPLATE_ID_HERE'
-      service-completed: 'YOUR_TEMPLATE_ID_HERE'
-      evaluation-received: 'YOUR_TEMPLATE_ID_HERE'
+      engineer-assigned: 'TJUibxXzlp2LwlK5Wwse0Gc5N8IwO-riR3aD-g89NBE' # 工程师分配通知模板ID
+      quote-generated: 'DaH51pHOJaxbqM1vf-NNKoFuRfweKbvEBRLF8OjYN1o' # 报价生成通知模板ID
+      price-confirmed: 'DaH51pHOJaxbqM1vf-NNKoFuRfweKbvEBRLF8OjYN1o' # 价格确认通知模板ID
+      service-completed: 'TJUibxXzlp2LwlK5Wwse0Gc5N8IwO-riR3aD-g89NBE' # 服务完成通知模板ID
+      evaluation-received: 'YDVprZJqih5p3hGv_Odi-Oma5fLvW0vVmkcxfZZgi3M' # 评价接收通知模板ID
     page:
-      task-detail: 'pages/task/taskdetail'
+      task-detail: 'pages/task/taskdetail' # 任务详情页面路径
+
 
 # JWT配置
 jwt:
@@ -77,11 +75,14 @@ jwt:
 
 logging:
   level:
-    com.ryl.miniprogram: debug
+    com.ryl.miniprogram: info
+    org.springframework.web: warn
+    org.mybatis: warn
 
 # 文件上传配置
 file:
   upload:
-    # path: uploads # 上传文件存储路径
+    path: D:/servers/rylmini/uploads # 上传文件存储路径
+    url-prefix: https://api.jsryl.top # 文件访问URL前缀
   allowed-file-types: ${FILE_ALLOWED_TYPES:.jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx}
   max-file-size: ${FILE_MAX_SIZE:10485760} 

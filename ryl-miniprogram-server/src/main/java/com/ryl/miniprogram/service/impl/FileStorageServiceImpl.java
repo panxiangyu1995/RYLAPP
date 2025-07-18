@@ -53,7 +53,13 @@ public class FileStorageServiceImpl implements FileStorageService {
             Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
         }
         
-        // 返回相对路径URL
-        return "/avatars/" + filename;
+        // 拼接完整的URL
+        String relativePath = "/uploads/avatars/" + filename;
+        if (urlPrefix != null && !urlPrefix.isEmpty()) {
+            return urlPrefix + relativePath;
+        } else {
+            // 如果前缀为空，则只返回相对路径（作为后备）
+            return relativePath;
+        }
     }
 } 

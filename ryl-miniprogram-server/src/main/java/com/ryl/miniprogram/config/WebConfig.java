@@ -3,7 +3,7 @@ package com.ryl.miniprogram.config;
 import com.ryl.miniprogram.security.JwtAuthInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,16 +30,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Autowired
     private JwtAuthInterceptor jwtAuthInterceptor;
 
-    @Bean
-    @Qualifier("uploadPath")
-    public String uploadPath() {
-        // 从模块目录回退一级到项目根目录，然后进入uploads文件夹
-        String path = new File("../uploads").getAbsolutePath();
-        log.info("全局上传文件绝对路径配置为: {}", path);
-        // 为了可移植性，我们返回相对路径，让各个组件自己处理
-        return "../uploads";
-    }
-    
+    @Value("${file.upload.path}")
+    private String uploadPath;
+
     /**
      * 添加跨域支持
      */
@@ -79,8 +72,11 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 配置上传文件的访问路径
+        String resourceLocation = "file:" + new File(uploadPath).getAbsolutePath() + "/";
+        log.info("配置静态资源映射: /uploads/** -> {}", resourceLocation);
+        
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + uploadPath() + "/");
+                .addResourceLocations(resourceLocation);
         
         // 添加Swagger UI资源映射
         registry.addResourceHandler("/swagger-ui/**")
@@ -116,11 +112,11 @@ public class WebConfig implements WebMvcConfigurer {
         factory.setMaxFileSize(DataSize.ofMegabytes(10));
         
         // 创建临时目录
-        File tempDir = new File(uploadPath(), "temp");
+        File tempDir = new File(uploadPath, "temp");
         if (!tempDir.exists()) {
             tempDir.mkdirs();
         }
-        // setLocation需要一个绝对路径，但这是框架内部要求，不影响我们应用代码的可移植性
+        // setLocation需要一个绝对路径
         factory.setLocation(tempDir.getAbsolutePath());
         
         return factory.createMultipartConfig();

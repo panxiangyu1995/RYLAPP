@@ -1,4 +1,20 @@
 [INFO] Scanning for projects...
+[INFO] Artifact org.apache.johnzon:johnzon-maven-plugin:pom:1.2.21 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyunmaven (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.apache.johnzon:johnzon-maven-plugin:pom:1.2.21 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyunmaven (https://maven.aliyun.com/repository/public, default, releases)]
+Downloading from aliyunmaven: https://maven.aliyun.com/repository/public/org/apache/johnzon/johnzon-maven-plugin/1.2.21/johnzon-maven-plugin-1.2.21.pom
+Downloaded from aliyunmaven: https://maven.aliyun.com/repository/public/org/apache/johnzon/johnzon-maven-plugin/1.2.21/johnzon-maven-plugin-1.2.21.pom (0 B at 0 B/s)
+[INFO] Artifact org.apache.johnzon:johnzon:pom:1.2.21 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyunmaven (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.apache.johnzon:johnzon:pom:1.2.21 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyunmaven (https://maven.aliyun.com/repository/public, default, releases)]
+Downloading from aliyunmaven: https://maven.aliyun.com/repository/public/org/apache/johnzon/johnzon/1.2.21/johnzon-1.2.21.pom
+Downloaded from aliyunmaven: https://maven.aliyun.com/repository/public/org/apache/johnzon/johnzon/1.2.21/johnzon-1.2.21.pom (0 B at 0 B/s)
+[INFO] Artifact org.apache:apache:pom:27 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyunmaven (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.apache:apache:pom:27 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyunmaven (https://maven.aliyun.com/repository/public, default, releases)]
+Downloading from aliyunmaven: https://maven.aliyun.com/repository/public/org/apache/apache/27/apache-27.pom
+Downloaded from aliyunmaven: https://maven.aliyun.com/repository/public/org/apache/apache/27/apache-27.pom (0 B at 0 B/s)
+[INFO] Artifact org.apache.johnzon:johnzon-maven-plugin:jar:1.2.21 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyunmaven (https://maven.aliyun.com/repository/public, default, releases)]
+[INFO] Artifact org.apache.johnzon:johnzon-maven-plugin:jar:1.2.21 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [aliyunmaven (https://maven.aliyun.com/repository/public, default, releases)]
+Downloading from aliyunmaven: https://maven.aliyun.com/repository/public/org/apache/johnzon/johnzon-maven-plugin/1.2.21/johnzon-maven-plugin-1.2.21.jar
+Downloaded from aliyunmaven: https://maven.aliyun.com/repository/public/org/apache/johnzon/johnzon-maven-plugin/1.2.21/johnzon-maven-plugin-1.2.21.jar (0 B at 0 B/s)
 [INFO] 
 [INFO] -------------------< com.ryl:ryl-miniprogram-server >-------------------
 [INFO] Building ryl-miniprogram-server 0.0.1-SNAPSHOT
@@ -38,7 +54,7 @@
 [INFO] +- org.springframework.boot:spring-boot-starter-aop:jar:2.7.18:compile
 [INFO] |  +- org.springframework:spring-aop:jar:5.3.31:compile
 [INFO] |  \- org.aspectj:aspectjweaver:jar:1.9.7:compile
-[INFO] +- com.microsoft.sqlserver:mssql-jdbc:jar:10.2.3.jre8:runtime
+[INFO] +- com.microsoft.sqlserver:mssql-jdbc:jar:12.4.2.jre11:runtime
 [INFO] +- com.baomidou:mybatis-plus-boot-starter:jar:3.5.3:compile
 [INFO] |  +- com.baomidou:mybatis-plus:jar:3.5.3:compile
 [INFO] |  |  \- com.baomidou:mybatis-plus-extension:jar:3.5.3:compile
@@ -84,12 +100,20 @@
 [INFO] |  \- com.fasterxml.jackson.core:jackson-databind:jar:2.13.5:compile
 [INFO] |     +- com.fasterxml.jackson.core:jackson-annotations:jar:2.13.5:compile
 [INFO] |     \- com.fasterxml.jackson.core:jackson-core:jar:2.13.5:compile
+[INFO] +- javax.xml.bind:jaxb-api:jar:2.3.1:compile
+[INFO] |  \- javax.activation:javax.activation-api:jar:1.2.0:compile
+[INFO] +- org.glassfish.jaxb:jaxb-runtime:jar:2.3.1:compile
+[INFO] |  +- org.glassfish.jaxb:txw2:jar:2.3.9:compile
+[INFO] |  +- com.sun.istack:istack-commons-runtime:jar:3.0.7:compile
+[INFO] |  +- org.jvnet.staxex:stax-ex:jar:1.8:compile
+[INFO] |  \- com.sun.xml.fastinfoset:FastInfoset:jar:1.2.15:compile
+[INFO] +- com.sun.xml.bind:jaxb-impl:jar:2.3.1:compile
 [INFO] +- org.apache.commons:commons-lang3:jar:3.12.0:compile
 [INFO] +- commons-io:commons-io:jar:2.11.0:compile
 [INFO] +- cn.hutool:hutool-all:jar:5.8.16:compile
 [INFO] +- org.springframework.boot:spring-boot-devtools:jar:2.7.18:runtime
 [INFO] |  \- org.springframework.boot:spring-boot:jar:2.7.18:compile
-[INFO] +- org.projectlombok:lombok:jar:1.18.30:provided
+[INFO] +- org.projectlombok:lombok:jar:1.18.32:compile
 [INFO] +- org.springframework.boot:spring-boot-starter-test:jar:2.7.18:test
 [INFO] |  +- org.springframework.boot:spring-boot-test:jar:2.7.18:test
 [INFO] |  +- org.springframework.boot:spring-boot-test-autoconfigure:jar:2.7.18:test
@@ -120,10 +144,10 @@
 [INFO] |  |  \- org.springframework:spring-jcl:jar:5.3.31:compile
 [INFO] |  +- org.springframework:spring-test:jar:5.3.31:test
 [INFO] |  \- org.xmlunit:xmlunit-core:jar:2.9.1:test
-[INFO] \- com.h2database:h2:jar:2.2.224:runtime
+[INFO] \- com.h2database:h2:jar:2.2.224:test
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  2.913 s
-[INFO] Finished at: 2025-07-14T09:49:09+08:00
+[INFO] Total time:  9.805 s
+[INFO] Finished at: 2025-07-18T15:23:17+08:00
 [INFO] ------------------------------------------------------------------------
