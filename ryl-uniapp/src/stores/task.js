@@ -445,194 +445,135 @@ export const useTaskStore = defineStore('task', {
     },
     
     // 上传任务图片
-  async uploadTaskImage(file, taskId, imageType = 0, sort = 0) {
-    try {
-      // 验证参数
-      if (!file) {
-        console.error('图片文件为空');
-        throw new Error('图片文件为空');
-      }
-      
-      // 确保文件是File或Blob对象
-      if (!(file instanceof File || file instanceof Blob)) {
-        console.error('图片文件类型无效:', typeof file, file);
-        throw new Error('图片文件类型无效');
-      }
-      
-      // 验证文件类型
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
-      if (!validTypes.includes(file.type)) {
-        console.error('上传图片失败：不支持的图片类型', file.type);
-        throw new Error(`不支持的图片类型: ${file.type}`);
-      }
-      
-      // 验证文件大小
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        console.error('上传图片失败：图片过大', file.size);
-        throw new Error(`图片大小不能超过5MB, 当前大小: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
-      }
-      
-      console.log(`准备上传图片: 任务ID=${taskId}, 类型=${imageType}, 排序=${sort}, 大小=${file.size}字节`);
-      
-        const formData = new FormData();
-      formData.append('file', file);
-        formData.append('taskId', taskId);
-        formData.append('imageType', imageType);
-      formData.append('sort', sort);
-      
-      // 添加详细日志
-      console.log('上传图片FormData内容:');
-      for (let [key, value] of formData.entries()) {
-        if (key === 'file') {
-          console.log(`${key}: ${value.name || 'unnamed'}, 类型: ${value.type}, 大小: ${value.size} 字节`);
-        } else {
-          console.log(`${key}: ${value}`);
+    async uploadTaskImage(file, taskId, imageType = 0, sort = 0) {
+      try {
+        // 验证参数
+        if (!file || !file.path) {
+          console.error('图片文件或路径为空');
+          throw new Error('图片文件或路径为空');
         }
-      }
-      
-      // 使用完整的API URL路径
-      const url = API_PATHS.TASK_IMAGE_UPLOAD;
-      console.log(`上传图片URL: ${url}`);
-      
-      // 发送请求
-      const response = await request.post(url, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-        },
-        timeout: 30000, // 增加超时时间到30秒
-        onUploadProgress: progressEvent => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          console.log(`图片 ${sort+1} 上传进度: ${percentCompleted}%`);
-          // 不再直接更新UI，由createTask中的循环控制
+
+        // 验证文件类型
+        const originalFilename = file.name || '';
+        const fileExtension = originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
+        const validTypes = ['jpg', 'jpeg', 'png', 'gif'];
+        
+        if (!validTypes.includes(fileExtension)) {
+          console.error('上传图片失败：不支持的图片类型', fileExtension);
+          throw new Error(`不支持的图片类型: ${fileExtension}`);
         }
-      });
-      
-      // 检查响应
-      if (response.code !== 200) {
-        throw new Error(response.message || '服务器返回错误');
-      }
-      
-      console.log('图片上传成功:', response.data);
+
+        // 验证文件大小
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+          console.error('上传图片失败：图片过大', file.size);
+          throw new Error(`图片大小不能超过5MB, 当前大小: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+        }
+        
+        console.log(`准备上传图片: 任务ID=${taskId}, 类型=${imageType}, 排序=${sort}, 大小=${file.size}字节`);
+        
+        // 构建带参数的URL
+        const baseUrl = API_PATHS.TASK_IMAGE_UPLOAD;
+        const url = `${baseUrl}?taskId=${taskId}&imageType=${imageType}&sort=${sort}`;
+        console.log(`上传图片URL: ${url}`);
+        
+        // 使用 request.upload 方法
+        const response = await request.upload(url, file.path);
+        
+        // 检查响应
+        if (response.code !== 200) {
+          throw new Error(response.message || '服务器返回错误');
+        }
+        
+        console.log('图片上传成功:', response.data);
         return response.data;
+        
       } catch (error) {
-      console.error('图片上传详细错误:', error);
-      
-      // 提供更详细的错误信息
-      let errorMessage = '上传图片失败';
-      if (error.response) {
-        const status = error.response.status;
-        const responseData = error.response.data;
-        console.error('上传失败响应数据:', responseData);
-        errorMessage += `: 服务器返回 ${status} 错误`;
-        if (responseData && responseData.message) {
-          errorMessage += ` - ${responseData.message}`;
+        console.error('图片上传详细错误:', error);
+        let errorMessage = '上传图片失败';
+        if (error.response) {
+          const status = error.response.status;
+          const responseData = error.response.data;
+          console.error('上传失败响应数据:', responseData);
+          errorMessage += `: 服务器返回 ${status} 错误`;
+          if (responseData && responseData.message) {
+            errorMessage += ` - ${responseData.message}`;
+          }
+        } else if (error.request) {
+          errorMessage += ': 服务器无响应';
+        } else {
+          errorMessage += `: ${error.message}`;
         }
-      } else if (error.request) {
-        errorMessage += ': 服务器无响应';
-      } else {
-        errorMessage += `: ${error.message}`;
-      }
-      
-      throw new Error(errorMessage);
+        
+        throw new Error(errorMessage);
       }
     },
-    
+
     // 上传任务附件
-  async uploadTaskAttachment(file, taskId, sort = 0) {
-    try {
-      // 验证参数
-      if (!file) {
-        console.error('附件文件为空');
-        throw new Error('附件文件为空');
-      }
-      
-      // 确保文件是File或Blob对象
-      if (!(file instanceof File || file instanceof Blob)) {
-        console.error('附件文件类型无效:', typeof file, file);
-        throw new Error('附件文件类型无效');
-      }
-      
-      // 验证文件类型
-      const originalFilename = file.name || '';
-      const fileExtension = originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
-      const validTypes = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
-      
-      if (!validTypes.includes(fileExtension)) {
-        console.error('上传附件失败：不支持的文件类型', fileExtension);
-        throw new Error(`不支持的文件类型: ${fileExtension}`);
-      }
-      
-      // 验证文件大小
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (file.size > maxSize) {
-        console.error('上传附件失败：文件过大', file.size);
-        throw new Error(`附件大小不能超过10MB, 当前大小: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
-      }
-      
-      console.log(`准备上传附件: 任务ID=${taskId}, 排序=${sort}, 大小=${file.size}字节`);
-      
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('taskId', taskId);
-      formData.append('sort', sort);
-      
-      // 添加详细日志
-      console.log('上传附件FormData内容:');
-      for (let [key, value] of formData.entries()) {
-        if (key === 'file') {
-          console.log(`${key}: ${value.name || 'unnamed'}, 类型: ${value.type}, 大小: ${value.size} 字节`);
+    async uploadTaskAttachment(file, taskId, sort = 0) {
+      try {
+        // 验证参数
+        if (!file || !file.path) {
+          console.error('附件文件或路径为空');
+          throw new Error('附件文件或路径为空');
+        }
+        
+        // 验证文件类型
+        const originalFilename = file.name || '';
+        const fileExtension = originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
+        const validTypes = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
+        
+        if (!validTypes.includes(fileExtension)) {
+          console.error('上传附件失败：不支持的文件类型', fileExtension);
+          throw new Error(`不支持的文件类型: ${fileExtension}`);
+        }
+        
+        // 验证文件大小
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+          console.error('上传附件失败：文件过大', file.size);
+          throw new Error(`附件大小不能超过10MB, 当前大小: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+        }
+        
+        console.log(`准备上传附件: 任务ID=${taskId}, 排序=${sort}, 大小=${file.size}字节`);
+        
+        // 构建带参数的URL
+        const baseUrl = API_PATHS.TASK_ATTACHMENT_UPLOAD;
+        const url = `${baseUrl}?taskId=${taskId}&sort=${sort}`;
+        console.log(`上传附件URL: ${url}`);
+        
+        // 使用 request.upload 方法
+        const response = await request.upload(url, file.path);
+        
+        // 检查响应
+        if (response.code !== 200) {
+          throw new Error(response.message || '服务器返回错误');
+        }
+        
+        console.log('附件上传成功:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('附件上传详细错误:', error);
+        
+        // 提供更详细的错误信息
+        let errorMessage = '上传附件失败';
+        if (error.response) {
+          const status = error.response.status;
+          const responseData = error.response.data;
+          console.error('上传失败响应数据:', responseData);
+          errorMessage += `: 服务器返回 ${status} 错误`;
+          if (responseData && responseData.message) {
+            errorMessage += ` - ${responseData.message}`;
+          }
+        } else if (error.request) {
+          errorMessage += ': 服务器无响应';
         } else {
-          console.log(`${key}: ${value}`);
+          errorMessage += `: ${error.message}`;
         }
+        
+        throw new Error(errorMessage);
       }
-      
-      // 使用完整的API URL路径
-      const url = API_PATHS.TASK_ATTACHMENT_UPLOAD;
-      console.log(`上传附件URL: ${url}`);
-      
-      // 发送请求
-      const response = await request.post(url, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        timeout: 30000, // 增加超时时间到30秒
-        onUploadProgress: progressEvent => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          console.log(`附件 ${sort+1} 上传进度: ${percentCompleted}%`);
-          // 不再直接更新UI，由createTask中的循环控制
-        }
-      });
-      
-      // 检查响应
-      if (response.code !== 200) {
-        throw new Error(response.message || '服务器返回错误');
-      }
-      
-      console.log('附件上传成功:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('附件上传详细错误:', error);
-      
-      // 提供更详细的错误信息
-      let errorMessage = '上传附件失败';
-      if (error.response) {
-        const status = error.response.status;
-        const responseData = error.response.data;
-        console.error('上传失败响应数据:', responseData);
-        errorMessage += `: 服务器返回 ${status} 错误`;
-        if (responseData && responseData.message) {
-          errorMessage += ` - ${responseData.message}`;
-        }
-      } else if (error.request) {
-        errorMessage += ': 服务器无响应';
-      } else {
-        errorMessage += `: ${error.message}`;
-      }
-      
-      throw new Error(errorMessage);
-    }
-  },
+    },
 
     // 提交服务评价
     async submitEvaluation(taskId, evaluationData) {

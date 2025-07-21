@@ -50,6 +50,7 @@
 import { ref, watch } from 'vue';
 import { useUserStore } from '@/stores/user';
 import request from '@/utils/request'; // 引入请求工具
+import { API_PATHS } from '@/constants/api';
 
 const userStore = useUserStore();
 
@@ -57,6 +58,10 @@ const props = defineProps({
   modelValue: {
     type: Array,
     default: () => []
+  },
+  taskId: {
+    type: String,
+    required: true
   },
   maxSize: {
     type: Number,
@@ -141,14 +146,15 @@ const processFiles = (files) => {
       extension: file.name.split('.').pop().toLowerCase(),
       url: file.path,
       status: 'uploading',
-      serverUrl: ''
+      serverUrl: '',
+      attachmentId: null
     };
     fileList.value.push(fileItem);
-    uploadFile(fileItem);
+    uploadFile(fileItem, fileList.value.length - 1);
   }
 }
 
-const uploadFile = (fileItem) => {
+const uploadFile = (fileItem, index) => {
   const token = uni.getStorageSync('token');
   if (!token) {
     showError('用户未登录，无法上传');
@@ -156,8 +162,10 @@ const uploadFile = (fileItem) => {
     return;
   }
 
+  const url = `${request.baseURL}${API_PATHS.TASK_ATTACHMENT_UPLOAD}?taskId=${props.taskId}&sort=${index}`;
+
   uni.uploadFile({
-    url: `${request.baseURL}/upload/file`, // 修正：使用 request.baseURL
+    url: url,
     filePath: fileItem.url,
     name: 'file',
     header: {
@@ -165,14 +173,24 @@ const uploadFile = (fileItem) => {
     },
     success: (uploadRes) => {
       try {
-        const data = JSON.parse(uploadRes.data);
-        if (data.code === 200) {
-          fileItem.status = 'success';
-          fileItem.serverUrl = data.data.url;
+        const resData = JSON.parse(uploadRes.data);
+        if (resData.code === 200) {
+          const fileInfo = resData.data;
+          // 创建一个新的、已更新的文件对象
+          const updatedFileItem = {
+            ...fileItem,
+            status: 'success',
+            serverUrl: fileInfo.fileUrl,
+            attachmentId: fileInfo.id,
+            name: fileInfo.originalFileName || fileInfo.fileName,
+            size: fileInfo.fileSize
+          };
+          // 通过创建一个新数组来替换旧数组中的对应项
+          fileList.value.splice(index, 1, updatedFileItem);
           updateModelValue();
         } else {
           fileItem.status = 'error';
-          showError(data.message || '上传失败');
+          showError(resData.message || '上传失败');
         }
       } catch (e) {
         fileItem.status = 'error';
@@ -189,7 +207,7 @@ const uploadFile = (fileItem) => {
 const updateModelValue = () => {
   const successfulUploads = fileList.value
     .filter(f => f.status === 'success')
-    .map(f => ({ fileUrl: f.serverUrl, fileName: f.name }));
+    .map(f => ({ fileUrl: f.serverUrl, fileName: f.name, attachmentId: f.attachmentId }));
   emit('update:modelValue', successfulUploads);
 };
 
@@ -200,19 +218,11 @@ const removeFile = async (id) => {
     fileList.value.splice(index, 1);
     updateModelValue();
 
-    if (fileToRemove.serverUrl) {
+    if (fileToRemove.attachmentId) {
       try {
-        await uni.request({
-          url: `${request.baseURL}/upload/delete`, // 修正：使用 request.baseURL
-          method: 'POST',
-          header: {
-            'Authorization': `Bearer ${uni.getStorageSync('token')}`,
-            'Content-Type': 'application/json'
-          },
-          data: {
-            fileUrl: fileToRemove.serverUrl
-          }
-        });
+        // 后端缺少独立的附件删除接口，暂时只做前端移除
+        console.log(`附件 ${fileToRemove.attachmentId} 已从前端列表移除，后端删除接口待实现。`);
+        // await request.delete(`/files/task/attachment/${fileToRemove.attachmentId}`);
       } catch (error) {
         console.error('删除服务器文件失败:', error);
       }

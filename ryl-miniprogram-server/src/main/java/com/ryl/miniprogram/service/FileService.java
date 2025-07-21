@@ -4,8 +4,10 @@ import com.ryl.miniprogram.entity.RecordFile;
 import com.ryl.miniprogram.entity.TaskAttachment;
 import com.ryl.miniprogram.entity.TaskImage;
 import com.ryl.miniprogram.dto.FileDownloadResource;
+import com.ryl.miniprogram.dto.FileInfoDTO;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -33,7 +35,7 @@ public interface FileService {
      * @param sort      排序
      * @return 图片信息
      */
-    TaskImage uploadTaskImage(MultipartFile file, String taskId, Integer imageType, Integer sort) throws java.io.IOException;
+    FileInfoDTO uploadTaskImage(MultipartFile file, String taskId, Integer imageType, Integer sort) throws IOException;
     
     /**
      * 上传任务附件
@@ -43,7 +45,7 @@ public interface FileService {
      * @param sort      排序
      * @return 附件信息
      */
-    TaskAttachment uploadTaskAttachment(MultipartFile file, String taskId, Integer sort) throws java.io.IOException;
+    FileInfoDTO uploadTaskAttachment(MultipartFile file, String taskId, Integer sort) throws IOException;
     
     /**
      * 获取文件

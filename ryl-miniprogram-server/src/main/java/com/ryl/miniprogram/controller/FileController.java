@@ -72,7 +72,7 @@ public class FileController {
      * @return 图片信息
      */
     @PostMapping("/task/image")
-    public ResultVO<TaskImage> uploadTaskImage(
+    public ResultVO<FileInfoDTO> uploadTaskImage(
             @RequestParam("file") MultipartFile file,
             @RequestParam("taskId") String taskId,
             @RequestParam("imageType") Integer imageType,
@@ -100,10 +100,10 @@ public class FileController {
                 return ResultVO.failed("图片大小不能超过5MB");
             }
             
-            // 上传图片
-            TaskImage taskImage = fileService.uploadTaskImage(file, taskId, imageType, sort);
-            log.info("任务图片上传成功，taskId: {}, imageId: {}", taskId, taskImage.getId());
-            return ResultVO.success(taskImage);
+            // 上传图片并获取DTO
+            FileInfoDTO fileInfoDTO = fileService.uploadTaskImage(file, taskId, imageType, sort);
+            log.info("任务图片上传成功，taskId: {}, imageId: {}", taskId, fileInfoDTO.getId());
+            return ResultVO.success(fileInfoDTO);
         } catch (Exception e) {
             log.error("上传任务图片失败", e);
             return ResultVO.failed("图片上传失败：" + e.getMessage());
@@ -119,7 +119,7 @@ public class FileController {
      * @return 附件信息
      */
     @PostMapping("/task/attachment")
-    public ResultVO<TaskAttachment> uploadTaskAttachment(
+    public ResultVO<FileInfoDTO> uploadTaskAttachment(
             @RequestParam("file") MultipartFile file,
             @RequestParam("taskId") String taskId,
             @RequestParam(value = "sort", required = false, defaultValue = "0") Integer sort) {
@@ -158,10 +158,10 @@ public class FileController {
                 return ResultVO.failed("附件大小不能超过10MB");
             }
             
-            // 上传附件
-            TaskAttachment taskAttachment = fileService.uploadTaskAttachment(file, taskId, sort);
-            log.info("任务附件上传成功，taskId: {}, attachmentId: {}", taskId, taskAttachment.getId());
-            return ResultVO.success(taskAttachment);
+            // 上传附件并获取DTO
+            FileInfoDTO fileInfoDTO = fileService.uploadTaskAttachment(file, taskId, sort);
+            log.info("任务附件上传成功，taskId: {}, attachmentId: {}", taskId, fileInfoDTO.getId());
+            return ResultVO.success(fileInfoDTO);
         } catch (Exception e) {
             log.error("上传任务附件失败", e);
             return ResultVO.failed("附件上传失败：" + e.getMessage());

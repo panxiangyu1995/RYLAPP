@@ -15,6 +15,11 @@ import lombok.NoArgsConstructor;
 public class FileInfoDTO {
     
     /**
+     * 文件ID
+     */
+    private Long id;
+
+    /**
      * 文件名
      */
     private String fileName;

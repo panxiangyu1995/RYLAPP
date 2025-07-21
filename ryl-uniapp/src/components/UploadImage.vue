@@ -13,7 +13,7 @@
         :key="index" 
         class="relative w-full aspect-square rounded-lg overflow-hidden border border-neutral-gray bg-neutral-light"
       >
-        <image :src="image.url" class="w-full h-full object-cover" :alt="`图片 ${index + 1}`" />
+        <image :src="image.serverUrl || image.url" class="w-full h-full object-cover" :alt="`图片 ${index + 1}`" />
         <button 
           type="button"
           @click="removeImage(index)" 
@@ -45,6 +45,7 @@
 import { ref, watch } from 'vue';
 import { useUserStore } from '@/stores/user';
 import request from '@/utils/request'; // 引入请求工具
+import { API_PATHS } from '@/constants/api';
 
 const userStore = useUserStore();
 
@@ -52,6 +53,10 @@ const props = defineProps({
   modelValue: {
     type: Array,
     default: () => []
+  },
+  taskId: {
+    type: String,
+    required: true
   },
   maxCount: {
     type: Number,
@@ -103,10 +108,11 @@ const handleChooseImage = () => {
           url: file.path,
           name: file.name || `image-${Date.now()}`,
           status: 'uploading', // uploading, success, error
-          serverUrl: ''
+          serverUrl: '',
+          imageId: null
         };
         images.value.push(imageItem);
-        uploadImage(imageItem);
+        uploadImage(imageItem, images.value.length - 1);
       });
     },
     fail: (err) => {
@@ -115,7 +121,7 @@ const handleChooseImage = () => {
   });
 };
 
-const uploadImage = (imageItem) => {
+const uploadImage = (imageItem, index) => {
   const token = uni.getStorageSync('token');
   if (!token) {
     showError('用户未登录，无法上传');
@@ -123,8 +129,10 @@ const uploadImage = (imageItem) => {
     return;
   }
 
+  const url = `${request.baseURL}${API_PATHS.TASK_IMAGE_UPLOAD}?taskId=${props.taskId}&imageType=0&sort=${index}`;
+
   uni.uploadFile({
-    url: `${request.baseURL}/upload/image`, // 修正：使用 request.baseURL
+    url: url,
     filePath: imageItem.url,
     name: 'file',
     header: {
@@ -132,14 +140,22 @@ const uploadImage = (imageItem) => {
     },
     success: (uploadRes) => {
       try {
-        const data = JSON.parse(uploadRes.data);
-        if (data.code === 200) {
-          imageItem.status = 'success';
-          imageItem.serverUrl = data.data.url;
+        const resData = JSON.parse(uploadRes.data);
+        if (resData.code === 200) {
+          const fileInfo = resData.data;
+          // 创建一个新的、已更新的图片对象
+          const updatedImageItem = {
+            ...imageItem,
+            status: 'success',
+            serverUrl: fileInfo.fileUrl,
+            imageId: fileInfo.id
+          };
+          // 通过创建一个新数组来替换旧数组中的对应项，以强制UI更新
+          images.value.splice(index, 1, updatedImageItem);
           updateModelValue();
         } else {
           imageItem.status = 'error';
-          showError(data.message || '上传失败');
+          showError(resData.message || '上传失败');
         }
       } catch (e) {
         imageItem.status = 'error';
@@ -159,19 +175,9 @@ const removeImage = async (index) => {
   images.value.splice(index, 1);
   updateModelValue();
 
-  if (imageToRemove.serverUrl) {
+  if (imageToRemove.imageId) {
     try {
-      await uni.request({
-        url: `${request.baseURL}/upload/delete`, // 修正：使用 request.baseURL
-        method: 'POST',
-        header: {
-          'Authorization': `Bearer ${uni.getStorageSync('token')}`,
-          'Content-Type': 'application/json'
-        },
-        data: {
-          fileUrl: imageToRemove.serverUrl
-        }
-      });
+      await request.delete(`/files/task/image/${imageToRemove.imageId}`);
     } catch (error) {
       console.error('删除服务器图片失败:', error);
     }
@@ -181,7 +187,7 @@ const removeImage = async (index) => {
 const updateModelValue = () => {
   const successfulUploads = images.value
     .filter(img => img.status === 'success')
-    .map(img => ({ url: img.serverUrl, name: img.name }));
+    .map(img => ({ url: img.serverUrl, name: img.name, imageId: img.imageId }));
   emit('update:modelValue', successfulUploads);
 };
 

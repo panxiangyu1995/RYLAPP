@@ -211,14 +211,14 @@
         <view class="bg-white rounded-lg p-4 mb-6">
           <view class="text-lg font-medium mb-3 text-ui-blue-start">图片上传</view>
           <view class="text-sm text-gray-500 mb-2">可上传最多8张图片，自动压缩</view>
-          <upload-image v-model="formData.images" @upload-error="handleUploadError" />
+          <upload-image v-model="formData.images" :task-id="taskId" @upload-error="handleUploadError" />
         </view>
         
         <!-- 附件上传 -->
         <view class="bg-white rounded-lg p-4 mb-6">
           <view class="text-lg font-medium mb-3 text-ui-blue-start">附件上传</view>
           <view class="text-sm text-gray-500 mb-2">可上传最多5个文件，单个不超过10MB</view>
-          <upload-file v-model="formData.files" @upload-error="handleUploadError" />
+          <upload-file v-model="formData.files" :task-id="taskId" @upload-error="handleUploadError" />
         </view>
         
         <!-- 提交按钮 -->
@@ -260,6 +260,7 @@ const selectedType = ref('repair');
 const isSubmitting = ref(false);
 const isSuccess = ref(false);
 const submittedTask = ref(null);
+const taskId = ref('');
 const taskTypes = computed(() => taskStore.taskTypes);
 
 // 表单数据
@@ -292,6 +293,7 @@ const formData = reactive(getInitialFormData());
 
 // 生命周期钩子
 onLoad((options) => {
+  taskId.value = generateTaskId(selectedType.value);
   if (options.type) {
     selectTaskType(options.type);
   }
@@ -314,6 +316,7 @@ onShow(() => {
 // 方法
 const selectTaskType = (type) => {
   selectedType.value = type;
+  taskId.value = generateTaskId(type);
   
   const newDevice = { ...getInitialFormData().device };
   
@@ -480,14 +483,13 @@ const submitTask = async () => {
 };
 
 const buildTaskData = () => {
-    const taskId = generateTaskId(selectedType.value);
     const companyName = formData.customer.name || formData.customer.contact || '未知客户';
     const taskTypeName = taskTypes.value.find(t => t.id === selectedType.value)?.name || '未知任务';
     let deviceName = selectedType.value === 'selection' ? formData.device.purpose : formData.device.name;
     const taskTitle = `${companyName}-${deviceName || '未知设备'}-${taskTypeName}`;
 
     return {
-      taskId: taskId,
+      taskId: taskId.value,
       title: taskTitle,
       taskType: selectedType.value,
       description: formData.description,

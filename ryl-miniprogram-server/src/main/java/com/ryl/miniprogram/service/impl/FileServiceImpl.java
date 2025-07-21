@@ -10,6 +10,7 @@ import com.ryl.miniprogram.mapper.TaskAttachmentMapper;
 import com.ryl.miniprogram.mapper.TaskImageMapper;
 import com.ryl.miniprogram.service.FileService;
 import com.ryl.miniprogram.dto.FileDownloadResource;
+import com.ryl.miniprogram.dto.FileInfoDTO;
 import com.ryl.miniprogram.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,7 +92,7 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public TaskImage uploadTaskImage(MultipartFile file, String taskId, Integer imageType, Integer sort) throws IOException {
+    public FileInfoDTO uploadTaskImage(MultipartFile file, String taskId, Integer imageType, Integer sort) throws IOException {
         log.info("开始上传任务图片，taskId: {}, imageType: {}, sort: {}", taskId, imageType, sort);
         
         // 检查参数
@@ -136,13 +137,14 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             // 保存文件
             file.transferTo(destinationFile);
             
-            // 构建相对URL
-            String imageUrl = "/uploads/images/" + datePath + "/" + newFilename;
+            // 构建并保存完整URL
+            String relativePath = "/uploads/images/" + datePath + "/" + newFilename;
+            String fullUrl = urlPrefix + relativePath;
             
             // 保存图片记录
             TaskImage taskImage = new TaskImage();
             taskImage.setTaskId(taskId);
-            taskImage.setImageUrl(imageUrl);
+            taskImage.setImageUrl(fullUrl); // 存储完整URL
             taskImage.setImageType(imageType);
             taskImage.setSort(sort);
             Date now = new Date();
@@ -151,10 +153,17 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             
             log.info("保存任务图片记录到数据库");
             taskImageMapper.insert(taskImage);
-            log.info("任务图片上传成功，ID: {}, URL: {}", taskImage.getId(), imageUrl);
+            log.info("任务图片上传成功，ID: {}, URL: {}", taskImage.getId(), fullUrl);
             
-            taskImage.setImageUrl(urlPrefix + imageUrl);
-            return taskImage;
+            // 构建并返回DTO
+            return FileInfoDTO.builder()
+                .id(taskImage.getId())
+                .fileUrl(fullUrl)
+                .originalFileName(originalFilename)
+                .fileName(originalFilename)
+                .fileType(fileType)
+                .fileSize(file.getSize())
+                .build();
         } catch (IOException e) {
             log.error("任务图片上传失败", e);
             throw new IOException("图片上传失败: " + e.getMessage(), e);
@@ -163,7 +172,7 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
     
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public TaskAttachment uploadTaskAttachment(MultipartFile file, String taskId, Integer sort) throws IOException {
+    public FileInfoDTO uploadTaskAttachment(MultipartFile file, String taskId, Integer sort) throws IOException {
         log.info("开始上传任务附件，taskId: {}, sort: {}", taskId, sort);
         
         // 检查参数
@@ -205,14 +214,15 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             // 保存文件
             file.transferTo(destinationFile);
             
-            // 构建相对URL
-            String fileUrl = "/uploads/attachments/" + datePath + "/" + newFilename;
-            
+            // 构建并保存完整URL
+            String relativePath = "/uploads/attachments/" + datePath + "/" + newFilename;
+            String fullUrl = urlPrefix + relativePath;
+
             // 保存附件记录
             TaskAttachment taskAttachment = new TaskAttachment();
             taskAttachment.setTaskId(taskId);
             taskAttachment.setFileName(originalFilename);
-            taskAttachment.setFileUrl(fileUrl);
+            taskAttachment.setFileUrl(fullUrl); // 存储完整URL
             taskAttachment.setFileType(fileType);
             taskAttachment.setFileSize(file.getSize());
             taskAttachment.setSort(sort);
@@ -222,10 +232,17 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             
             log.info("保存任务附件记录到数据库");
             taskAttachmentMapper.insert(taskAttachment);
-            log.info("任务附件上传成功，ID: {}, URL: {}", taskAttachment.getId(), fileUrl);
+            log.info("任务附件上传成功，ID: {}, URL: {}", taskAttachment.getId(), fullUrl);
             
-            taskAttachment.setFileUrl(urlPrefix + fileUrl);
-            return taskAttachment;
+            // 构建并返回DTO
+            return FileInfoDTO.builder()
+                .id(taskAttachment.getId())
+                .fileUrl(fullUrl)
+                .originalFileName(originalFilename)
+                .fileName(originalFilename)
+                .fileType(fileType)
+                .fileSize(file.getSize())
+                .build();
         } catch (IOException e) {
             log.error("任务附件上传失败", e);
             throw new IOException("附件上传失败: " + e.getMessage(), e);
