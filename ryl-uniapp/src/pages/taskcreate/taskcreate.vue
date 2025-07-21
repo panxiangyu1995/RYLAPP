@@ -75,18 +75,8 @@
       </view>
       
       <!-- 表单区域 -->
-      <form @submit="submitTask">
-        <!-- 登录提示 -->
-        <view v-if="!userStore.isLoggedIn" class="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-6">
-          <view class="text-yellow-700 mb-2">您需要登录后才能提交订单</view>
-          <button 
-            type="button"
-            @click="goToLogin"
-            class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md"
-          >
-            立即登录
-          </button>
-        </view>
+      <form @submit.prevent="protectedSubmitTask">
+        <!-- 登录提示 (REMOVED) -->
         
         <!-- 客户信息 -->
         <view class="bg-white rounded-lg p-4 mb-6">
@@ -235,7 +225,7 @@
         <button 
           form-type="submit"
           class="w-full bg-ui-vibrant-gradient text-white font-bold py-3 px-4 rounded-lg shadow-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ui-blue-end disabled:opacity-50"
-          :disabled="isSubmitting || !userStore.isLoggedIn"
+          :disabled="isSubmitting"
           :loading="isSubmitting"
         >
           {{ isSubmitting ? '提交中...' : '确认提交' }}
@@ -253,6 +243,7 @@ import { ref, reactive, computed } from 'vue';
 import { useTaskStore } from '@/stores/task';
 import { useUserStore } from '@/stores/user';
 import { onLoad, onShow } from '@dcloudio/uni-app';
+import { withAuth } from '@/utils/authGuard.js';
 
 import DeviceBasicInfo from '@/components/DeviceBasicInfo.vue';
 import UploadImage from '@/components/UploadImage.vue';
@@ -335,12 +326,7 @@ const selectTaskType = (type) => {
   formData.device = newDevice;
 };
 
-// 前往登录页
-const goToLogin = () => {
-  uni.navigateTo({
-    url: `/pages/login/login?redirect=/pages/taskcreate/taskcreate?type=${selectedType.value}`
-  });
-};
+// 前往登录页 (REMOVED)
 
 const goBack = () => {
   uni.navigateBack();
@@ -419,6 +405,13 @@ const saveTaskToLocal = (taskData, result) => {
     const updatedTasks = [...recentTasks, newTask].slice(-10); // 只保留最近10条
     uni.setStorageSync('submittedTasks', updatedTasks);
 };
+
+// 受保护的提交函数
+const protectedSubmitTask = withAuth(() => {
+  // `submitTask` 逻辑现在在这里，或者被调用
+  // 为了保持结构清晰，我们直接调用 submitTask
+  submitTask();
+});
 
 // 提交任务
 const submitTask = async () => {

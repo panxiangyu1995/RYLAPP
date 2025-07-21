@@ -22,29 +22,25 @@
       "path": "pages/profile/profile",
       "style": {
         "navigationBarTitleText": "个人中心"
-      },
-      "needLogin": true
+      }
     },
     {
       "path": "pages/taskcreate/taskcreate",
       "style": {
         "navigationBarTitleText": "创建任务"
-      },
-      "needLogin": true
+      }
     },
     {
       "path": "pages/taskprogress/taskprogress",
       "style": {
         "navigationBarTitleText": "任务进度"
-      },
-      "needLogin": true
+      }
     },
     {
       "path": "pages/taskdetail/taskdetail",
       "style": {
         "navigationBarTitleText": "任务详情"
-      },
-      "needLogin": true
+      }
     },
     {
       "path": "pages/agreement/agreement",

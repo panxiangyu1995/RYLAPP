@@ -8,17 +8,7 @@
       <view class="text-xl font-medium">订单进展</view>
     </view> -->
     
-    <!-- 调试模式提示 -->
-    <view v-if="!userStore.isLoggedIn" class="bg-blue-50 border border-blue-300 rounded-lg p-4 mb-6">
-      <view class="text-blue-700 mb-2">您尚未登录，请登录后查看订单</view>
-      <button 
-        type="button"
-        @click="goToLogin"
-        class="px-4 py-2 bg-ui-vibrant-gradient text-white rounded-md"
-      >
-        登录
-      </button>
-    </view>
+    <!-- 调试模式提示 (REMOVED) -->
     
     <!-- 任务列表 -->
     <view>
@@ -29,8 +19,13 @@
       
       <!-- 无任务状态 -->
       <view v-else-if="tasks.length === 0" class="text-center py-8">
-        <view class="text-gray-500 mb-4">您还没有提交任何订单</view>
-        <button @click="goToHome" class="bg-ui-vibrant-gradient text-white font-bold py-2 px-4 rounded-lg shadow-md hover:opacity-90">创建新订单</button>
+        <view class="text-gray-500 mb-4">{{ userStore.isLoggedIn ? '您还没有提交任何订单' : '请登录后查看订单' }}</view>
+        <button 
+          @click="userStore.isLoggedIn ? goToHome() : goToLogin()" 
+          class="bg-ui-vibrant-gradient text-white font-bold py-2 px-4 rounded-lg shadow-md hover:opacity-90"
+        >
+          {{ userStore.isLoggedIn ? '创建新订单' : '立即登录' }}
+        </button>
       </view>
       
       <!-- 任务列表 -->
@@ -69,6 +64,8 @@ const fetchTasks = async () => {
   loading.value = true;
   
   try {
+    // 确保在调用前 Pinia store 已准备好
+    await userStore.init();
     tasks.value = await taskStore.fetchTaskList();
   } catch (err) {
     error.value = err.message || '获取订单列表失败';

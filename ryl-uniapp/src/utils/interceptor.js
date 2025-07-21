@@ -15,11 +15,11 @@ async function interceptorLogic(args) {
   const pageInfo = pages.find(p => `/${p.path}` === url);
 
   // 默认不需要登录
-  let needLogin = false;
-  if (pageInfo && pageInfo.needLogin) {
-    needLogin = true;
-    console.log('[拦截器] 该页面需要登录:', needLogin);
-  }
+  // let needLogin = false;
+  // if (pageInfo && pageInfo.needLogin) {
+  //   needLogin = true;
+  //   console.log('[拦截器] 该页面需要登录:', needLogin);
+  // }
   
   // 如果已登录但 Pinia 中没有用户信息，则异步获取
   if (isLoggedIn && !userStore.hasUserInfo) {
@@ -31,15 +31,15 @@ async function interceptorLogic(args) {
       // 获取用户信息失败，可能 token 已过期，发出需要重定向的信号
       console.error('[拦截器] 获取用户信息失败，可能token已过期:', error);
       userStore.logout();
-      uni.$emit('needs-login-redirect');
+      // uni.$emit('needs-login-redirect'); // 不再自动重定向
     }
   }
 
   // 如果目标页面需要登录，但用户未登录，则发出需要重定向的信号
-  if (needLogin && !isLoggedIn) {
-    console.log('[拦截器] 页面需要登录但用户未登录，准备重定向到登录页');
-    uni.$emit('needs-login-redirect');
-  }
+  // if (needLogin && !isLoggedIn) {
+  //   console.log('[拦截器] 页面需要登录但用户未登录，准备重定向到登录页');
+  //   uni.$emit('needs-login-redirect');
+  // }
 
   return args; // 总是放行，让 App.vue 中的监听器处理实际的跳转
 }

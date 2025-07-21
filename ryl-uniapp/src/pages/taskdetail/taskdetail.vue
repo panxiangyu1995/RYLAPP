@@ -98,6 +98,8 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useTaskStore } from '@/stores/task';
+import { useUserStore } from '@/stores/user';
+import { withAuth } from '@/utils/authGuard';
 import TaskProgress from '@/components/TaskProgress.vue';
 import ServiceEvaluation from '@/components/ServiceEvaluation.vue';
 import ChevronLeftIcon from '@/components/icons/ChevronLeftIcon.vue';
@@ -105,6 +107,7 @@ import FileTextIcon from '@/components/icons/FileTextIcon.vue';
 import { onLoad } from '@dcloudio/uni-app';
 
 const taskStore = useTaskStore();
+const userStore = useUserStore();
 
 const taskId = ref(null);
 const task = ref(null);
@@ -129,6 +132,11 @@ const currentStepContent = computed(() => {
 
 // 获取任务详情
 const fetchTaskDetail = async () => {
+  if (!userStore.isLoggedIn) {
+    error.value = '请登录后查看订单详情。';
+    loading.value = false;
+    return;
+  }
   if (!taskId.value) return;
   loading.value = true;
   error.value = '';
@@ -199,7 +207,7 @@ const formatDate = (dateString) => {
 };
 
 // 处理评价提交成功
-const handleEvaluationSubmit = async (data) => {
+const handleEvaluationSubmit = withAuth(async (data) => {
   try {
     await taskStore.submitEvaluation(taskId.value, data);
     // 重新获取任务详情，刷新状态
@@ -207,7 +215,7 @@ const handleEvaluationSubmit = async (data) => {
   } catch (err) {
     console.error('提交评价失败:', err);
   }
-};
+});
 
 // 处理评价提交失败
 const handleEvaluationError = (err) => {
@@ -225,7 +233,7 @@ const goBack = () => {
 };
 
 // 处理报价确认
-const handleConfirmPrice = async () => {
+const handleConfirmPrice = withAuth(async () => {
   try {
     await taskStore.confirmTaskPrice(taskId.value);
     uni.showToast({ title: '报价确认成功！', icon: 'success' });
@@ -239,7 +247,7 @@ const handleConfirmPrice = async () => {
     console.error('确认报价失败:', err);
     uni.showToast({ title: '确认报价失败，请重试', icon: 'none' });
   }
-};
+});
 
 // 页面加载时获取任务详情
 onLoad((options) => {

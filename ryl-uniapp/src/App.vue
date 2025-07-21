@@ -15,11 +15,11 @@ onLaunch(() => {
   setupInterceptors();
   
   // 监听需要登录重定向的全局事件
-  uni.$on('needs-login-redirect', () => {
-    uni.reLaunch({
-      url: '/pages/login/login'
-    });
-  });
+  // uni.$on('needs-login-redirect', () => {
+  //   uni.reLaunch({
+  //     url: '/pages/login/login'
+  //   });
+  // });
 });
 
 onShow(() => {
