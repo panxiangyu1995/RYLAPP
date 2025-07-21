@@ -36,6 +36,8 @@ public class SecurityConfig {
             .httpBasic(basic -> basic.disable())
             // 请求授权
             .authorizeRequests(auth -> auth
+                // 允许后台管理和APP接口的公开访问，以便于当前阶段的测试
+                .antMatchers("/api/admin/**", "/api/app/**").permitAll()
                 // 允许所有请求，不需要认证
                 .anyRequest().permitAll()
             );
