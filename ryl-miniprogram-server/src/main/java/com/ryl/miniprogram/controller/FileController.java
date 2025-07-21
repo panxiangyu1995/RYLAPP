@@ -205,6 +205,30 @@ public class FileController {
     }
     
     /**
+     * 获取任务附件文件
+     *
+     * @param attachmentId 附件ID
+     * @return 文件
+     */
+    @GetMapping("/attachment/{attachmentId}")
+    public ResponseEntity<Resource> getTaskAttachmentFile(@PathVariable Long attachmentId) {
+        try {
+            FileDownloadResource fileDownloadResource = fileService.getTaskAttachmentFile(attachmentId);
+            Resource resource = fileDownloadResource.resource();
+            String filename = fileDownloadResource.filename();
+
+            String contentType = "application/octet-stream";
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .body(resource);
+        } catch (Exception e) {
+            log.error("获取任务附件失败，ID: {}", attachmentId, e);
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    /**
      * 获取任务图片列表
      *
      * @param taskId    任务ID

@@ -18,7 +18,7 @@ export const API_PATHS = {
   // 文件相关API
   IMAGE_PREVIEW: (id) => `/files/${id}`,
   IMAGE_DOWNLOAD: (id) => `/files/${id}`,
-  ATTACHMENT_DOWNLOAD: (taskId, fileId) => `/files/${fileId}`,
+  ATTACHMENT_DOWNLOAD: (fileId) => `/files/attachment/${fileId}`,
   TASK_IMAGES: (taskId, imageType) => `/files/task/${taskId}/images${imageType !== undefined ? `?imageType=${imageType}` : ''}`,
   TASK_ATTACHMENTS: (taskId) => `/files/task/${taskId}/attachments`,
   

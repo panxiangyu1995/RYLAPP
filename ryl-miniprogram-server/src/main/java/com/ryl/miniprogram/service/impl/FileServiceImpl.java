@@ -137,7 +137,7 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             file.transferTo(destinationFile);
             
             // 构建相对URL
-            String imageUrl = "/images/" + datePath + "/" + newFilename;
+            String imageUrl = "/uploads/images/" + datePath + "/" + newFilename;
             
             // 保存图片记录
             TaskImage taskImage = new TaskImage();
@@ -206,7 +206,7 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             file.transferTo(destinationFile);
             
             // 构建相对URL
-            String fileUrl = "/attachments/" + datePath + "/" + newFilename;
+            String fileUrl = "/uploads/attachments/" + datePath + "/" + newFilename;
             
             // 保存附件记录
             TaskAttachment taskAttachment = new TaskAttachment();
@@ -256,6 +256,34 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
     }
     
     @Override
+    public FileDownloadResource getTaskAttachmentFile(Long attachmentId) {
+        TaskAttachment attachment = taskAttachmentMapper.selectById(attachmentId);
+        if (attachment == null) {
+            throw new BusinessException("附件未找到，ID: " + attachmentId);
+        }
+
+        try {
+            // 从fileUrl中去掉前缀"/uploads/"，因为uploadPath已经包含了实际的上传路径
+            String relativePath = attachment.getFileUrl().startsWith("/uploads/") 
+                ? attachment.getFileUrl().substring("/uploads/".length()) 
+                : attachment.getFileUrl();
+                
+            Path filePath = new File(this.uploadPath, relativePath).toPath();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                return new FileDownloadResource(resource, attachment.getFileName());
+            } else {
+                log.warn("无法读取附件: {}", filePath);
+                throw new BusinessException("无法读取附件: " + attachment.getFileName());
+            }
+        } catch (MalformedURLException ex) {
+            log.error("附件路径格式错误: {}", attachment.getFileUrl(), ex);
+            throw new BusinessException("附件未找到: " + attachment.getFileName(), ex);
+        }
+    }
+    
+    @Override
     public List<TaskImage> getTaskImages(String taskId, Integer imageType) {
         LambdaQueryWrapper<TaskImage> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskImage::getTaskId, taskId);
@@ -264,16 +292,18 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
         }
         queryWrapper.orderByAsc(TaskImage::getSort);
         List<TaskImage> images = taskImageMapper.selectList(queryWrapper);
+        // 为每个图片URL添加前缀
         images.forEach(image -> image.setImageUrl(urlPrefix + image.getImageUrl()));
         return images;
     }
 
     @Override
     public List<TaskAttachment> getTaskAttachments(String taskId) {
-        LambdaQueryWrapper<TaskAttachment> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TaskAttachment::getTaskId, taskId);
-        queryWrapper.orderByAsc(TaskAttachment::getSort);
-        List<TaskAttachment> attachments = taskAttachmentMapper.selectList(queryWrapper);
+        List<TaskAttachment> attachments = taskAttachmentMapper.selectList(
+                new LambdaQueryWrapper<TaskAttachment>()
+                        .eq(TaskAttachment::getTaskId, taskId)
+                        .orderByAsc(TaskAttachment::getSort)
+        );
         attachments.forEach(attachment -> attachment.setFileUrl(urlPrefix + attachment.getFileUrl()));
         return attachments;
     }
@@ -305,10 +335,13 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             return false;
         }
         
-        // 从URL中提取文件路径
-        // 注意：这里的逻辑需要调整，因为URL现在是相对路径
-        String imagePath = uploadPath + taskImage.getImageUrl();
-        File file = new File(imagePath);
+        // 从URL中提取文件路径，去掉前缀"/uploads/"
+        String relativePath = taskImage.getImageUrl().startsWith("/uploads/") 
+            ? taskImage.getImageUrl().substring("/uploads/".length()) 
+            : taskImage.getImageUrl();
+            
+        String filePath = new File(uploadPath, relativePath).getAbsolutePath();
+        File file = new File(filePath);
         if (file.exists()) {
             file.delete();
         }
@@ -325,9 +358,12 @@ public class FileServiceImpl extends ServiceImpl<RecordFileMapper, RecordFile> i
             return false;
         }
         
-        // 从URL中提取文件路径
-        // 注意：这里的逻辑需要调整，因为URL现在是相对路径
-        String filePath = uploadPath + taskAttachment.getFileUrl();
+        // 从URL中提取文件路径，去掉前缀"/uploads/"
+        String relativePath = taskAttachment.getFileUrl().startsWith("/uploads/") 
+            ? taskAttachment.getFileUrl().substring("/uploads/".length()) 
+            : taskAttachment.getFileUrl();
+            
+        String filePath = new File(uploadPath, relativePath).getAbsolutePath();
         File file = new File(filePath);
         if (file.exists()) {
             file.delete();

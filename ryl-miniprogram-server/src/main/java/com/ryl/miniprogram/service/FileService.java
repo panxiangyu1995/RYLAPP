@@ -52,6 +52,15 @@ public interface FileService {
      * @return 文件
      */
     FileDownloadResource getFile(Long fileId);
+
+    
+    /**
+     * 获取任务附件文件
+     *
+     * @param attachmentId 附件ID
+     * @return 文件
+     */
+    FileDownloadResource getTaskAttachmentFile(Long attachmentId);
     
     /**
      * 获取任务图片列表

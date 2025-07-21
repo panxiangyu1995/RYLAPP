@@ -390,40 +390,54 @@ const downloadImage = async (url, imageId) => {
 
 // 附件下载功能
 const downloadFile = (fileUrl, fileId, fileName) => {
-  uni.showLoading({ title: '下载中...' });
-  uni.downloadFile({
-    url: fileUrl,
-    success: (res) => {
-      if (res.statusCode === 200) {
-        uni.saveFile({
-          tempFilePath: res.tempFilePath,
-          success: (saveRes) => {
-            uni.hideLoading();
-            uni.showToast({
-              title: '下载成功',
-              icon: 'success',
-              success: () => {
-                uni.openDocument({
-                  filePath: saveRes.savedFilePath,
-                  showMenu: true
-                });
-              }
-            });
-          },
-          fail: () => {
-            uni.hideLoading();
-            uni.showToast({ title: '保存失败', icon: 'none' });
-          }
-        });
-      } else {
+  // 如果有fileId，则使用API下载，否则直接使用fileUrl
+  if (fileId) {
+    uni.showLoading({ title: '下载中...' });
+    // 使用store中的方法下载附件
+    taskStore.downloadAttachment(fileId).then(() => {
+      uni.hideLoading();
+      uni.showToast({ title: '下载成功', icon: 'success' });
+    }).catch(() => {
+      uni.hideLoading();
+      uni.showToast({ title: '下载失败', icon: 'none' });
+    });
+  } else {
+    // 直接使用URL下载
+    uni.showLoading({ title: '下载中...' });
+    uni.downloadFile({
+      url: fileUrl,
+      success: (res) => {
+        if (res.statusCode === 200) {
+          uni.saveFile({
+            tempFilePath: res.tempFilePath,
+            success: (saveRes) => {
+              uni.hideLoading();
+              uni.showToast({
+                title: '下载成功',
+                icon: 'success',
+                success: () => {
+                  uni.openDocument({
+                    filePath: saveRes.savedFilePath,
+                    showMenu: true
+                  });
+                }
+              });
+            },
+            fail: () => {
+              uni.hideLoading();
+              uni.showToast({ title: '保存失败', icon: 'none' });
+            }
+          });
+        } else {
+          uni.hideLoading();
+          uni.showToast({ title: '下载失败', icon: 'none' });
+        }
+      },
+      fail: () => {
         uni.hideLoading();
         uni.showToast({ title: '下载失败', icon: 'none' });
       }
-    },
-    fail: () => {
-      uni.hideLoading();
-      uni.showToast({ title: '下载失败', icon: 'none' });
-    }
-  });
+    });
+  }
 };
 </script> 

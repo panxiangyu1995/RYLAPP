@@ -26,6 +26,21 @@
             </block>
           </view>
           
+          <!-- 用户协议 -->
+          <view class="mb-4">
+            <view class="flex items-center">
+              <checkbox-group @change="agreementChecked = !!$event.detail.value.length">
+                  <checkbox :checked="agreementChecked" />
+              </checkbox-group>
+              <view class="text-sm ml-2">
+                我已阅读并同意
+                <navigator url="/pages/agreement/agreement" class="text-ui-blue-start inline">《用户协议》</navigator>
+                和
+                <navigator url="/pages/privacy/privacy" class="text-ui-blue-start inline">《隐私政策》</navigator>
+              </view>
+            </view>
+          </view>
+          
           <!-- 账号密码登录表单 -->
           <view v-if="activeTab === 'password'">
             <view class="mb-4">
@@ -102,10 +117,10 @@
       </view>
     </view>
     
-    <view class="mt-8 text-center text-xs text-gray-500">
+    <!-- <view class="mt-8 text-center text-xs text-gray-500">
       <view>登录即代表您已阅读并同意</view>
       <view>《用户协议》和《隐私政策》</view>
-    </view>
+    </view> -->
   </view>
 </template>
 
@@ -118,6 +133,7 @@ const userStore = useUserStore();
 const loading = ref(false);
 const activeTab = ref('password');
 const showPassword = ref(false);
+const agreementChecked = ref(false);
 let redirectUrl = '/pages/home/home';
 
 const loginForm = ref({
@@ -132,6 +148,10 @@ onLoad((options) => {
 });
 
 const handlePhoneLogin = async (e) => {
+  if (!agreementChecked.value) {
+    uni.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' });
+    return;
+  }
   if (!e.detail.code) {
     uni.showToast({ title: '您取消了授权', icon: 'none' });
     return;
@@ -159,6 +179,10 @@ const handlePhoneLogin = async (e) => {
 
 // 处理账号密码登录
 const handlePasswordLogin = async () => {
+  if (!agreementChecked.value) {
+    uni.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' });
+    return;
+  }
   if (!loginForm.value.contact) {
     uni.showToast({ title: '请输入用户名', icon: 'none' });
     return;

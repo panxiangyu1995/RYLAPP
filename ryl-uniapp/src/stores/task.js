@@ -712,9 +712,9 @@ export const useTaskStore = defineStore('task', {
     },
     
     // 下载附件
-    async downloadAttachment(taskId, fileId) {
+    async downloadAttachment(fileId) {
       try {
-        const response = await request.get(API_PATHS.DOWNLOAD_ATTACHMENT(taskId, fileId), {
+        const response = await request.get(API_PATHS.ATTACHMENT_DOWNLOAD(fileId), {
           responseType: 'blob'
         });
         return response.data;
