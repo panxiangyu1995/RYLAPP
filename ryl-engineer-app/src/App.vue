@@ -1,10 +1,13 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import BottomNavigation from './components/BottomNavigation.vue'
 import StagewiseToolbarLoader from './components/StagewiseToolbarLoader.vue'
+import UpdateDialog from './components/UpdateDialog.vue'
+import { useAppStore } from './stores/app'
 
 const route = useRoute()
+const appStore = useAppStore()
 
 // 判断当前路由是否需要显示底部导航
 const showBottomNav = computed(() => {
@@ -12,6 +15,11 @@ const showBottomNav = computed(() => {
   const noNavRoutes = ['Login', 'Register', 'ForgotPassword']
   return !noNavRoutes.includes(route.name)
 })
+
+onMounted(() => {
+  // 应用启动时自动检查更新
+  appStore.checkUpdate();
+});
 </script>
 
 <template>
@@ -19,6 +27,7 @@ const showBottomNav = computed(() => {
     <router-view />
     <BottomNavigation v-if="showBottomNav" />
     <StagewiseToolbarLoader />
+    <UpdateDialog />
   </div>
 </template>
 

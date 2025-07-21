@@ -1,3 +1,7 @@
+-- SQL Server版本的客户表和设备表创建脚本
+USE ryl_engineer;
+GO
+
 -- 创建任务活动记录表
 CREATE TABLE task_activity (
     id BIGINT PRIMARY KEY IDENTITY(1,1),

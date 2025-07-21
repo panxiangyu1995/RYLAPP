@@ -53,6 +53,12 @@
         <div class="menu-text">修改密码</div>
         <div class="icon-chevron-right"></div>
       </div>
+
+      <div class="menu-item" @click="checkForUpdate">
+        <div class="menu-icon update-icon"></div>
+        <div class="menu-text">检查更新</div>
+        <div class="icon-chevron-right"></div>
+      </div>
     </div>
 
     <div class="logout-container">
@@ -71,10 +77,12 @@ import { ref, onMounted, onBeforeMount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useUserStore } from '../../stores/user'
+import { useAppStore } from '../../stores/app'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const userStore = useUserStore()
+const appStore = useAppStore()
 
 const userInfo = ref({
   name: '加载中...',
@@ -168,6 +176,10 @@ async function fetchUserProfile() {
   } finally {
     loading.value = false
   }
+}
+
+function checkForUpdate() {
+  appStore.checkUpdate(true);
 }
 
 function editProfile() {
@@ -329,6 +341,13 @@ async function logout() {
 
 .lock-icon::before {
   content: '\f023';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: #60a5fa;
+}
+
+.update-icon::before {
+  content: '\f01e'; /* 使用一个循环箭头图标作为示例 */
   font-family: 'Font Awesome 6 Free';
   font-weight: 900;
   color: #60a5fa;
