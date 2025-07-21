@@ -1,3 +1,6 @@
+-- SQL Server版本的客户表和设备表创建脚本
+USE ryl_engineer;
+GO
 -- 为 task 表添加 device_type 字段
 -- 这个字段用于存储任务关联设备所属的仪器类型，是实现任务自动派发的关键依据。
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[task]') AND name = 'device_type')

@@ -1,3 +1,7 @@
+-- 任务图片表结构更新脚本
+USE ryl_engineer;
+GO
+
 CREATE TABLE notification_log (
     id BIGINT IDENTITY(1,1) PRIMARY KEY,
     task_id VARCHAR(50) NOT NULL,
