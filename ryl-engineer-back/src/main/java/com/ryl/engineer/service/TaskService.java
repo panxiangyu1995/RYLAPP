@@ -69,22 +69,6 @@ public interface TaskService {
     boolean updateTaskFlowStatus(TaskFlowStatusRequest request);
     
     /**
-     * 上传任务图片
-     * @param taskId 任务ID
-     * @param file 图片文件
-     * @return 图片URL
-     */
-    String uploadTaskImage(String taskId, MultipartFile file);
-    
-    /**
-     * 批量上传任务图片
-     * @param taskId 任务ID
-     * @param files 图片文件列表
-     * @return 图片URL列表
-     */
-    List<String> batchUploadTaskImages(String taskId, List<MultipartFile> files);
-    
-    /**
      * 更新任务
      * @param taskId 任务ID
      * @param taskDTO 任务信息

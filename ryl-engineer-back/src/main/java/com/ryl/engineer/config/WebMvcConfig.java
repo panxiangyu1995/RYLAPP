@@ -20,29 +20,23 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 
 import javax.servlet.ServletContext;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Web配置类
  */
+@Slf4j
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    @Autowired
-    private ServletContext servletContext;
-    
-    @Autowired
-    private ObjectMapper objectMapper; // 注入JacksonConfig配置的ObjectMapper
-    
+    @Value("${ryl.file.upload-path}")
+    private String uploadPath;
+
     @Autowired
     private JwtAuthenticationInterceptor jwtAuthenticationInterceptor;
-    
-    // 是否使用绝对路径（从配置中读取，默认为true）
-    @Value("${app.upload.use-absolute-path:true}")
-    private boolean useAbsolutePath;
-    
-    // 上传文件的基础路径（从配置中读取，默认为当前工作目录下的uploads目录）
-    @Value("${app.upload.base-path:}")
-    private String configuredUploadPath;
+
+    @Autowired
+    private ObjectMapper objectMapper; // 注入JacksonConfig配置的ObjectMapper
 
     /**
      * 跨域配置
@@ -64,13 +58,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         // 注册JWT认证拦截器，拦截所有API请求
         registry.addInterceptor(jwtAuthenticationInterceptor)
-                .addPathPatterns("/api/v1/**")
+                .addPathPatterns("/api/**")
                 // 排除登录、注册等不需要认证的路径
                 .excludePathPatterns(
                     "/api/v1/user/login",
                     "/api/v1/user/register",
-                    "/api/v1/user/forgot-password/**",
-                    "/api/v1/user/reset-password",
                     "/api/v1/uploads/**"
                 );
         
@@ -82,36 +74,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 获取上传文件的基础路径
-        String baseUploadPath;
-        if (useAbsolutePath) {
-            // 如果配置了自定义路径，则使用配置的路径
-            if (configuredUploadPath != null && !configuredUploadPath.isEmpty()) {
-                baseUploadPath = configuredUploadPath;
-            } else {
-                // 否则使用默认的D:/uploads路径
-                baseUploadPath = "D:/uploads";
-            }
-        } else {
-            // 使用相对于Web应用的路径
-            baseUploadPath = servletContext.getRealPath("/uploads");
-        }
-        
-        // 确保路径以分隔符结尾
-        if (!baseUploadPath.endsWith(File.separator)) {
-            baseUploadPath += File.separator;
-        }
-        
-        // 配置上传文件访问路径
+        // 确保物理路径以文件分隔符结尾
+        String effectiveUploadPath = uploadPath.endsWith(File.separator) ? uploadPath : uploadPath + File.separator;
+
+        // 将 /api/v1/uploads/** 路径映射到配置的物理磁盘位置
         registry.addResourceHandler("/api/v1/uploads/**")
-                .addResourceLocations("file:" + baseUploadPath);
-                
-        // 添加其他静态资源路径
-        registry.addResourceHandler("/static/**")
-                .addResourceLocations("classpath:/static/");
-                
-        // 为测试添加日志输出
-        System.out.println("静态资源路径配置完成，上传路径为: " + baseUploadPath);
+                .addResourceLocations("file:" + effectiveUploadPath);
+
+        log.info("配置静态资源映射: /api/v1/uploads/** -> {}", "file:" + effectiveUploadPath);
     }
 
     /**

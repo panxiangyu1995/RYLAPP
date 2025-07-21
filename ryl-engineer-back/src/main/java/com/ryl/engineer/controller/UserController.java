@@ -13,6 +13,9 @@ import com.ryl.engineer.entity.User;
 import com.ryl.engineer.service.UserService;
 import com.ryl.engineer.util.JwtUtil;
 import com.ryl.engineer.util.PasswordUtil;
+import com.ryl.engineer.utils.UserContextHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.annotation.Validated;
@@ -37,21 +40,11 @@ import java.util.UUID;
 @RequestMapping("/api/v1/user")
 public class UserController {
 
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
+
     @Autowired
     private UserService userService;
     
-    // 从配置中获取上传路径
-    @Value("${app.upload.base-path:}")
-    private String baseUploadPath;
-    
-    // 从配置中获取头像路径
-    @Value("${app.upload.avatar-path:avatars}")
-    private String avatarPath;
-    
-    // 从配置中获取头像URL前缀
-    @Value("${app.upload.avatar-url-prefix:http://localhost:8089/api/v1/uploads/avatars}")
-    private String avatarUrlPrefix;
-
     /**
      * 用户登录
      *
@@ -162,25 +155,14 @@ public class UserController {
     /**
      * 获取用户个人信息
      *
-     * @param request HTTP请求
      * @return 用户信息响应
      */
     @GetMapping("/profile")
-    public Result<UserInfoResponse> getUserProfile(HttpServletRequest request) {
-        // 从请求头中获取token
-        String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        
-        if (token == null || token.isEmpty()) {
-            return Result.error("未登录");
-        }
-        
-        // 从token中获取用户ID
-        Long userId = JwtUtil.getUserId(token);
+    public Result<UserInfoResponse> getUserProfile() {
+        // 从上下文中获取用户ID
+        Long userId = UserContextHolder.getUserId();
         if (userId == null) {
-            return Result.error("无效的token");
+            return Result.error(401, "无效的凭证，请重新登录");
         }
         
         // 获取用户信息
@@ -212,25 +194,14 @@ public class UserController {
     /**
      * 获取用户个人信息（旧接口，保持兼容）
      *
-     * @param request HTTP请求
      * @return 用户信息响应
      */
     @GetMapping("/info")
-    public Result<UserInfoResponse> getUserInfo(HttpServletRequest request) {
-        // 从请求头中获取token
-        String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        
-        if (token == null || token.isEmpty()) {
-            return Result.error("未登录");
-        }
-        
-        // 从token中获取用户ID
-        Long userId = JwtUtil.getUserId(token);
+    public Result<UserInfoResponse> getUserInfo() {
+        // 从上下文中获取用户ID
+        Long userId = UserContextHolder.getUserId();
         if (userId == null) {
-            return Result.error("无效的token");
+            return Result.error(401, "无效的凭证，请重新登录");
         }
         
         // 获取用户信息
@@ -256,16 +227,14 @@ public class UserController {
      * 更新用户个人信息
      *
      * @param request 用户信息请求
-     * @param httpRequest HTTP请求
      * @return 更新结果
      */
     @PutMapping("/profile")
-    public Result<Map<String, Object>> updateUserProfile(@RequestBody @Validated UserInfoRequest request, HttpServletRequest httpRequest) {
-        // 从token中获取用户ID
-        String token = httpRequest.getHeader("Authorization").substring(7);
-        Long userId = JwtUtil.getUserId(token);
+    public Result<Map<String, Object>> updateUserProfile(@RequestBody @Validated UserInfoRequest request) {
+        // 从上下文中获取用户ID
+        Long userId = UserContextHolder.getUserId();
         if (userId == null) {
-            return Result.error("无效的token");
+            return Result.error(401, "无效的凭证，请重新登录");
         }
         
         // 获取当前用户信息
@@ -298,16 +267,14 @@ public class UserController {
      * 更新用户个人信息（旧接口，保持兼容）
      *
      * @param request 用户信息请求
-     * @param httpRequest HTTP请求
      * @return 更新结果
      */
     @PostMapping("/info")
-    public Result<UserInfoResponse> updateUserInfo(@RequestBody @Validated UserInfoRequest request, HttpServletRequest httpRequest) {
-        // 从token中获取用户ID
-        String token = httpRequest.getHeader("Authorization").substring(7);
-        Long userId = JwtUtil.getUserId(token);
+    public Result<UserInfoResponse> updateUserInfo(@RequestBody @Validated UserInfoRequest request) {
+        // 从上下文中获取用户ID
+        Long userId = UserContextHolder.getUserId();
         if (userId == null) {
-            return Result.error("无效的token");
+            return Result.error(401, "无效的凭证，请重新登录");
         }
 
         // 获取当前用户信息
@@ -346,106 +313,27 @@ public class UserController {
      * 更新用户头像
      *
      * @param file 头像文件
-     * @param request HTTP请求
      * @return 更新结果
      */
     @PostMapping("/avatar")
-    public Result<Map<String, Object>> updateAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
-        // 从请求头中获取token
-        String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        
-        if (token == null || token.isEmpty()) {
-            return Result.error("未登录");
-        }
-        
+    public Result<Map<String, Object>> updateAvatar(@RequestParam("file") MultipartFile file) {
         // 从token中获取用户ID
-        Long userId = JwtUtil.getUserId(token);
+        Long userId = UserContextHolder.getUserId();
         if (userId == null) {
-            return Result.error("无效的token");
+            return Result.error(401, "无效的凭证，请重新登录");
         }
-        
-        // 获取用户信息
-        User user = userService.getUserById(userId);
-        if (user == null) {
-            return Result.error("用户不存在");
-        }
-        
-        // 检查文件是否为空
-        if (file.isEmpty()) {
-            return Result.error("文件不能为空");
-        }
-        
+
         try {
-            // 获取文件名
-            String fileName = file.getOriginalFilename();
-            // 检查文件类型
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                return Result.error("只支持上传图片文件");
-            }
-            
-            // 获取文件后缀
-            String suffix = fileName.substring(fileName.lastIndexOf("."));
-            // 检查文件后缀
-            if (!".jpg".equalsIgnoreCase(suffix) && !".jpeg".equalsIgnoreCase(suffix) 
-                && !".png".equalsIgnoreCase(suffix) && !".gif".equalsIgnoreCase(suffix)) {
-                return Result.error("只支持JPG、JPEG、PNG和GIF格式的图片");
-            }
-            
-            // 限制文件大小（5MB）
-            if (file.getSize() > 5 * 1024 * 1024) {
-                return Result.error("文件大小不能超过5MB");
-            }
-            
-            // 使用类级别的配置变量
-            String effectiveBasePath = baseUploadPath;
-            
-            // 如果配置为空，使用默认路径
-            if (effectiveBasePath == null || effectiveBasePath.isEmpty()) {
-                effectiveBasePath = System.getProperty("user.dir") + "/uploads";
-            }
-            
-            // 创建文件存储目录
-            String avatarDir = effectiveBasePath + "/" + avatarPath + "/";
-            File dir = new File(avatarDir);
-            if (!dir.exists()) {
-                boolean created = dir.mkdirs();
-                if (!created) {
-                    return Result.error("创建上传目录失败");
-                }
-            }
-            
-            // 生成新的文件名
-            String newFileName = "avatar_" + userId + "_" + System.currentTimeMillis() + suffix;
-            String filePath = avatarDir + newFileName;
-            
-            // 保存文件
-            File dest = new File(filePath);
-            file.transferTo(dest);
-            
-            // 构建头像URL
-            String avatarUrl = avatarUrlPrefix + "/" + newFileName;
-            
-            // 更新用户头像URL
-            user.setAvatar(avatarUrl);
-            boolean success = userService.updateUser(user);
-            
-            if (!success) {
-                return Result.error("更新头像失败");
-            }
-            
-            // 构建响应
+            String avatarUrl = userService.updateUserAvatar(userId, file);
             Map<String, Object> response = new HashMap<>();
             response.put("updated", true);
             response.put("avatarUrl", avatarUrl);
-            
             return Result.success(response);
         } catch (IOException e) {
-            e.printStackTrace();
-            return Result.error("文件上传失败: " + e.getMessage());
+            log.error("更新用户头像失败, userId: {}", userId, e);
+            return Result.error(500, "更新头像失败: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return Result.error(400, e.getMessage());
         }
     }
     
@@ -454,25 +342,14 @@ public class UserController {
      *
      * @param oldPassword 旧密码
      * @param newPassword 新密码
-     * @param request HTTP请求
      * @return 修改结果
      */
     @PutMapping("/password")
-    public Result<Map<String, Object>> updatePassword(@RequestBody Map<String, String> passwordData, HttpServletRequest request) {
-        // 从请求头中获取token
-        String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        
-        if (token == null || token.isEmpty()) {
-            return Result.error("未登录");
-        }
-        
-        // 从token中获取用户ID
-        Long userId = JwtUtil.getUserId(token);
+    public Result<Map<String, Object>> updatePassword(@RequestBody Map<String, String> passwordData) {
+        // 从上下文中获取用户ID
+        Long userId = UserContextHolder.getUserId();
         if (userId == null) {
-            return Result.error("无效的token");
+            return Result.error(401, "无效的凭证，请重新登录");
         }
         
         // 获取用户信息

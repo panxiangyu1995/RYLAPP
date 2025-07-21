@@ -577,17 +577,25 @@ export default {
     // 提交记录
     const submitRecord = async (recordData) => {
       try {
-        const record = {
-          taskId: taskId.value,
-          stepIndex: activeRecordStep.value,
-          ...recordData
+        // 分离文件和文本数据
+        const files = recordData.attachments.map(att => att.file);
+        const textData = {
+          stepId: recordData.stepId,
+          content: recordData.content,
+          spentTime: recordData.spentTime,
+          taskId: taskId.value // 确保taskId在文本数据中
+        };
+
+        // 如果包含上门时间，也加入文本数据
+        if (recordData.visitAppointmentTime) {
+          textData.visitAppointmentTime = recordData.visitAppointmentTime;
         }
         
-        // 调用API添加记录
-        const response = await addTaskFlowRecord(record)
+        // 调用新的API函数
+        const response = await addTaskFlowRecord(textData, files);
         
         if (response && response.code === 200) {
-          toast.success('工作记录已提交')
+          toast.success('工作记录已提交');
           
           // 重新加载任务流程
           await loadTaskFlow()

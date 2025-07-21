@@ -40,15 +40,9 @@ mybatis:
 
 logging:
   level:
-    com.ryl.engineer: debug
-    org.springframework.security: debug
-    org.springframework.web: debug
-    org.springframework.http.converter.json: debug
-    org.hibernate.type: trace
-    com.fasterxml.jackson: debug
-    com.ryl.engineer.controller: debug
-    com.ryl.engineer.service: debug
-    com.ryl.engineer.mapper: debug
+    com.ryl.engineer: info
+    org.springframework.web: warn
+    org.mybatis: warn
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
@@ -62,27 +56,11 @@ jwt:
   # 过期时间（秒）
   expiration: 86400
 
-# 文件上传配置
-file:
-  upload:
-    path: D:/uploads
-    url-prefix: http://localhost:8089
-
-# 应用配置
-app:
-  upload:
-    # 是否使用绝对路径
-    use-absolute-path: true
-    # 上传文件基础路径，为空则使用系统工作目录下的uploads文件夹
-    base-path: D:/uploads
-    # 头像路径
-    avatar-path: avatars
-    # 头像访问URL前缀
-    avatar-url-prefix: http://localhost:8089/api/v1/uploads/avatars
-    # 任务图片路径
-    task-image-path: task/images
-    # 任务图片访问URL前缀
-    task-image-url-prefix: http://localhost:8089/api/v1/uploads/task/images
+# 统一文件上传配置
+ryl:
+  file:
+    upload-path: D:/servers/ryl-engineer/uploads # 上传文件存储物理根路径
+    url-prefix: http://localhost:8089 # 对外访问的URL前缀, 注意这里不包含 /api/v1
 
 # SpringDoc OpenAPI配置
 springdoc:

@@ -88,7 +88,7 @@ export const useUserStore = defineStore('user', () => {
       const response = await updateUserAvatar(formData);
       
       // 处理响应
-      if (response.code === 200 && response.data && response.data.updated) {
+      if (response.code === 200 && response.data && response.data.avatarUrl) {
         // 更新本地头像URL
         const avatarUrl = response.data.avatarUrl;
         if (profile.value) {

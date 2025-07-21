@@ -7,6 +7,7 @@ import com.ryl.engineer.dto.RegisterRequest;
 import com.ryl.engineer.dto.RegisterResponse;
 import com.ryl.engineer.entity.User;
 import com.ryl.engineer.mapper.UserMapper;
+import com.ryl.engineer.service.FileService;
 import com.ryl.engineer.service.UserService;
 import com.ryl.engineer.util.JwtUtil;
 import com.ryl.engineer.util.PasswordUtil;
@@ -16,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -23,6 +26,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.web.multipart.MultipartFile;
+import com.ryl.engineer.dto.FileStorageInfo;
 
 /**
  * 用户服务实现类
@@ -34,6 +40,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private FileService fileService; // 注入统一的文件服务
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -203,6 +212,39 @@ public class UserServiceImpl implements UserService {
     public boolean updateUser(User user) {
         user.setUpdateTime(new Date());
         return userMapper.update(user) > 0;
+    }
+
+    @Override
+    @Transactional
+    public String updateUserAvatar(Long userId, MultipartFile file) throws IOException {
+        // 1. 验证用户是否存在
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("用户不存在");
+        }
+
+        // 2. 校验文件
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("上传的文件不能为空");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("只支持上传图片文件");
+        }
+        if (file.getSize() > 5 * 1024 * 1024) { // 5MB
+            throw new IllegalArgumentException("文件大小不能超过5MB");
+        }
+
+        // 3. 调用统一文件服务上传文件
+        FileStorageInfo storageInfo = fileService.uploadFile(file, "avatars");
+
+        // 4. 更新用户信息
+        user.setAvatar(storageInfo.getRelativePath()); // 存储相对路径
+        user.setUpdateTime(new java.util.Date()); // 修正为Date类型
+        userMapper.update(user); // 使用自定义的update方法
+
+        // 5. 返回完整的URL给前端
+        return storageInfo.getFullUrl();
     }
 
     @Override

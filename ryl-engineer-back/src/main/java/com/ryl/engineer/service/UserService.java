@@ -7,8 +7,10 @@ import com.ryl.engineer.dto.RegisterRequest;
 import com.ryl.engineer.dto.RegisterResponse;
 import com.ryl.engineer.entity.User;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户服务接口
@@ -31,6 +33,16 @@ public interface UserService {
      */
     RegisterResponse register(RegisterRequest request);
     
+    /**
+     * 更新用户头像
+     *
+     * @param userId 用户ID
+     * @param file   头像文件
+     * @return 新的头像URL
+     * @throws IOException 文件上传异常
+     */
+    String updateUserAvatar(Long userId, MultipartFile file) throws IOException;
+
     /**
      * 忘记密码
      *

@@ -57,39 +57,19 @@
       <!-- 设备详细信息 - 通用字段 -->
       <div class="device-details">
         <!-- 维修/保养特有字段 -->
-        <div class="detail-item fault-description" v-if="(isRepairTask || isMaintenanceTask) && (device.faultDescription || task.faultDescription)">
-          <i class="icon-exclamation-circle"></i>
-          <div class="detail-info">
-            <span class="detail-label">故障描述</span>
-            <span class="detail-value">{{ device.faultDescription || task.faultDescription }}</span>
-          </div>
+        <div class="detail-item">
+          <span class="detail-label">设备序列号:</span>
+          <span class="detail-value">{{ device.deviceSn || task.deviceSn }}</span>
         </div>
-        
-        <!-- 验证任务特有字段 -->
-        <div class="detail-item" v-if="isVerificationTask && (device.verificationType || task.verificationType)">
-          <i class="icon-check-double"></i>
-          <div class="detail-info">
-            <span class="detail-label">验证类别</span>
-            <span class="detail-value">{{ device.verificationType || task.verificationType }}</span>
-          </div>
+
+        <div class="detail-item">
+           <span class="detail-label">问题描述:</span>
+           <span class="detail-value">{{ device.description || task.description }}</span>
         </div>
-        
-        <!-- 培训任务特有字段 -->
-        <div class="detail-item" v-if="isTrainingTask && (device.appointmentTime || task.appointmentTime)">
-          <i class="icon-calendar-alt"></i>
-          <div class="detail-info">
-            <span class="detail-label">预约时间</span>
-            <span class="detail-value">{{ formatDate(device.appointmentTime || task.appointmentTime) }}</span>
-          </div>
-        </div>
-        
-        <!-- 选型任务特有字段 -->
-        <div class="detail-item" v-if="isSelectionTask && (device.requirementDescription || task.requirementDescription)">
-          <i class="icon-clipboard-list"></i>
-          <div class="detail-info">
-            <span class="detail-label">需求描述</span>
-            <span class="detail-value">{{ device.requirementDescription || task.requirementDescription }}</span>
-          </div>
+
+        <div class="detail-item" v-if="isSelectionTask">
+          <span class="detail-label">设备用途:</span>
+          <span class="detail-value">{{ device.purpose || task.purpose }}</span>
         </div>
       </div>
       

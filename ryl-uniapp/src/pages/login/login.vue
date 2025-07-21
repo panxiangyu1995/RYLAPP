@@ -21,7 +21,7 @@
               :class="['flex-1 py-2 text-center', activeTab === 'wechat' ? 'text-ui-text-black border-b-2 border-ui-blue-end font-bold' : 'text-gray-500']"
               @click="activeTab = 'wechat'"
             >
-              微信一键登录
+              手机账号一键登录
             </button>
             </block>
           </view>
@@ -93,10 +93,10 @@
             </view>
           </view>
           
-          <!-- 微信一键登录 -->
+          <!-- 手机账号一键登录 -->
           <block #ifdef MP-WEIXIN>
           <view v-if="activeTab === 'wechat'">
-            <view class="text-center mb-6">使用微信账号快速登录</view>
+            <view class="text-center mb-6">使用手机账号快速登录</view>
             
             <button 
               open-type="getPhoneNumber"
@@ -105,7 +105,7 @@
               :disabled="loading"
             >
               <text v-if="loading">登录中...</text>
-              <text v-else>微信手机号一键登录</text>
+              <text v-else>使用手机账号一键登录</text>
             </button>
             
             <view class="mt-4 text-center">

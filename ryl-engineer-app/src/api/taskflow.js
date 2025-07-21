@@ -27,11 +27,30 @@ export function updateTaskFlowStatus(data) {
 
 /**
  * 添加任务流程记录
- * @param {Object} record 记录数据，包含taskId、stepIndex、description、images、files等
+ * @param {Object} record 记录数据，包含文本内容
+ * @param {Array<File>} files 附件文件列表
  * @returns {Promise<Object>} 响应结果
  */
-export function addTaskFlowRecord(record) {
-  return http.post(`${BASE_URL}/${record.taskId}/flow/records`, record)
+export function addTaskFlowRecord(record, files) {
+  const formData = new FormData();
+
+  // 1. 添加JSON部分
+  // 后端需要能解析这个JSON字符串
+  formData.append('record', new Blob([JSON.stringify(record)], { type: 'application/json' }));
+
+  // 2. 添加文件部分
+  if (files && files.length > 0) {
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+  }
+
+  return http.post(`${BASE_URL}/${record.taskId}/flow/records`, formData, {
+    headers: {
+      // Content-Type 会由浏览器自动设置，并包含boundary
+      'Content-Type': 'multipart/form-data'
+    }
+  });
 }
 
 /**

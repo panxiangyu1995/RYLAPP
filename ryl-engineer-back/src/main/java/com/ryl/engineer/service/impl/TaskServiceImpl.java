@@ -85,15 +85,6 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     @Autowired
     private ChatService chatService;
     
-    @Value("${app.upload.base-path:}")
-    private String baseUploadPath;
-    
-    @Value("${app.upload.task-image-path:task/images}")
-    private String taskImagePath;
-    
-    @Value("${app.upload.task-image-url-prefix:http://localhost:8089/api/v1/uploads/task/images}")
-    private String taskImageUrlPrefix;
-    
     /**
      * 创建任务
      */
@@ -183,7 +174,6 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
             task.setDeviceModel(request.getDeviceModel());
             task.setDeviceBrand(request.getDeviceBrand());
             task.setDescription(request.getDescription());
-            task.setFaultDescription(request.getFaultDescription());
             task.setQuantity(request.getQuantity());
             task.setAttachments(request.getAttachments());
             
@@ -192,7 +182,6 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                 task.setVerificationType(request.getVerificationType());
             } else if ("selection".equals(taskType)) {
                 task.setPurpose(request.getPurpose());
-                task.setRequirementDescription(request.getRequirementDescription());
             } else if ("training".equals(taskType)) {
                 task.setAppointmentTime(request.getAppointmentTime());
             }
@@ -713,136 +702,6 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     }
     
     /**
-     * 上传任务图片
-     */
-    @Override
-    public String uploadTaskImage(String taskId, MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("文件不能为空");
-        }
-        
-        try {
-            // 1. 检查文件夹是否存在，不存在则创建
-            if (baseUploadPath == null || baseUploadPath.isEmpty()) {
-                baseUploadPath = "D:/uploads"; // 默认上传路径
-                log.warn("未配置上传路径，使用默认路径: {}", baseUploadPath);
-            }
-            
-            File uploadDir = new File(baseUploadPath + File.separator + taskImagePath);
-            if (!uploadDir.exists()) {
-                boolean created = uploadDir.mkdirs();
-                if (!created) {
-                    log.error("创建上传目录失败: {}", uploadDir.getAbsolutePath());
-                    throw new RuntimeException("创建上传目录失败");
-                }
-                log.info("创建上传目录: {}", uploadDir.getAbsolutePath());
-            }
-            
-            // 2. 生成文件名
-            String originalFilename = file.getOriginalFilename();
-            if (originalFilename == null) {
-                originalFilename = "unknown.jpg";
-            }
-            String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String newFilename = UUID.randomUUID().toString() + suffix;
-            
-            // 3. 保存文件
-            File destFile = new File(uploadDir.getAbsolutePath() + File.separator + newFilename);
-            file.transferTo(destFile);
-            log.info("文件已保存到: {}", destFile.getAbsolutePath());
-            
-            // 4. 生成访问URL
-            String imageUrl = taskImageUrlPrefix + "/" + newFilename;
-            
-            // 5. 如果taskId不为空，保存到数据库
-            if (taskId != null) {
-                TaskImage taskImage = new TaskImage();
-                taskImage.setTaskId(taskId);
-                taskImage.setImageUrl(imageUrl);
-                taskImage.setCreateTime(LocalDateTime.now());
-                taskImageMapper.insert(taskImage);
-            }
-            
-            return imageUrl;
-        } catch (IOException e) {
-            log.error("上传图片失败", e);
-            throw new RuntimeException("上传图片失败: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * 批量上传任务图片
-     */
-    @Override
-    public List<String> batchUploadTaskImages(String taskId, List<MultipartFile> files) {
-        if (files == null || files.isEmpty()) {
-            return Collections.emptyList();
-        }
-        
-        List<String> imageUrls = new ArrayList<>();
-        List<TaskImage> taskImages = new ArrayList<>();
-        
-        try {
-            // 1. 检查文件夹是否存在，不存在则创建
-            if (baseUploadPath == null || baseUploadPath.isEmpty()) {
-                baseUploadPath = "D:/uploads"; // 默认上传路径
-                log.warn("未配置上传路径，使用默认路径: {}", baseUploadPath);
-            }
-            
-            File uploadDir = new File(baseUploadPath + File.separator + taskImagePath);
-            if (!uploadDir.exists()) {
-                boolean created = uploadDir.mkdirs();
-                if (!created) {
-                    log.error("创建上传目录失败: {}", uploadDir.getAbsolutePath());
-                    throw new RuntimeException("创建上传目录失败");
-                }
-                log.info("创建上传目录: {}", uploadDir.getAbsolutePath());
-            }
-            
-            // 2. 处理每个文件
-            for (MultipartFile file : files) {
-                if (file.isEmpty()) continue;
-                
-                // 3. 生成文件名
-                String originalFilename = file.getOriginalFilename();
-                if (originalFilename == null) {
-                    originalFilename = "unknown.jpg";
-                }
-                String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
-                String newFilename = UUID.randomUUID().toString() + suffix;
-                
-                // 4. 保存文件
-                File destFile = new File(uploadDir.getAbsolutePath() + File.separator + newFilename);
-                file.transferTo(destFile);
-                log.info("文件已保存到: {}", destFile.getAbsolutePath());
-                
-                // 5. 生成访问URL
-                String imageUrl = taskImageUrlPrefix + "/" + newFilename;
-                imageUrls.add(imageUrl);
-                
-                // 6. 创建TaskImage对象
-                if (taskId != null) {
-                    TaskImage taskImage = new TaskImage();
-                    taskImage.setTaskId(taskId);
-                    taskImage.setImageUrl(imageUrl);
-                    taskImage.setCreateTime(LocalDateTime.now());
-                    taskImages.add(taskImage);
-                }
-            }
-            
-            // 7. 批量保存到数据库
-            if (!taskImages.isEmpty()) {
-                taskImageMapper.batchInsert(taskImages);
-            }
-            
-            return imageUrls;
-        } catch (IOException e) {
-            log.error("批量上传图片失败", e);
-            throw new RuntimeException("批量上传图片失败: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
      * 更新任务
      */
     @Override
@@ -873,9 +732,6 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         if (taskDTO.getDescription() != null) {
             task.setDescription(taskDTO.getDescription());
         }
-        if (taskDTO.getFaultDescription() != null) {
-            task.setFaultDescription(taskDTO.getFaultDescription());
-        }
         if (taskDTO.getDeviceName() != null) {
             task.setDeviceName(taskDTO.getDeviceName());
         }
@@ -884,6 +740,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         }
         if (taskDTO.getDeviceBrand() != null) {
             task.setDeviceBrand(taskDTO.getDeviceBrand());
+        }
+        if (taskDTO.getDescription() != null) {
+            task.setDescription(taskDTO.getDescription());
         }
         if (taskDTO.getQuantity() != null) {
             task.setQuantity(taskDTO.getQuantity());

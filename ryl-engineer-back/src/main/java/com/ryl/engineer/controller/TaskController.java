@@ -162,41 +162,6 @@ public class TaskController {
     }
     
     /**
-     * 上传任务图片（不需要taskId，用于任务创建前上传）
-     * @param file 图片文件
-     * @return 图片URL
-     */
-    @PostMapping("/images")
-    public Result<String> uploadTaskImage(@RequestParam("file") MultipartFile file) {
-        String imageUrl = taskService.uploadTaskImage(null, file);
-        return Result.success("上传图片成功", imageUrl);
-    }
-    
-    /**
-     * 上传任务图片
-     * @param taskId 任务ID
-     * @param file 图片文件
-     * @return 图片URL
-     */
-    @PostMapping("/{taskId}/images")
-    public Result<String> uploadTaskImage(@PathVariable("taskId") String taskId, @RequestParam("file") MultipartFile file) {
-        String imageUrl = taskService.uploadTaskImage(taskId, file);
-        return Result.success("上传图片成功", imageUrl);
-    }
-    
-    /**
-     * 批量上传任务图片
-     * @param taskId 任务ID
-     * @param files 图片文件列表
-     * @return 图片URL列表
-     */
-    @PostMapping("/{taskId}/images/batch")
-    public Result<List<String>> batchUploadTaskImages(@PathVariable("taskId") String taskId, @RequestParam("files") List<MultipartFile> files) {
-        List<String> imageUrls = taskService.batchUploadTaskImages(taskId, files);
-        return Result.success("批量上传图片成功", imageUrls);
-    }
-    
-    /**
      * 更新任务
      * @param taskId 任务ID
      * @param taskDTO 任务信息

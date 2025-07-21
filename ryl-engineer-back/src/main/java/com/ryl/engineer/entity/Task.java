@@ -149,11 +149,6 @@ public class Task {
     private String description;
     
     /**
-     * 故障描述
-     */
-    private String faultDescription;
-    
-    /**
      * 数量
      */
     private Integer quantity;
@@ -172,11 +167,6 @@ public class Task {
      * 用途（选型任务）
      */
     private String purpose;
-    
-    /**
-     * 需求描述（选型任务）
-     */
-    private String requirementDescription;
     
     /**
      * 预约时间（培训任务）

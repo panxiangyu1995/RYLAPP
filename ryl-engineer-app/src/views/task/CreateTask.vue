@@ -207,7 +207,7 @@
             <div class="form-group">
               <label>需求描述</label>
               <textarea 
-                v-model="form.requirementDescription" 
+                v-model="form.description" 
                 placeholder="描述具体需求..."
                 rows="4"
                 required
@@ -259,7 +259,7 @@
             <div class="form-group" v-if="['repair', 'maintenance'].includes(form.taskType)">
               <label>故障描述</label>
               <textarea 
-                v-model="form.faultDescription" 
+                v-model="form.description" 
                 placeholder="描述故障情况..."
                 rows="4"
                 required
@@ -715,7 +715,7 @@ export default {
           alert('请输入仪器用途');
           return false;
         }
-        if (!this.form.requirementDescription.trim()) {
+        if (!this.form.description.trim()) {
           alert('请输入需求描述');
           return false;
         }
@@ -725,7 +725,7 @@ export default {
           return false;
         }
         
-        if (['repair', 'maintenance'].includes(taskType) && !this.form.faultDescription.trim()) {
+        if (['repair', 'maintenance'].includes(taskType) && !this.form.description.trim()) {
           alert('请输入故障描述');
           return false;
         }
@@ -863,7 +863,7 @@ export default {
       // 根据任务类型添加特定字段
       if (taskType === 'selection') {
         taskData.purpose = this.form.purpose;
-        taskData.requirementDescription = this.form.requirementDescription;
+        taskData.description = this.form.description;
         taskData.quantity = this.form.quantity;
       } else {
         // 直接将设备信息放在根级别，而不是嵌套在deviceInfo对象中
@@ -873,7 +873,7 @@ export default {
         taskData.serialNumber = this.form.serialNumber;
         
         if (['repair', 'maintenance'].includes(taskType)) {
-          taskData.faultDescription = this.form.faultDescription;
+          taskData.description = this.form.description;
           taskData.quantity = this.form.quantity;
         }
         
@@ -975,12 +975,13 @@ export default {
           this.form.deviceName = taskData.deviceName || '';
           this.form.deviceModel = taskData.deviceModel || '';
           this.form.deviceBrand = taskData.deviceBrand || '';
-          this.form.faultDescription = taskData.faultDescription || '';
+          this.form.serialNumber = taskData.serialNumber || '';
+          this.form.description = taskData.description || '';
           this.form.quantity = taskData.quantity || 1;
-          this.form.attachments = taskData.attachments || '';
+          this.form.attachments = taskData.attachments || [];
           this.form.verificationType = taskData.verificationType || '';
           this.form.purpose = taskData.purpose || '';
-          this.form.requirementDescription = taskData.requirementDescription || '';
+          this.form.appointmentTime = taskData.appointmentTime || '';
           
           // 处理客户信息
           if (taskData.customer) {

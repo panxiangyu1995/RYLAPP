@@ -78,38 +78,6 @@ export function updateTaskStep(stepData) {
 }
 
 /**
- * 上传任务图片
- * @param {FormData} formData 包含文件的表单数据
- * @returns {Promise<Object>} 上传结果
- */
-export function uploadTaskImage(formData) {
-  return http.post(`${BASE_URL}/images`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
-}
-
-/**
- * 批量上传任务图片
- * @param {string} taskId 任务ID
- * @param {Array<File>} files 图片文件列表
- * @returns {Promise<Object>} 上传结果
- */
-export function batchUploadTaskImages(taskId, files) {
-  const formData = new FormData()
-  files.forEach(file => {
-    formData.append('files', file)
-  })
-  
-  return http.post(`${BASE_URL}/${taskId}/images/batch`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
-}
-
-/**
  * 上传任务附件
  * @param {string} taskId 任务ID
  * @param {FormData} formData 包含文件的表单数据
@@ -127,7 +95,7 @@ export function uploadTaskAttachments(taskId, formData) {
  * 更新任务
  * @param {string} taskId 任务ID
  * @param {Object} taskData 任务数据
- * @returns {Promise<Object>} 响应结果
+ * @returns {Promise<Object>} 更新结果
  */
 export function updateTask(taskId, taskData) {
   return http.put(`${BASE_URL}/${taskId}`, taskData)
