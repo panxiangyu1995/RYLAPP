@@ -13,7 +13,7 @@
       <!-- 数据用途 -->
       <view class="mb-4">
         <text class="font-bold block">2. 数据用途</text>
-        <text class="block">• 订单分配和进度通知（短信/微信模板消息）</text>
+        <text class="block">• 订单分配和进度通知（微信模板消息）</text>
         <text class="block">• 服务改进（匿名化分析订单类型频率）</text>
       </view>
 
@@ -29,6 +29,7 @@
         <text class="font-bold block">4. 数据存储</text>
         <text class="block">• 数据存储在中国大陆的服务器上</text>
         <text class="block">• 采用加密技术保护您的个人信息</text>
+        <text class="block">• 存储时间：订单完成后1年</text>
       </view>
       
       <!-- 用户权利 -->
@@ -54,9 +55,9 @@
       
       <!-- 联系我们 -->
       <view class="mb-4">
-        <text class="font-bold block">8. 联系我们</text>
-        <text class="block">• 如有任何问题，请联系客服</text>
-        <text class="block">• 电子邮件：privacy@example.com</text>
+        <text class="block">• 客服电话：13670469261</text>
+        <text class="block">• 电子邮箱：Ryl@realline-scientific.com</text>
+        <text class="block">• 公司地址：泰州市医药高新技术产业开发区秀水路22号2幢五层</text>
       </view>
     </scroll-view>
     

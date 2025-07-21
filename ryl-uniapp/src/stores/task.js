@@ -141,9 +141,13 @@ export const useTaskStore = defineStore('task', {
         return;
       }
 
+      // 使用Set确保模板ID的唯一性，避免重复请求
+      const uniqueTmplIds = [...new Set(tmplIds)];
+      console.log('请求订阅的模板ID:', uniqueTmplIds);
+
       try {
         const res = await wx.requestSubscribeMessage({
-          tmplIds: tmplIds,
+          tmplIds: uniqueTmplIds,
         });
 
         if (res.errMsg === 'requestSubscribeMessage:ok') {

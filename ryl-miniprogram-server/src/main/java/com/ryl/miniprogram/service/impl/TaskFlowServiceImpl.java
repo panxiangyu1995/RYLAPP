@@ -120,7 +120,7 @@ public class TaskFlowServiceImpl extends ServiceImpl<TaskFlowMapper, TaskFlow> i
                 weChatNotificationService.sendEngineerAssignedNotification(taskForNotification);
                 break;
             case 3: // <<<< 修正此处
-                weChatNotificationService.sendQuoteGeneratedNotification(taskForNotification);
+                weChatNotificationService.sendQuoteReminderNotification(taskForNotification);
                 break;
             case 4:
                 weChatNotificationService.sendServiceCompletedNotification(taskForNotification);

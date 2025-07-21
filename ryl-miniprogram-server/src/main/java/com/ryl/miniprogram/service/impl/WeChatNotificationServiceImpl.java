@@ -16,13 +16,16 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class WeChatNotificationServiceImpl implements WeChatNotificationService {
+
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Autowired
     private WxMaService wxMaService;
@@ -36,8 +39,8 @@ public class WeChatNotificationServiceImpl implements WeChatNotificationService 
     @Value("${wx.miniapp.template-ids.engineer-assigned}")
     private String engineerAssignedTemplateId;
 
-    @Value("${wx.miniapp.template-ids.quote-generated}")
-    private String quoteGeneratedTemplateId;
+    @Value("${wx.miniapp.template-ids.quote-reminder}")
+    private String quoteReminderTemplateId;
     
     @Value("${wx.miniapp.template-ids.price-confirmed}")
     private String priceConfirmedTemplateId;
@@ -69,10 +72,12 @@ public class WeChatNotificationServiceImpl implements WeChatNotificationService 
             return;
         }
 
-        // 准备数据
-        Map<String, String> data = new HashMap<>();
-        data.put("thing1", truncate(task.getTitle(), 20));
-        data.put("name2", truncate(task.getEngineerName(), 10));
+        List<WxMaSubscribeMessage.MsgData> data = Arrays.asList(
+                new WxMaSubscribeMessage.MsgData("thing1", "您的订单已有工程师接单"),
+                new WxMaSubscribeMessage.MsgData("time2", DATE_FORMAT.format(new Date())),
+                new WxMaSubscribeMessage.MsgData("character_string3", task.getTaskId()),
+                new WxMaSubscribeMessage.MsgData("phrase4", "处理中")
+        );
 
         String page = taskDetailPage + "?id=" + task.getId();
         sendMessage(customer.getOpenid(), templateId, data, page, task);
@@ -80,9 +85,9 @@ public class WeChatNotificationServiceImpl implements WeChatNotificationService 
 
     @Async
     @Override
-    public void sendQuoteGeneratedNotification(Task task) {
-        final String templateId = quoteGeneratedTemplateId;
-        log.info("准备发送报价通知，任务ID: {}, 模板ID: {}", task.getTaskId(), templateId);
+    public void sendQuoteReminderNotification(Task task) {
+        final String templateId = quoteReminderTemplateId;
+        log.info("准备发送报价提醒通知，任务ID: {}, 模板ID: {}", task.getTaskId(), templateId);
 
         if (isNotificationSent(task.getTaskId(), templateId)) {
             return;
@@ -93,11 +98,10 @@ public class WeChatNotificationServiceImpl implements WeChatNotificationService 
             return;
         }
 
-        // 准备数据
-        Map<String, String> data = new HashMap<>();
-        data.put("thing1", truncate(task.getTitle(), 20));
-        data.put("amount2", task.getPrice().toPlainString());
-        data.put("date3", new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date()));
+        List<WxMaSubscribeMessage.MsgData> data = Arrays.asList(
+                new WxMaSubscribeMessage.MsgData("amount4", task.getPrice().toPlainString()),
+                new WxMaSubscribeMessage.MsgData("character_string1", task.getTaskId())
+        );
 
         String page = taskDetailPage + "?id=" + task.getId() + "&confirm=true";
         sendMessage(customer.getOpenid(), templateId, data, page, task);
@@ -117,16 +121,18 @@ public class WeChatNotificationServiceImpl implements WeChatNotificationService 
             return;
         }
 
-        // 准备数据
-        Map<String, String> data = new HashMap<>();
-        data.put("thing1", truncate(task.getTitle(), 20));
-        data.put("phrase2", "已确认");
-        data.put("thing3", truncate("报价：" + task.getPrice().toPlainString() + "元", 20));
+        List<WxMaSubscribeMessage.MsgData> data = Arrays.asList(
+                new WxMaSubscribeMessage.MsgData("thing1", "您的订单报价已确认"),
+                new WxMaSubscribeMessage.MsgData("time2", DATE_FORMAT.format(new Date())),
+                new WxMaSubscribeMessage.MsgData("character_string3", task.getTaskId()),
+                new WxMaSubscribeMessage.MsgData("phrase4", "报价已确认")
+        );
 
         String page = taskDetailPage + "?id=" + task.getId();
         sendMessage(customer.getOpenid(), templateId, data, page, task);
     }
 
+    @Async
     @Override
     public void sendServiceCompletedNotification(Task task) {
         final String templateId = serviceCompletedTemplateId;
@@ -141,17 +147,18 @@ public class WeChatNotificationServiceImpl implements WeChatNotificationService 
             return;
         }
 
-        // 准备数据
-        Map<String, String> data = new HashMap<>();
-        data.put("thing1", truncate(task.getTitle(), 20));
-        data.put("thing2", truncate("服务已完成，请评价", 20));
-        data.put("thing3", truncate(task.getEngineerName(), 20));
-        data.put("date4", new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date()));
+        List<WxMaSubscribeMessage.MsgData> data = Arrays.asList(
+                new WxMaSubscribeMessage.MsgData("thing1", "您的订单已服务完成，请及时评价"),
+                new WxMaSubscribeMessage.MsgData("time2", DATE_FORMAT.format(new Date())),
+                new WxMaSubscribeMessage.MsgData("character_string3", task.getTaskId()),
+                new WxMaSubscribeMessage.MsgData("phrase4", "待评价")
+        );
 
         String page = taskDetailPage + "?id=" + task.getId() + "&evaluate=true";
         sendMessage(customer.getOpenid(), templateId, data, page, task);
     }
 
+    @Async
     @Override
     public void sendEvaluationReceivedNotification(Task task) {
         final String templateId = evaluationReceivedTemplateId;
@@ -166,73 +173,26 @@ public class WeChatNotificationServiceImpl implements WeChatNotificationService 
             return;
         }
 
-        // 准备数据
-        Map<String, String> data = new HashMap<>();
-        data.put("thing1", truncate(task.getTitle(), 20));
-        data.put("thing2", truncate("感谢您的评价", 20));
-        data.put("thing3", truncate("我们将继续为您提供优质服务", 20));
+        List<WxMaSubscribeMessage.MsgData> data = Arrays.asList(
+                new WxMaSubscribeMessage.MsgData("thing1", "感谢您的宝贵评价！"),
+                new WxMaSubscribeMessage.MsgData("thing4", truncate(task.getTitle(), 20)),
+                new WxMaSubscribeMessage.MsgData("thing5", truncate(task.getEngineerName(), 20)),
+                new WxMaSubscribeMessage.MsgData("character_string6", task.getTaskId())
+        );
 
         String page = taskDetailPage + "?id=" + task.getId();
         sendMessage(customer.getOpenid(), templateId, data, page, task);
     }
 
-    private void sendMessage(String openid, String templateId, Map<String, String> data, String page, Task task) {
+    private void sendMessage(String openid, String templateId, List<WxMaSubscribeMessage.MsgData> data, String page, Task task) {
         try {
-            // 创建WxMaSubscribeMessage对象
-            WxMaSubscribeMessage.WxMaSubscribeMessageBuilder builder = WxMaSubscribeMessage.builder()
+            WxMaSubscribeMessage subscribeMessage = WxMaSubscribeMessage.builder()
                     .toUser(openid)
                     .templateId(templateId)
                     .page(page)
-                    .miniprogramState(miniprogramState);
-            
-            // 如果有数据，添加到消息中
-            if (data != null && !data.isEmpty()) {
-                // 使用反射查看WxMaSubscribeMessage类的结构
-                Class<?> builderClass = builder.getClass();
-                log.info("WxMaSubscribeMessageBuilder类名: {}", builderClass.getName());
-                
-                // 查看可用方法
-                java.lang.reflect.Method[] methods = builderClass.getDeclaredMethods();
-                for (java.lang.reflect.Method method : methods) {
-                    log.info("方法: {}", method.getName());
-                }
-                
-                // 尝试使用data方法
-                try {
-                    // 创建数据对象
-                    java.util.Map<String, Object> dataMap = new java.util.HashMap<>();
-                    for (Map.Entry<String, String> entry : data.entrySet()) {
-                        java.util.Map<String, String> item = new java.util.HashMap<>();
-                        item.put("value", entry.getValue());
-                        dataMap.put(entry.getKey(), item);
-                    }
-                    
-                    // 尝试调用data方法
-                    builder.getClass().getMethod("data", java.util.Map.class).invoke(builder, dataMap);
-                } catch (Exception e) {
-                    log.error("反射调用data方法失败: {}", e.getMessage());
-                    
-                    // 如果上面的方法失败，尝试另一种方式
-                    try {
-                        // 创建WxMaSubscribeMessage.MsgData对象列表
-                        java.util.List<Object> dataList = new java.util.ArrayList<>();
-                        for (Map.Entry<String, String> entry : data.entrySet()) {
-                            // 尝试创建MsgData对象
-                            Class<?> msgDataClass = Class.forName("cn.binarywang.wx.miniapp.bean.WxMaSubscribeMessage$MsgData");
-                            Object msgData = msgDataClass.getConstructor(String.class, String.class)
-                                    .newInstance(entry.getKey(), entry.getValue());
-                            dataList.add(msgData);
-                        }
-                        
-                        // 尝试调用data方法
-                        builder.getClass().getMethod("data", java.util.List.class).invoke(builder, dataList);
-                    } catch (Exception ex) {
-                        log.error("反射调用data方法失败(第二次尝试): {}", ex.getMessage());
-                    }
-                }
-            }
-            
-            WxMaSubscribeMessage subscribeMessage = builder.build();
+                    .miniprogramState(miniprogramState)
+                    .data(data)
+                    .build();
 
             // 如果是测试任务，则不记录数据库日志
             if ("TEST-TASK-001".equals(task.getTaskId())) {

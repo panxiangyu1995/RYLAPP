@@ -6,7 +6,7 @@ public interface WeChatNotificationService {
 
     void sendEngineerAssignedNotification(Task task);
 
-    void sendQuoteGeneratedNotification(Task task);
+    void sendQuoteReminderNotification(Task task);
 
     void sendPriceConfirmedNotification(Task task);
 

@@ -63,7 +63,7 @@ public class TestController {
                     weChatNotificationService.sendEngineerAssignedNotification(mockTask);
                     break;
                 case "quote_generated":
-                    weChatNotificationService.sendQuoteGeneratedNotification(mockTask);
+                    weChatNotificationService.sendQuoteReminderNotification(mockTask);
                     break;
                 case "price_confirmed":
                     weChatNotificationService.sendPriceConfirmedNotification(mockTask);

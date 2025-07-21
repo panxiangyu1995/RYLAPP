@@ -57,11 +57,11 @@ wx:
     test-openid: 'obtYJ7p_U1Tn9PNUR2IPk3SOOsNc' # 请替换为您的测试openid
     miniprogram-state: 'formal' # 可选值: developer(开发版), trial(体验版), formal(正式版)
     template-ids:
-      engineer-assigned: 'TJUibxXzlp2LwlK5Wwse0Gc5N8IwO-riR3aD-g89NBE' # 工程师分配通知模板ID
-      quote-generated: 'DaH51pHOJaxbqM1vf-NNKoFuRfweKbvEBRLF8OjYN1o' # 报价生成通知模板ID
-      price-confirmed: 'DaH51pHOJaxbqM1vf-NNKoFuRfweKbvEBRLF8OjYN1o' # 价格确认通知模板ID
-      service-completed: 'TJUibxXzlp2LwlK5Wwse0Gc5N8IwO-riR3aD-g89NBE' # 服务完成通知模板ID
-      evaluation-received: 'YDVprZJqih5p3hGv_Odi-Oma5fLvW0vVmkcxfZZgi3M' # 评价接收通知模板ID
+      engineer-assigned: 'TJUibxXzlp2LwlK5Wwse0Gc5N8IwO-riR3aD-g89NBE' # 订单状态变更通知
+      quote-reminder: 'DaH51pHOJaxbqM1vf-NNKoFuRfweKbvEBRLF8OjYN1o'      # 订单报价提醒
+      price-confirmed: 'TJUibxXzlp2LwlK5Wwse0Gc5N8IwO-riR3aD-g89NBE'     # 订单状态变更通知 (用于价格确认)
+      service-completed: 'TJUibxXzlp2LwlK5Wwse0Gc5N8IwO-riR3aD-g89NBE'  # 订单状态变更通知 (用于服务完成)
+      evaluation-received: 'YDVprZJqih5p3hGv_Odi-Oma5fLvW0vVmkcxfZZgi3M' # 报修评价提醒
     page:
       task-detail: 'pages/task/taskdetail' # 任务详情页面路径
 
