@@ -334,10 +334,11 @@ export default {
     const previewImageUrl = ref(null)
     
     // 任务负责相关
-    const isResponsibleEngineer = computed(() => {
-      if (!task.value || !task.value.engineers) return false
-      const currentUserId = authStore.user?.id
-      return task.value.engineers.some(eng => eng.id === currentUserId && eng.isOwner)
+    const canTransferTask = computed(() => {
+      if (!task.value || !authStore.user) return false
+      const isOwner = task.value.engineers?.some(eng => eng.id === authStore.user.id && eng.isOwner)
+      const isAdminRole = authStore.hasRole('ROLE_ADMIN')
+      return isOwner || isAdminRole
     })
     
     // 对话框显示状态
@@ -432,7 +433,7 @@ export default {
     // 设置权限
     const setupPermissions = () => {
       const userRole = authStore.user?.role
-      const isOwner = isResponsibleEngineer.value
+      const isOwner = task.value?.engineers?.some(eng => eng.id === authStore.user?.id && eng.isOwner)
       
       // 根据角色和任务状态设置各种权限
       canViewLocation.value = true // 所有人都可以查看位置
@@ -686,9 +687,8 @@ export default {
     
     // 显示转出任务对话框
     const handleTransfer = () => {
-      // 检查是否可以转出任务
-      if (!task.value || !isResponsibleEngineer.value) {
-        toast.error('您没有权限转出此任务')
+      if (!canTransferTask.value) {
+        toast.error('您没有权限转出此任务，请联系任务负责人或系统管理员。')
         return
       }
       showTransferDialog.value = true
@@ -701,9 +701,11 @@ export default {
         transferError.value = ''
         
         await transferTask({
-          taskId: task.value.id,
+          taskId: taskId.value,
           engineerId: transferData.engineerId,
-          note: transferData.note
+          note: transferData.note,
+          operatorId: authStore.user?.id,
+          isOperatorAdmin: authStore.hasRole('ROLE_ADMIN')
         })
         
         toast.success('任务转出成功')
@@ -969,7 +971,7 @@ export default {
       canManageFlow,
       canManageCollaborators,
       canEditDevice,
-      isResponsibleEngineer,
+      canTransferTask,
       activeStepIndex,
       hasPrevStep,
       hasNextStep,

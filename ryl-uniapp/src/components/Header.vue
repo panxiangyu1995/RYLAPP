@@ -7,14 +7,15 @@
         <image 
           src="/static/images/company-logo.png" 
           alt="Realline Scientific" 
-          class="h-10"
+          class="h-12"
           mode="aspectFit"
         />
         
         <!-- 标题文字 -->
-        <view class="flex flex-col items-center mt-1">
-          <view class="text-lg font-semibold text-ui-text-black">瑞屹林</view>
-          <view class="text-xs text-gray-500">科研仪器服务平台|专注于实验室服务</view>
+        <view class="flex flex-col items-center mt-2">
+          <view class="text-xs text-gray-500">专注于实验室服务</view>
+          <view class="flex flex-col items-center mt-2"></view>
+          <view class="text-lg font-semibold ui-blue-start">江苏瑞屹林生物科技有限公司</view>
         </view>
       </view>
       

@@ -356,11 +356,16 @@ public class TaskController {
         try {
             log.info("收到任务转出请求: taskId={}, data={}", taskId, data);
             
-            // 从请求体中获取engineerId和note
+            // 从请求体中获取engineerId, note 和 operatorId
+            if (data.get("engineerId") == null || data.get("operatorId") == null) {
+                return Result.error(400, "新负责人ID和操作员ID不能为空");
+            }
             Long engineerId = Long.valueOf(data.get("engineerId").toString());
+            Long operatorId = Long.valueOf(data.get("operatorId").toString());
             String note = data.get("note") != null ? data.get("note").toString() : null;
+            Boolean isOperatorAdmin = (Boolean) data.getOrDefault("isOperatorAdmin", false);
             
-            boolean success = taskService.transferTask(taskId, engineerId, note);
+            boolean success = taskService.transferTask(taskId, engineerId, note, operatorId, isOperatorAdmin);
             if (!success) {
                 log.error("转出任务失败: taskId={}, engineerId={}", taskId, engineerId);
                 return Result.error(400, "转出任务失败");

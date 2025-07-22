@@ -1215,9 +1215,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean transferTask(String taskId, Long engineerId, String note) {
-        log.info("转出任务: taskId={}, engineerId={}, note={}", taskId, engineerId, note);
-        
+    public boolean transferTask(String taskId, Long engineerId, String note, Long operatorId, Boolean isOperatorAdmin) {
+        log.info("转出任务: taskId={}, engineerId={}, note={}, operatorId={}, isAdmin={}", taskId, engineerId, note, operatorId, isOperatorAdmin);
+
         try {
             // 1. 查询任务信息
             Task task = taskMapper.selectOne(
@@ -1287,16 +1287,33 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
             
             // 保存转出历史记录
             taskTransferHistoryMapper.insert(transferHistory);
-            
+
             // 6. 添加任务动态记录
             TaskActivity activity = new TaskActivity();
             activity.setTaskId(taskId);
             activity.setActivityType("transfer");
-            activity.setContent("任务已转出给工程师: " + engineer.getName());
-            activity.setOperatorId(originalEngineerId);
-            activity.setOperatorName(engineer.getName());
+            User operator = userMapper.selectById(operatorId);
+            String operatorName = (operator != null) ? operator.getName() : "未知操作员";
+            activity.setContent("任务由 " + operatorName + " 转出给工程师: " + engineer.getName());
+            activity.setOperatorId(operatorId);
+            activity.setOperatorName(operatorName);
             activity.setCreateTime(new Date());
             taskActivityMapper.insert(activity);
+
+            // 7. 发送通知
+            // 通知新负责人
+            String newEngineerMessage = String.format("您被指派了一个新的任务：%s (%s)", task.getTitle(), task.getTaskId());
+            chatService.sendSystemMessage(engineerId, newEngineerMessage);
+
+            // 如果是管理员操作，且原负责人存在且不是自己，则通知原负责人
+            if (Boolean.TRUE.equals(isOperatorAdmin) && originalEngineerId != null && !originalEngineerId.equals(operatorId)) {
+                User originalEngineer = userMapper.selectById(originalEngineerId);
+                if (originalEngineer != null) {
+                    String oldEngineerMessage = String.format("您负责的任务 %s (%s) 已被管理员 %s 转派给 %s。",
+                            task.getTitle(), task.getTaskId(), operatorName, engineer.getName());
+                    chatService.sendSystemMessage(originalEngineerId, oldEngineerMessage);
+                }
+            }
             
             log.info("转出任务成功: taskId={}, 从工程师ID={} 转给工程师ID={}", taskId, originalEngineerId, engineerId);
             return true;

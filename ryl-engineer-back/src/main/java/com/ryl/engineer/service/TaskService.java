@@ -155,9 +155,11 @@ public interface TaskService {
      * @param taskId 任务ID
      * @param engineerId 接收任务的工程师ID
      * @param note 转出备注
+     * @param operatorId 操作人ID
+     * @param isOperatorAdmin 操作人是否为管理员
      * @return 是否成功
      */
-    boolean transferTask(String taskId, Long engineerId, String note);
+    boolean transferTask(String taskId, Long engineerId, String note, Long operatorId, Boolean isOperatorAdmin);
     
     /**
      * 更新任务状态
