@@ -4,6 +4,7 @@ import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.dto.TaskDTO;
 import com.ryl.engineer.dto.TaskDetailDTO;
 import com.ryl.engineer.dto.TaskFlowDTO;
+import com.ryl.engineer.dto.TaskStepDefinitionDTO;
 import com.ryl.engineer.dto.request.CreateTaskRequest;
 import com.ryl.engineer.dto.request.RejectTaskRequest;
 import com.ryl.engineer.dto.request.TaskFlowStatusRequest;
@@ -25,6 +26,14 @@ public interface TaskService {
      * @return 任务ID
      */
     String createTask(CreateTaskRequest request);
+
+    /**
+     * 为来自小程序的、尚未初始化的任务创建步骤
+     * @param taskId 需要初始化步骤的任务ID
+     * @param steps  步骤定义的列表
+     * @return 如果操作成功，返回 true
+     */
+    boolean initializeTaskSteps(String taskId, List<TaskStepDefinitionDTO> steps);
     
     /**
      * 分页查询任务列表

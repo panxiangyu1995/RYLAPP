@@ -30,18 +30,6 @@
               <span class="task-type-name">{{ type.name }}</span>
             </div>
           </div>
-          
-          <!-- 系统外任务选项 -->
-          <div class="form-group external-task-option">
-            <label class="checkbox-label">
-              <input 
-                type="checkbox" 
-                v-model="form.isExternalTask"
-              >
-              <span>系统外任务</span>
-            </label>
-            <span class="hint-text">选择此项表示该任务不是通过客户小程序下单，而是工程师手动创建的任务</span>
-          </div>
         </div>
 
         <!-- 客户信息 -->
@@ -418,6 +406,7 @@ import { getCustomerList, getCustomerDetail } from '@/api/customer'
 import { getSalesList } from '@/api/sales'
 import { getEngineersList, createTask, uploadTaskImage } from '@/api/task'
 import { convertLocalDateTimeToISO, formatToLocalDateTime } from '@/utils/dateUtils'
+import { TASK_TYPE_FLOW_STEPS } from '@/constants/taskFlowTemplates'
 
 export default {
   name: 'CreateTask',
@@ -449,7 +438,6 @@ export default {
         selectedFiles: [],
         customer: null,
         assignedEngineers: [],
-        isExternalTask: false,
         faultDescription: '',
         quantity: 1,
         attachments: [],
@@ -697,11 +685,6 @@ export default {
         return false;
       }
       
-      if (!this.form.customer && !this.form.isExternalTask) {
-        alert('请选择客户或标记为系统外任务');
-        return false;
-      }
-      
       if (!this.form.startTime || !this.form.endTime) {
         alert('请设置任务开始和结束时间');
         return false;
@@ -837,8 +820,7 @@ export default {
         startTime: convertLocalDateTimeToISO(this.form.startTime),
         endTime: convertLocalDateTimeToISO(this.form.endTime),
         description: this.form.description,
-        assignedEngineers: this.form.assignedEngineers.map(engineer => engineer.id),
-        isExternalTask: this.form.isExternalTask
+        assignedEngineers: this.form.assignedEngineers.map(engineer => engineer.id)
       };
       
       // 添加客户信息
@@ -894,6 +876,15 @@ export default {
         if (taskType === 'installation') {
           taskData.quantity = this.form.quantity;
         }
+      }
+
+      // 添加步骤定义
+      const stepTemplate = TASK_TYPE_FLOW_STEPS[taskType];
+      if (stepTemplate) {
+        taskData.steps = stepTemplate.map((step, index) => ({
+          stepIndex: index,
+          title: step.title
+        }));
       }
       
       // 打印任务数据，用于调试
@@ -959,7 +950,6 @@ export default {
           this.form.title = taskData.title || '';
           this.form.priority = taskData.priority || 'normal';
           this.form.description = taskData.description || '';
-          this.form.isExternalTask = taskData.isExternalTask || false;
           
           // 处理日期时间
           if (taskData.startTime) {

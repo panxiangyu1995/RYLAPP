@@ -69,6 +69,16 @@ export function getTaskFlow(taskId) {
 }
 
 /**
+ * 初始化任务步骤（针对来自小程序端的任务）
+ * @param {string} taskId 任务ID
+ * @param {Array<Object>} steps 步骤定义数组
+ * @returns {Promise<Object>} 响应结果
+ */
+export function initializeTaskSteps(taskId, steps) {
+  return http.post(`${BASE_URL}/${taskId}/initialize-steps`, steps);
+}
+
+/**
  * 更新任务步骤
  * @param {Object} stepData 步骤数据
  * @returns {Promise<Object>} 响应结果

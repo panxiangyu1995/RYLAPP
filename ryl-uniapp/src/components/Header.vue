@@ -14,7 +14,7 @@
         <!-- 标题文字 -->
         <view class="flex flex-col items-center mt-1">
           <view class="text-lg font-semibold text-ui-text-black">瑞屹林</view>
-          <view class="text-xs text-gray-500">科研仪器服务平台</view>
+          <view class="text-xs text-gray-500">科研仪器服务平台|专注于实验室服务</view>
         </view>
       </view>
       

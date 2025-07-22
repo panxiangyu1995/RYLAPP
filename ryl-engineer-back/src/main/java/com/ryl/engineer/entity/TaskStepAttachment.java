@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 任务步骤记录的附件实体类
  */
 @Data
-@TableName("task_step_attachment")
+@TableName("record_file")
 public class TaskStepAttachment {
 
     /**

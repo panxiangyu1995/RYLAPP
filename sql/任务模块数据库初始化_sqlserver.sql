@@ -143,10 +143,6 @@ END
 GO
 
 
-CREATE INDEX idx_task_type_flow ON task_flow(task_type);
-END
-GO
-
 -- 步骤记录描述表
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[step_record]') AND type in (N'U'))
 BEGIN
@@ -156,6 +152,7 @@ CREATE TABLE step_record (
     step_id BIGINT NOT NULL, /* 步骤ID */
     step_index INT NOT NULL, /* 步骤索引 */
     description NVARCHAR(MAX) NOT NULL, /* 记录描述 */
+    spent_time INT, /* 花费时间 (分钟) */
     creator_id BIGINT NOT NULL, /* 创建人ID */
     creator_name VARCHAR(50) NOT NULL, /* 创建人姓名 */
     create_time DATETIME2 DEFAULT GETDATE(), /* 创建时间 */

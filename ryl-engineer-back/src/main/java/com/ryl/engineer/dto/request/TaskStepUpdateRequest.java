@@ -30,11 +30,6 @@ public class TaskStepUpdateRequest {
     private String action;
     
     /**
-     * 步骤描述
-     */
-    private String description;
-    
-    /**
      * 步骤结果
      */
     private String result;

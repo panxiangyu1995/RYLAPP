@@ -7,6 +7,7 @@ import com.ryl.engineer.common.Result;
 import com.ryl.engineer.dto.TaskDTO;
 import com.ryl.engineer.dto.TaskDetailDTO;
 import com.ryl.engineer.dto.TaskFlowDTO;
+import com.ryl.engineer.dto.TaskStepDefinitionDTO;
 import com.ryl.engineer.dto.request.CreateTaskRequest;
 import com.ryl.engineer.dto.request.RejectTaskRequest;
 import com.ryl.engineer.dto.request.TaskFlowStatusRequest;
@@ -104,38 +105,28 @@ public class TaskController {
     }
     
     /**
-     * 更新任务流程状态
+     * 为来自小程序的任务初始化步骤
      * @param taskId 任务ID
-     * @param request 流程状态更新请求
+     * @param steps 步骤定义列表
      * @return 是否成功
      */
-    @PostMapping("/{taskId}/flow/status")
-    public Result<Boolean> updateTaskFlowStatus(
+    @PostMapping("/{taskId}/initialize-steps")
+    public Result<Boolean> initializeSteps(
             @PathVariable("taskId") String taskId,
-            @RequestBody @Valid TaskFlowStatusRequest request) {
-        log.info("收到更新任务流程状态请求: URL路径taskId={}, 请求体taskId={}, currentStepIndex={}, nextStepIndex={}, action={}",
-                taskId, request.getTaskId(), request.getCurrentStepIndex(), request.getNextStepIndex(), request.getAction());
-                
-        // 确保路径参数和请求体中的taskId一致
-        if (!taskId.equals(request.getTaskId())) {
-            log.warn("请求参数不一致: URL路径taskId={}, 请求体taskId={}", taskId, request.getTaskId());
-            return Result.error(400, "请求参数不一致");
-        }
-        
+            @RequestBody @Valid List<TaskStepDefinitionDTO> steps) {
         try {
-            boolean success = taskService.updateTaskFlowStatus(request);
-            if (!success) {
-                log.error("更新任务流程状态失败: taskId={}", taskId);
-                return Result.error(400, "更新任务流程状态失败");
+            boolean success = taskService.initializeTaskSteps(taskId, steps);
+            if (success) {
+                return Result.success("任务步骤初始化成功", true);
+            } else {
+                return Result.error(400, "任务步骤初始化失败，可能任务不存在或已初始化。");
             }
-            log.info("更新任务流程状态成功: taskId={}", taskId);
-            return Result.success("更新任务流程状态成功", true);
         } catch (Exception e) {
-            log.error("更新任务流程状态异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
-            return Result.error(500, "更新任务流程状态异常: " + e.getMessage());
+            log.error("初始化任务步骤时发生异常, taskId: {}", taskId, e);
+            return Result.error(500, "服务器内部错误: " + e.getMessage());
         }
     }
-    
+
     /**
      * 获取任务状态历史
      * @param taskId 任务ID

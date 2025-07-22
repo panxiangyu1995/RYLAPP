@@ -10,6 +10,7 @@ import com.ryl.engineer.dto.EngineerDTO;
 import com.ryl.engineer.dto.TaskDTO;
 import com.ryl.engineer.dto.TaskFlowDTO;
 import com.ryl.engineer.dto.TaskStepDTO;
+import com.ryl.engineer.dto.TaskStepDefinitionDTO;
 import com.ryl.engineer.dto.request.CreateTaskRequest;
 import com.ryl.engineer.dto.request.TaskFlowStatusRequest;
 import com.ryl.engineer.dto.request.TaskQueryRequest;
@@ -19,13 +20,17 @@ import com.ryl.engineer.entity.TaskEngineer;
 import com.ryl.engineer.entity.TaskImage;
 import com.ryl.engineer.entity.TaskStep;
 import com.ryl.engineer.entity.TaskActivity;
+import com.ryl.engineer.entity.TaskStepAttachment;
+import com.ryl.engineer.entity.TaskStepRecord;
 import com.ryl.engineer.entity.TaskTransferHistory;
 import com.ryl.engineer.entity.TaskStatusHistory;
 import com.ryl.engineer.entity.User;
 import com.ryl.engineer.mapper.TaskEngineerMapper;
 import com.ryl.engineer.mapper.TaskImageMapper;
 import com.ryl.engineer.mapper.TaskMapper;
+import com.ryl.engineer.mapper.TaskStepAttachmentMapper;
 import com.ryl.engineer.mapper.TaskStepMapper;
+import com.ryl.engineer.mapper.TaskStepRecordMapper;
 import com.ryl.engineer.mapper.TaskActivityMapper;
 import com.ryl.engineer.mapper.TaskTransferHistoryMapper;
 import com.ryl.engineer.mapper.TaskStatusHistoryMapper;
@@ -63,6 +68,12 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     
     @Autowired
     private TaskStepMapper taskStepMapper;
+
+    @Autowired
+    private TaskStepRecordMapper taskStepRecordMapper;
+
+    @Autowired
+    private TaskStepAttachmentMapper taskStepAttachmentMapper;
     
     @Autowired
     private TaskImageMapper taskImageMapper;
@@ -146,7 +157,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                 log.error("设置任务时间失败", e);
                 throw new IllegalArgumentException("任务时间格式错误: " + e.getMessage());
             }
-            task.setIsExternalTask(request.getIsExternalTask() ? 1 : 0);
+            task.setIsExternalTask(1); // 所有通过此API创建的任务都标记为系统外任务
             task.setStatus("pending");
             task.setCreateTime(LocalDateTime.now());
             task.setCurrentStep(0);
@@ -221,9 +232,26 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                 taskEngineerMapper.batchInsert(engineers);
             }
             
-            // 11. 创建初始步骤
-            createInitialTaskSteps(taskId, taskType);
-            
+            // 11. 根据前端传递的定义创建任务步骤
+            if (request.getSteps() != null && !request.getSteps().isEmpty()) {
+                List<TaskStep> stepsToCreate = new ArrayList<>();
+                for (com.ryl.engineer.dto.TaskStepDefinitionDTO stepDef : request.getSteps()) {
+                    TaskStep newStep = new TaskStep();
+                    newStep.setTaskId(taskId);
+                    newStep.setStepIndex(stepDef.getStepIndex());
+                    newStep.setTitle(stepDef.getTitle());
+                    // 初始状态默认为 'pending', 第一个步骤为 'in-progress'
+                    newStep.setStatus(stepDef.getStepIndex() == 0 ? "in-progress" : "pending");
+                    newStep.setCreateTime(LocalDateTime.now());
+                    newStep.setUpdateTime(LocalDateTime.now());
+                    stepsToCreate.add(newStep);
+                }
+                // 使用 taskStepMapper 逐条插入
+                for (TaskStep stepToCreate : stepsToCreate) {
+                    taskStepMapper.insert(stepToCreate);
+                }
+            }
+
             return taskId;
         } catch (Exception e) {
             log.error("创建任务失败", e);
@@ -231,6 +259,47 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         }
     }
     
+    @Override
+    @Transactional
+    public boolean initializeTaskSteps(String taskId, List<TaskStepDefinitionDTO> steps) {
+        // 1. 检查任务是否存在
+        Task task = taskMapper.selectOne(Wrappers.<Task>lambdaQuery().eq(Task::getTaskId, taskId));
+        if (task == null) {
+            log.warn("尝试为不存在的任务初始化步骤, taskId: {}", taskId);
+            return false;
+        }
+
+        // 2. 检查任务是否已经有步骤
+        long existingStepsCount = taskStepMapper.selectCount(Wrappers.<TaskStep>lambdaQuery().eq(TaskStep::getTaskId, taskId));
+        if (existingStepsCount > 0) {
+            log.warn("任务 {} 已有步骤，无需再次初始化。", taskId);
+            return false;
+        }
+
+        // 3. 批量创建新步骤
+        if (steps != null && !steps.isEmpty()) {
+            List<TaskStep> stepsToCreate = new ArrayList<>();
+            for (TaskStepDefinitionDTO stepDef : steps) {
+                TaskStep newStep = new TaskStep();
+                newStep.setTaskId(taskId);
+                newStep.setStepIndex(stepDef.getStepIndex());
+                newStep.setTitle(stepDef.getTitle());
+                // 初始状态默认为 'pending', 第一个步骤为 'in-progress'
+                newStep.setStatus(stepDef.getStepIndex() == 0 ? "in-progress" : "pending");
+                newStep.setCreateTime(LocalDateTime.now());
+                newStep.setUpdateTime(LocalDateTime.now());
+                stepsToCreate.add(newStep);
+            }
+            // 逐条插入
+            for (TaskStep stepToCreate : stepsToCreate) {
+                taskStepMapper.insert(stepToCreate);
+            }
+            log.info("成功为任务 {} 初始化了 {} 个步骤。", taskId, stepsToCreate.size());
+        }
+        
+        return true;
+    }
+
     /**
      * 分页查询任务列表
      */
@@ -439,89 +508,6 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         }
     }
     
-    // 创建初始任务步骤
-    private void createInitialTaskSteps(String taskId, String taskType) {
-        List<TaskStep> steps = new ArrayList<>();
-        
-        // 通用初始步骤
-        steps.add(createStep(taskId, 0, "已接单", "请保持电话畅通，我们稍后会联系您", "pending"));
-        steps.add(createStep(taskId, 1, "判断是否需要上门", "需要确认是否需要上门服务", "pending"));
-        
-        // 根据任务类型添加特定步骤
-        switch (taskType) {
-            case "repair":
-                steps.add(createStep(taskId, 2, "检修完成", "维修评估", "pending"));
-                steps.add(createStep(taskId, 3, "维修方案和报价", "提供维修方案和报价", "pending"));
-                steps.add(createStep(taskId, 4, "维修中", "工程师维修中", "pending"));
-                steps.add(createStep(taskId, 5, "验证报告", "已完成维修验证", "pending"));
-                break;
-            case "maintenance":
-                steps.add(createStep(taskId, 2, "检修完成", "保养评估", "pending"));
-                steps.add(createStep(taskId, 3, "保养方案和报价", "提供保养方案和报价", "pending"));
-                steps.add(createStep(taskId, 4, "保养中", "工程师保养中", "pending"));
-                steps.add(createStep(taskId, 5, "验证报告", "已完成保养验证", "pending"));
-                break;
-            case "training":
-                steps.add(createStep(taskId, 2, "培训准备完成", "培训评估", "pending"));
-                steps.add(createStep(taskId, 3, "培训方案和报价", "提供培训方案和报价", "pending"));
-                steps.add(createStep(taskId, 4, "培训中", "工程师培训中", "pending"));
-                steps.add(createStep(taskId, 5, "验证报告", "已完成培训验证", "pending"));
-                break;
-            case "verification":
-                steps.add(createStep(taskId, 2, "验证准备完成", "验证评估", "pending"));
-                steps.add(createStep(taskId, 3, "验证方案和报价", "提供验证方案和报价", "pending"));
-                steps.add(createStep(taskId, 4, "验证中", "工程师验证中", "pending"));
-                steps.add(createStep(taskId, 5, "验证报告", "已完成验证报告", "pending"));
-                break;
-            case "selection":
-                steps.add(createStep(taskId, 2, "选型分析完成", "选型评估", "pending"));
-                steps.add(createStep(taskId, 3, "选型方案和报价", "提供选型方案和报价", "pending"));
-                steps.add(createStep(taskId, 4, "选型进行中", "工程师选型中", "pending"));
-                steps.add(createStep(taskId, 5, "验证报告", "已完成选型验证", "pending"));
-                break;
-            case "installation":
-                steps.add(createStep(taskId, 2, "安装准备完成", "安装评估", "pending"));
-                steps.add(createStep(taskId, 3, "安装方案和报价", "提供安装方案和报价", "pending"));
-                steps.add(createStep(taskId, 4, "安装中", "工程师安装中", "pending"));
-                steps.add(createStep(taskId, 5, "验证报告", "已完成安装验证", "pending"));
-                break;
-            case "recycle":
-                steps.add(createStep(taskId, 2, "回收评估完成", "回收评估", "pending"));
-                steps.add(createStep(taskId, 3, "回收方案和报价", "提供回收方案和报价", "pending"));
-                steps.add(createStep(taskId, 4, "回收中", "工程师回收中", "pending"));
-                steps.add(createStep(taskId, 5, "验证报告", "已完成回收验证", "pending"));
-                break;
-            case "leasing":
-                steps.add(createStep(taskId, 2, "租赁评估完成", "租赁评估", "pending"));
-                steps.add(createStep(taskId, 3, "租赁方案和报价", "提供租赁方案和报价", "pending"));
-                steps.add(createStep(taskId, 4, "租赁中", "租赁中", "pending"));
-                steps.add(createStep(taskId, 5, "验证报告", "已完成租赁验证", "pending"));
-                break;
-        }
-        
-        // 通用结束步骤
-        steps.add(createStep(taskId, 6, "服务评价", "请对我们的服务进行评价", "pending"));
-        steps.add(createStep(taskId, 7, "订单已完成", "订单已完成", "pending"));
-        
-        // 批量插入步骤
-        for (TaskStep step : steps) {
-            taskStepMapper.insert(step);
-        }
-    }
-    
-    // 创建步骤辅助方法
-    private TaskStep createStep(String taskId, int stepIndex, String title, String description, String status) {
-        TaskStep step = new TaskStep();
-        step.setTaskId(taskId);
-        step.setStepIndex(stepIndex);
-        step.setTitle(title);
-        step.setDescription(description);
-        step.setStatus(status);
-        step.setCreateTime(LocalDateTime.now());
-        step.setUpdateTime(LocalDateTime.now());
-        return step;
-    }
-    
     /**
      * 获取任务流程
      */
@@ -529,19 +515,20 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     public TaskFlowDTO getTaskFlow(String taskId) {
         // 1. 查询任务信息
         Task task = taskMapper.selectOne(
-                Wrappers.lambdaQuery(Task.class).eq(Task::getTaskId, taskId)
+                Wrappers.<Task>lambdaQuery().eq(Task::getTaskId, taskId)
         );
         
         if (task == null) {
+            log.warn("请求任务流程失败：找不到任务，ID = {}", taskId);
             return null;
         }
         
-        // 2. 查询任务步骤
-        List<TaskStep> steps = taskStepMapper.findByTaskId(taskId);
-        
-        if (steps == null || steps.isEmpty()) {
-            return null;
-        }
+        // 2. 查询该任务的所有步骤定义
+        List<TaskStep> steps = taskStepMapper.selectList(
+            Wrappers.<TaskStep>lambdaQuery()
+                   .eq(TaskStep::getTaskId, taskId)
+                   .orderByAsc(TaskStep::getStepIndex)
+        );
         
         // 3. 构建流程DTO
         TaskFlowDTO flowDTO = new TaskFlowDTO();
@@ -550,17 +537,63 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         flowDTO.setCurrentStep(task.getCurrentStep());
         flowDTO.setTaskType(task.getTaskType());
         flowDTO.setStatus(task.getStatus());
+
+        // 如果没有步骤（来自小程序端的任务），则直接返回基础信息
+        if (steps == null || steps.isEmpty()) {
+            log.warn("任务 {} 没有任何步骤，可能来自小程序端。返回一个空的步骤列表。", taskId);
+            flowDTO.setSteps(new ArrayList<>());
+            return flowDTO;
+        }
         
-        // 4. 构建步骤DTO列表
+        // 4. 构建并聚合每个步骤的DTO
         List<TaskStepDTO> stepDTOs = steps.stream().map(step -> {
             TaskStepDTO dto = new TaskStepDTO();
-            // 转换属性名称
+            dto.setId(step.getId()); // 传递步骤的数据库ID
             dto.setIndex(step.getStepIndex());
             dto.setName(step.getTitle());
             dto.setStatus(step.getStatus());
             dto.setStartTime(step.getStartTime());
             dto.setEndTime(step.getEndTime());
-            dto.setDescription(step.getDescription());
+
+            // 5. 查询该步骤最新的一个记录（使用分页，兼容SQL Server）
+            Page<TaskStepRecord> page = new Page<>(1, 1); // 查询第一页，每页一条
+            LambdaQueryWrapper<TaskStepRecord> recordQuery = Wrappers.<TaskStepRecord>lambdaQuery()
+                    .eq(TaskStepRecord::getStepId, step.getId())
+                    .orderByDesc(TaskStepRecord::getCreateTime);
+            
+            Page<TaskStepRecord> resultPage = taskStepRecordMapper.selectPage(page, recordQuery);
+            
+            TaskStepRecord lastRecord = null;
+            if (resultPage != null && !resultPage.getRecords().isEmpty()) {
+                lastRecord = resultPage.getRecords().get(0);
+            }
+
+            // 6. 如果有记录，则填充描述、图片和文件
+            if (lastRecord != null) {
+                dto.setRecordContent(lastRecord.getContent());
+                
+                // 7. 查询与该记录关联的所有附件
+                List<TaskStepAttachment> attachments = taskStepAttachmentMapper.selectList(
+                    Wrappers.<TaskStepAttachment>lambdaQuery()
+                            .eq(TaskStepAttachment::getRecordId, lastRecord.getId())
+                );
+                
+                if (attachments != null && !attachments.isEmpty()) {
+                    // 根据文件类型区分图片和其他文件
+                    List<String> imageUrls = attachments.stream()
+                        .filter(a -> isImage(a.getFileType()))
+                        .map(TaskStepAttachment::getFileUrl)
+                        .collect(Collectors.toList());
+                    dto.setImages(imageUrls);
+
+                    // (如果TaskStepDTO需要)可以同样方式填充其他文件
+                    // List<AttachmentDTO> fileDTOs = attachments.stream()
+                    //     .filter(a -> !isImage(a.getFileType()))
+                    //     .map(a -> new AttachmentDTO(a.getFileName(), a.getFileUrl()))
+                    //     .collect(Collectors.toList());
+                    // dto.setFiles(fileDTOs);
+                }
+            }
             
             // 设置步骤状态文本
             String statusText;
@@ -588,13 +621,13 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                 actions.add("skip");
             } else if ("in-progress".equals(step.getStatus())) {
                 actions.add("complete");
-                actions.add("cancel");
+                // actions.add("cancel"); // 根据业务逻辑决定是否需要
             }
             dto.setActions(actions);
             
             // 设置是否当前步骤到表单数据中
             Map<String, Object> formData = new HashMap<>();
-            formData.put("isCurrent", step.getStepIndex() == task.getCurrentStep());
+            formData.put("isCurrent", step.getStepIndex().equals(task.getCurrentStep()));
             formData.put("statusText", statusText);
             dto.setFormData(formData);
             
@@ -604,6 +637,16 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         flowDTO.setSteps(stepDTOs);
         
         return flowDTO;
+    }
+
+    private boolean isImage(String fileType) {
+        if (fileType == null || fileType.isEmpty()) {
+            return false;
+        }
+        String lowerCaseType = fileType.toLowerCase();
+        return lowerCaseType.equals("jpg") || lowerCaseType.equals("jpeg") || 
+               lowerCaseType.equals("png") || lowerCaseType.equals("gif") ||
+               lowerCaseType.equals("bmp");
     }
     
     /**
@@ -662,9 +705,6 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         }
         
         step.setStatus(status);
-        if (request.getDescription() != null) {
-            step.setDescription(request.getDescription());
-        }
         // 设置操作人信息，在实际项目中应该从安全上下文中获取
         // step.setOperatorId(currentUserId);
         // step.setOperator(currentUserName);

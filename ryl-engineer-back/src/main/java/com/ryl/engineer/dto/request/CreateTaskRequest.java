@@ -6,6 +6,8 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.ryl.engineer.dto.TaskStepDefinitionDTO;
+import javax.validation.Valid;
 
 /**
  * 创建任务请求DTO
@@ -41,11 +43,6 @@ public class CreateTaskRequest {
      */
     @NotNull(message = "结束时间不能为空")
     private LocalDateTime endTime;
-    
-    /**
-     * 是否为系统外任务
-     */
-    private Boolean isExternalTask = false;
     
     /**
      * 客户对象
@@ -113,6 +110,14 @@ public class CreateTaskRequest {
     @NotNull(message = "指派的工程师不能为空")
     @Size(min = 1, message = "至少指派一名工程师")
     private List<Long> assignedEngineers;
+
+    /**
+     * 任务步骤定义列表
+     */
+    @Valid
+    @NotNull(message = "任务步骤定义不能为空")
+    @Size(min = 1, message = "至少需要一个任务步骤")
+    private List<TaskStepDefinitionDTO> steps;
     
     /**
      * 客户请求对象

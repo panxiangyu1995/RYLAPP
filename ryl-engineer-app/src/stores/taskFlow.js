@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import * as taskApi from '../api/task'
 import * as taskFlowApi from '../api/taskflow'
 import { useToast } from 'vue-toastification'
+import { TASK_TYPE_FLOW_STEPS } from '../constants/taskFlowTemplates'
 
 /**
  * 任务流程状态管理
@@ -37,7 +38,7 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
   })
   
   // 获取任务流程
-  const fetchTaskFlow = async (taskId) => {
+  const fetchTaskFlow = async (taskId, isRetry = false) => {
     if (!taskId) {
       console.error('获取任务流程失败: 任务ID为空')
       error.value = '任务ID不能为空'
@@ -48,12 +49,52 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
     error.value = null
     
     try {
-      console.log('开始获取任务流程, 任务ID:', taskId)
+      console.log(`开始获取任务流程, 任务ID: ${taskId}, 是否重试: ${isRetry}`)
       const response = await taskFlowApi.getTaskFlow(taskId)
       console.log('任务流程API响应:', response)
       
       if (response && response.code === 200 && response.data) {
         currentTaskId.value = taskId
+        
+        // 检查任务是否需要初始化步骤 (来自小程序的任务)
+        if (Array.isArray(response.data.steps) && response.data.steps.length === 0 && !isRetry) {
+          console.warn(`任务 ${taskId} 没有步骤, 可能是来自小程序的任务，尝试初始化...`)
+          
+          const taskTypeKey = response.data.taskType.toLowerCase();
+          const stepTemplate = TASK_TYPE_FLOW_STEPS[taskTypeKey];
+
+          if (stepTemplate) {
+            const stepsToCreate = stepTemplate.map((step, index) => ({
+              stepIndex: index,
+              title: step.title
+            }));
+
+            try {
+              toast.info('检测到新任务，正在初始化流程步骤...')
+              const initResponse = await taskApi.initializeTaskSteps(taskId, stepsToCreate);
+              if (initResponse && initResponse.code === 200) {
+                console.log(`任务 ${taskId} 步骤初始化成功，重新获取流程...`)
+                toast.success('任务流程已成功初始化！')
+                // 初始化成功后，再次获取流程数据
+                return await fetchTaskFlow(taskId, true); 
+              } else {
+                throw new Error(initResponse.message || '初始化步骤失败')
+              }
+            } catch (initError) {
+              console.error(`初始化任务 ${taskId} 的步骤失败:`, initError)
+              error.value = `无法初始化任务步骤: ${initError.message}`
+              toast.error(`无法初始化任务步骤: ${initError.message}`)
+              // 初始化失败，将步骤设置为空数组
+              flowSteps.value = []
+              currentStepIndex.value = -1
+              return null;
+            }
+          } else {
+             console.error(`在模板中找不到任务类型 "${taskTypeKey}" 的步骤定义`)
+             error.value = `缺少任务类型 "${response.data.taskType}" 的流程模板。`
+             toast.error(`缺少任务类型 "${response.data.taskType}" 的流程模板。`)
+          }
+        }
         
         // 确保steps字段存在
         if (!response.data.steps || !Array.isArray(response.data.steps)) {

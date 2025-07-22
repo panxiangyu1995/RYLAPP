@@ -34,11 +34,6 @@ public class TaskStep {
     private String title;
     
     /**
-     * 步骤描述
-     */
-    private String description;
-    
-    /**
      * 状态（pending/in-progress/completed/skipped）
      */
     private String status;

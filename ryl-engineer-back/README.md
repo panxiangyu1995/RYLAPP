@@ -2,12 +2,12 @@
 
 科研仪器维修公司内部工程师使用的后端系统。
 
-## 技术栈
+   ```bash
+   mvn spring-boot:run
+   ```
+   mvn clean install -DskipTests构建跳过测试
 
-- Spring Boot 2.7.18
-- MyBatis 3.5.15
-- PageHelper 6.1.0
-- MySQL
+   mvn clean install -U -DskipTests
 
 ## 项目结构
 

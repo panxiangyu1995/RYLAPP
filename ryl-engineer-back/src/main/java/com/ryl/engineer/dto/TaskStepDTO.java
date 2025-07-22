@@ -15,6 +15,11 @@ import java.util.Map;
 @AllArgsConstructor
 public class TaskStepDTO {
     /**
+     * 数据库中的步骤ID
+     */
+    private Long id;
+
+    /**
      * 步骤索引
      */
     private Integer index;
@@ -45,9 +50,9 @@ public class TaskStepDTO {
     private OperatorDTO operator;
     
     /**
-     * 步骤描述
+     * 步骤记录内容
      */
-    private String description;
+    private String recordContent;
     
     /**
      * 步骤结果

@@ -5,12 +5,12 @@
         SELECT *
         FROM dbo.task_step
         WHERE task_id = #{taskId}
-        ORDER BY step_index
+        ORDER BY [step_index]
     </select>
     
     <select id="findByTaskIdAndStepIndex" resultType="com.ryl.engineer.entity.TaskStep">
         SELECT *
         FROM dbo.task_step
-        WHERE task_id = #{taskId} AND step_index = #{stepIndex}
+        WHERE task_id = #{taskId} AND [step_index] = #{stepIndex}
     </select>
 </mapper> 

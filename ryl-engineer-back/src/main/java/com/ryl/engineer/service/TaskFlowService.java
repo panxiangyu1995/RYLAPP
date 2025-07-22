@@ -19,4 +19,20 @@ public interface TaskFlowService {
      * @throws IOException 如果文件上传失败
      */
     void addTaskFlowRecord(String taskId, TaskStepRecordRequest request, MultipartFile[] files) throws IOException;
+
+    /**
+     * 将任务推进到下一个步骤
+     *
+     * @param taskId 需要推进的任务ID
+     * @return 如果操作成功，返回 true；否则返回 false
+     */
+    boolean nextStep(String taskId);
+
+    /**
+     * 将任务回退到上一个步骤
+     *
+     * @param taskId 需要回退的任务ID
+     * @return 如果操作成功，返回 true；否则返回 false
+     */
+    boolean prevStep(String taskId);
 } 
