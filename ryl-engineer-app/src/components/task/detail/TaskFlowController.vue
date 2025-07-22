@@ -221,7 +221,7 @@ export default {
       default: false
     }
   },
-  emits: ['prev-step', 'next-step', 'show-add-record', 'show-step-records', 'decide-site-visit', 'update-task-status'],
+  emits: ['prev-step', 'next-step', 'show-add-record', 'show-step-records', 'decide-site-visit'],
   setup(props, { emit }) {
     const currentStepValue = ref(0)
     const loading = ref(false)
@@ -525,64 +525,6 @@ export default {
       emit('add-record', step)
     }
 
-    // 检查任务步骤状态变化和任务流程位置，来自动更新任务状态
-    const checkAndUpdateTaskStatus = () => {
-      if (!props.task) return
-
-      const currentIndex = currentStepIndex.value
-      const totalSteps = stepsList.value.length
-      const taskStatus = props.task.status
-
-      // 当前在第一步且状态为待处理时，保持"pending"
-      if (currentIndex === 0 && taskStatus === "pending") {
-        return
-      }
-
-      // 如果步骤索引 > 0，说明已经开始进行任务，状态应改为"in-progress"
-      if (currentIndex > 0 && currentIndex < totalSteps - 1 && taskStatus === "pending") {
-        emit('update-task-status', {
-          status: "in-progress",
-          note: "任务已开始处理"
-        })
-      }
-
-      // 如果到了最后一步，且前面步骤都已完成，状态应改为"completed"
-      if (currentIndex === totalSteps - 1) {
-        // 检查前面所有步骤是否都已完成
-        const allPreviousStepsCompleted = stepsList.value
-          .slice(0, totalSteps - 1)
-          .every(step => step.status === 'completed' || step.status === 'skipped')
-          
-        // 如果最后一步是进行中，并且之前步骤都完成了，且任务状态不是已完成
-        if (allPreviousStepsCompleted && taskStatus !== "completed") {
-          emit('update-task-status', {
-            status: "completed",
-            note: "任务流程已完成"
-          })
-        }
-      }
-    }
-
-    // 监听当前步骤索引的变化
-    watch(currentStepIndex, (newIndex, oldIndex) => {
-      if (newIndex !== oldIndex) {
-        // 当步骤发生变化时，检查是否需要更新任务状态
-        checkAndUpdateTaskStatus()
-      }
-    })
-
-    // 监听任务状态的变化
-    watch(() => props.task.status, (newStatus, oldStatus) => {
-      if (newStatus !== oldStatus) {
-        console.log(`任务状态从${oldStatus}变为${newStatus}`)
-      }
-    })
-
-    // 初始化时检查任务状态
-    onMounted(() => {
-      checkAndUpdateTaskStatus()
-    })
-
     // 下一步
     const nextStep = () => {
       emit('next-step')
@@ -628,7 +570,6 @@ export default {
       visitDate,
       visitTime,
       confirmSiteVisit,
-      checkAndUpdateTaskStatus,
       prevStep,
       nextStep
     }

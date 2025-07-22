@@ -101,42 +101,42 @@ export default {
         label: '待处理',
         description: '任务已创建，但还未开始工作',
         icon: 'icon-clock',
-        allowFrom: ['in-progress', 'waiting-parts', 'client-review']
+        allowFrom: ['pending', 'waiting-parts', 'in-progress', 'client-review', 'completed', 'completed','cancelled']
       },
       {
         value: 'in-progress',
         label: '进行中',
         description: '任务正在处理中',
         icon: 'icon-play-circle',
-        allowFrom: ['pending', 'waiting-parts', 'client-review']
+        allowFrom:['pending', 'waiting-parts', 'in-progress','client-review', 'completed', 'completed','cancelled']
       },
       {
         value: 'waiting-parts',
         label: '等待配件',
         description: '任务暂停，等待所需配件到货',
         icon: 'icon-truck',
-        allowFrom: ['pending', 'in-progress']
+        allowFrom: ['pending', 'waiting-parts', 'in-progress','client-review', 'completed', 'completed','cancelled']
       },
       {
         value: 'client-review',
         label: '客户确认中',
         description: '等待客户确认工作完成情况',
         icon: 'icon-user-check',
-        allowFrom: ['in-progress', 'waiting-parts']
+        allowFrom: ['pending', 'waiting-parts', 'in-progress','client-review', 'completed', 'completed','cancelled']
       },
       {
         value: 'completed',
         label: '已完成',
         description: '任务已成功完成',
         icon: 'icon-check-circle',
-        allowFrom: ['in-progress', 'client-review']
+        allowFrom: ['pending', 'waiting-parts', 'in-progress','client-review', 'completed', 'completed','cancelled']
       },
       {
         value: 'cancelled',
         label: '已取消',
         description: '任务已取消',
         icon: 'icon-ban',
-        allowFrom: ['pending', 'waiting-parts']
+        allowFrom:['pending', 'waiting-parts', 'in-progress','client-review', 'completed', 'completed','cancelled']
       }
     ]
     

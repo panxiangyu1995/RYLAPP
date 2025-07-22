@@ -83,7 +83,6 @@
       @show-add-record="showAddRecord"
       @show-step-records="showStepRecords"
       @decide-site-visit="handleSiteVisitDecision"
-      @update-task-status="handleTaskStatusUpdate"
     />
 
     <!-- 协作工程师 -->
@@ -625,12 +624,19 @@ export default {
     const confirmStatusChange = async (statusData) => {
       try {
         console.log('确认更改任务状态:', statusData);
+        
+        // 创建一个符合后端API期望的新对象
+        const payload = {
+          status: statusData.newStatus, // 后端需要 'status' 键
+          note: statusData.comment      // 后端需要 'note' 键
+        };
+
         // 调用API更新任务状态
-        const response = await http.put(`/api/v1/tasks/${taskId.value}/status`, statusData);
+        const response = await http.put(`/api/v1/tasks/${taskId.value}/status`, payload);
         
         if (response && response.code === 200) {
           // 显示成功通知
-          toast.success(`任务状态已更新为: ${getStatusText(statusData.status)}`);
+          toast.success(`任务状态已更新为: ${getStatusText(statusData.newStatus)}`);
           
           // 重新加载任务详情，确保UI更新
           await loadTaskDetail();
