@@ -29,7 +29,7 @@
         FROM
             dbo.task_engineer te
                 JOIN
-            dbo.user u ON te.engineer_id = u.id
+            dbo.[user] u ON te.engineer_id = u.id
         WHERE
             te.task_id
                 IN

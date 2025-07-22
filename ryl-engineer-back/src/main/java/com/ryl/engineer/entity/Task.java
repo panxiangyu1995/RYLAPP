@@ -186,6 +186,7 @@ public class Task {
     /**
      * 预算金额
      */
+    @TableField(exist = false)
     private BigDecimal budget;
     
     /**

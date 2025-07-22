@@ -258,7 +258,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
             ).stream().map(TaskEngineer::getTaskId).distinct().collect(Collectors.toList());
 
             if (taskIdsForEngineer.isEmpty()) {
-                return PageResult.fromPage(new Page<>(request.getPage(), request.getSize()));
+                // 返回一个空的TaskDetailDTO分页结果，并保持分页信息
+                Page<TaskDetailDTO> emptyPage = new Page<>(request.getPage(), request.getSize(), 0);
+                return PageResult.fromPage(emptyPage);
             }
             queryWrapper.in(Task::getTaskId, taskIdsForEngineer);
         }
@@ -280,12 +282,14 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         List<Task> tasks = page.getRecords();
 
         if (tasks.isEmpty()) {
-            return PageResult.fromPage(new Page<>(request.getPage(), request.getSize()));
+            // 返回一个空的TaskDetailDTO分页结果，并保持分页信息
+            Page<TaskDetailDTO> emptyPage = new Page<>(request.getPage(), request.getSize(), 0);
+            return PageResult.fromPage(emptyPage);
         }
 
         // 4. 二次查询：批量获取所有相关任务的工程师信息
         List<String> taskIds = tasks.stream().map(Task::getTaskId).collect(Collectors.toList());
-        List<EngineerSimpleVO> allEngineers = userMapper.findEngineersByTaskIds(taskIds);
+        List<EngineerSimpleVO> allEngineers = taskEngineerMapper.findEngineersByTaskIds(taskIds);
 
         // 将工程师信息按taskId分组
         Map<String, List<EngineerSimpleVO>> engineersByTaskId = allEngineers.stream()

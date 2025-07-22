@@ -40,7 +40,7 @@ mybatis:
 
 logging:
   level:
-    com.ryl.engineer: info
+    com.ryl.engineer: debug
     org.springframework.web: warn
     org.mybatis: warn
   pattern:
