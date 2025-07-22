@@ -50,7 +50,7 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
     
     try {
       console.log(`开始获取任务流程, 任务ID: ${taskId}, 是否重试: ${isRetry}`)
-      const response = await taskFlowApi.getTaskFlow(taskId)
+      const response = await taskApi.getTaskFlow(taskId)
       console.log('任务流程API响应:', response)
       
       if (response && response.code === 200 && response.data) {
@@ -169,12 +169,7 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
       currentStepIndex.value = targetIndex
       
       // 调用API更新任务步骤
-      const response = await taskFlowApi.updateTaskFlowStatus({
-        taskId: currentTaskId.value,
-        currentStepIndex: previousIndex,
-        nextStepIndex: targetIndex,
-        action: 'update'
-      })
+      const response = await taskFlowApi.prevStep(currentTaskId.value)
       
       if (response && response.code === 200) {
         console.log('成功前往上一步')
@@ -226,12 +221,7 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
       currentStepIndex.value = targetIndex
       
       // 调用API更新任务步骤
-      const response = await taskFlowApi.updateTaskFlowStatus({
-        taskId: currentTaskId.value,
-        currentStepIndex: previousIndex,
-        nextStepIndex: targetIndex,
-        action: 'update'
-      })
+      const response = await taskFlowApi.nextStep(currentTaskId.value)
       
       if (response && response.code === 200) {
         console.log('成功前往下一步')

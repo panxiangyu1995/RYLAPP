@@ -5,24 +5,24 @@ import http from './http'
  */
 
 // 基础路径
-const BASE_URL = '/api/v1/tasks'
+const BASE_URL = '/api/v1/task-flow'
 
 /**
- * 获取任务流程
+ * 将任务推进到下一步
  * @param {string} taskId 任务ID
- * @returns {Promise<Object>} 任务流程
+ * @returns {Promise<Object>} 响应结果
  */
-export function getTaskFlow(taskId) {
-  return http.get(`${BASE_URL}/${taskId}/flow`)
+export function nextStep(taskId) {
+  return http.post(`${BASE_URL}/${taskId}/next`)
 }
 
 /**
- * 更新任务流程状态
- * @param {Object} data 包含taskId、currentStepIndex、nextStepIndex和action的数据对象
+ * 将任务回退到上一步
+ * @param {string} taskId 任务ID
  * @returns {Promise<Object>} 响应结果
  */
-export function updateTaskFlowStatus(data) {
-  return http.post(`${BASE_URL}/${data.taskId}/flow/status`, data)
+export function prevStep(taskId) {
+  return http.post(`${BASE_URL}/${taskId}/prev`)
 }
 
 /**
