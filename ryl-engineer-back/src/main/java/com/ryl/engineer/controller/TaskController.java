@@ -249,6 +249,28 @@ public class TaskController {
             return Result.error(500, "更新任务上门决策异常: " + e.getMessage());
         }
     }
+
+    /**
+     * 重置任务的上门决策
+     * @param taskId 任务ID
+     * @return 是否成功
+     */
+    @PostMapping("/{taskId}/reset-decision")
+    public Result<Boolean> resetSiteVisitDecision(@PathVariable("taskId") String taskId) {
+        log.info("收到重置任务上门决策请求: taskId={}", taskId);
+        try {
+            boolean success = taskService.resetTaskSiteVisitDecision(taskId);
+            if (!success) {
+                log.error("重置任务上门决策失败: taskId={}", taskId);
+                return Result.error(400, "重置任务上门决策失败");
+            }
+            log.info("重置任务上门决策成功: taskId={}", taskId);
+            return Result.success("重置任务上门决策成功", true);
+        } catch (Exception e) {
+            log.error("重置任务上门决策时发生异常: taskId={}, 错误: {}", taskId, e.getMessage(), e);
+            return Result.error(500, "服务器内部错误: " + e.getMessage());
+        }
+    }
     
     /**
      * 确认任务报价

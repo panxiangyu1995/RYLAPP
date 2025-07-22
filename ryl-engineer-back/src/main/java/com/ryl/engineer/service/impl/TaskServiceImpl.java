@@ -1123,104 +1123,86 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateTaskSiteVisitDecision(String taskId, Integer stepIndex, Boolean requiresVisit, String visitAppointmentTime) {
-        log.info("更新任务上门决策: taskId={}, stepIndex={}, requiresVisit={}, visitAppointmentTime={}", 
-                taskId, stepIndex, requiresVisit, visitAppointmentTime);
-        
+        log.info("仅保存上门决策: taskId={}, requiresVisit={}, visitAppointmentTime={}",
+                taskId, requiresVisit, visitAppointmentTime);
+
         try {
             // 1. 查询任务信息
             Task task = taskMapper.selectOne(
                 Wrappers.<Task>lambdaQuery()
                     .eq(Task::getTaskId, taskId)
             );
-            
+
             if (task == null) {
                 log.error("任务不存在: taskId={}", taskId);
                 return false;
             }
-            
-            // 2. 更新任务上门决策
+
+            // 2. 更新任务的“是否需要上门”决策
             task.setNeedSiteVisit(requiresVisit ? 1 : 0);
-            
-            // 3. 设置约定上门时间（如果需要上门且提供了时间）
-            if (requiresVisit && StringUtils.hasText(visitAppointmentTime)) {
-                try {
-                    DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
-                    LocalDateTime appointmentTime = LocalDateTime.parse(visitAppointmentTime, formatter);
-                    task.setVisitAppointmentTime(appointmentTime);
-                    log.info("设置约定上门时间: {}", appointmentTime);
-                } catch (Exception e) {
-                    log.error("解析约定上门时间失败: {}", e.getMessage());
-                    // 解析失败不影响其他操作，继续执行
-                }
-            }
-            
-            taskMapper.updateById(task);
-            
-            // 4. 更新任务流程
-            // 4.1 获取当前步骤和下一步骤
-            List<TaskStep> steps = taskStepMapper.selectList(
-                Wrappers.<TaskStep>lambdaQuery()
-                    .eq(TaskStep::getTaskId, taskId)
-                    .orderByAsc(TaskStep::getStepIndex)
-            );
-            
-            if (steps.isEmpty()) {
-                log.error("任务步骤不存在: taskId={}", taskId);
-                return false;
-            }
-            
-            // 4.2 将当前步骤标记为已完成
-            TaskStep currentStep = steps.get(stepIndex);
-            currentStep.setStatus("completed");
-            currentStep.setEndTime(LocalDateTime.now());
-            taskStepMapper.updateById(currentStep);
-            
-            // 4.3 确定下一步骤
-            int nextStepIndex;
+
+            // 3. 如果需要上门，则更新或清空约定上门时间
             if (requiresVisit) {
-                // 如果需要上门，进入下一步
-                nextStepIndex = stepIndex + 1;
-            } else {
-                // 如果不需要上门，跳到服务评价步骤
-                nextStepIndex = steps.size() - 2; // 倒数第二步通常是服务评价
-                
-                // 将中间跳过的步骤标记为skipped
-                for (int i = stepIndex + 1; i < nextStepIndex; i++) {
-                    TaskStep skippedStep = steps.get(i);
-                    skippedStep.setStatus("skipped");
-                    skippedStep.setStartTime(LocalDateTime.now());
-                    skippedStep.setEndTime(LocalDateTime.now());
-                    taskStepMapper.updateById(skippedStep);
+                if (StringUtils.hasText(visitAppointmentTime)) {
+                    try {
+                        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+                        LocalDateTime appointmentTime = LocalDateTime.parse(visitAppointmentTime, formatter);
+                        task.setVisitAppointmentTime(appointmentTime);
+                        log.info("设置约定上门时间: {}", appointmentTime);
+                    } catch (Exception e) {
+                        log.error("解析约定上门时间失败: {}, 保持数据库原值", e.getMessage());
+                        // 解析失败时，可以选择不更新时间，或者设置为null
+                        // task.setVisitAppointmentTime(null);
+                    }
+                } else {
+                    // 如果标记需要上门但没有提供时间，可以选择清空或不处理
+                     task.setVisitAppointmentTime(null);
                 }
             }
-            
-            // 确保nextStepIndex在有效范围内
-            nextStepIndex = Math.min(nextStepIndex, steps.size() - 1);
-            nextStepIndex = Math.max(nextStepIndex, 0);
-            
-            // 4.4 更新任务的当前步骤
-            task.setCurrentStep(nextStepIndex);
+
+
+            // 4. 保存对Task的更新
             taskMapper.updateById(task);
-            
-            // 4.5 将下一步骤标记为进行中
-            TaskStep nextStep = steps.get(nextStepIndex);
-            nextStep.setStatus("in-progress");
-            nextStep.setStartTime(LocalDateTime.now());
-            taskStepMapper.updateById(nextStep);
-            
-            log.info("更新任务上门决策成功: taskId={}, requiresVisit={}, nextStepIndex={}", taskId, requiresVisit, nextStepIndex);
+
+            log.info("成功保存上门决策: taskId={}, requiresVisit={}", taskId, requiresVisit);
             return true;
         } catch (Exception e) {
-            log.error("更新任务上门决策异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
-            throw e;
+            log.error("保存上门决策异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
+            throw e; // 抛出异常以触发事务回滚
         }
     }
-    
+
     // 原有的updateTaskSiteVisitDecision方法调用新方法
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateTaskSiteVisitDecision(String taskId, Integer stepIndex, Boolean requiresVisit) {
         return updateTaskSiteVisitDecision(taskId, stepIndex, requiresVisit, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean resetTaskSiteVisitDecision(String taskId) {
+        log.info("开始重置任务的上门决策: taskId={}", taskId);
+        try {
+            Task task = taskMapper.selectOne(
+                Wrappers.<Task>lambdaQuery().eq(Task::getTaskId, taskId)
+            );
+            if (task == null) {
+                log.error("重置决策失败：找不到任务, taskId={}", taskId);
+                return false;
+            }
+
+            task.setNeedSiteVisit(null);
+            task.setVisitAppointmentTime(null);
+
+            taskMapper.updateById(task);
+
+            log.info("成功重置任务的上门决策: taskId={}", taskId);
+            return true;
+        } catch (Exception e) {
+            log.error("重置任务上门决策时发生异常: taskId={}, 错误: {}", taskId, e.getMessage(), e);
+            throw e; // 让事务回滚
+        }
     }
     
     /**

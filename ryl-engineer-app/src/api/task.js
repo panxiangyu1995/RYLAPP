@@ -211,4 +211,14 @@ export function rejectTask(taskId, data) {
 export function decideSiteVisit(taskId, data) {
   console.log(`发送上门决策请求: taskId=${taskId}, data=`, data);
   return http.post(`${BASE_URL}/${taskId}/decide-visit`, data)
+}
+
+/**
+ * 重置任务的上门决策
+ * @param {string} taskId - 任务ID
+ * @returns {Promise<Object>} 响应结果
+ */
+export function resetSiteVisitDecision(taskId) {
+  console.log(`发送重置上门决策请求: taskId=${taskId}`);
+  return http.post(`${BASE_URL}/${taskId}/reset-decision`);
 } 

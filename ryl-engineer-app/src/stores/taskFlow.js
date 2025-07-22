@@ -295,53 +295,97 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
     }
   }
   
-  // 决定是否需要上门
-  const decideSiteVisit = async (requiresVisit, visitAppointmentTime = null) => {
+  // 决定是否需要上门并推进流程
+  const commitDecisionAndProceed = async (decision) => {
     if (currentStepIndex.value < 0 || !currentTaskId.value) {
-      console.warn('无法决定是否需要上门：当前步骤无效或任务ID为空')
+      console.warn('无法提交决策并继续：当前步骤无效或任务ID为空')
       return false
     }
-    
+
+    if (decision.requiresVisit === null) {
+      toast.info('请先选择需要上门或远程协助')
+      return false
+    }
+
     updating.value = true
     error.value = null
-    lastOperation.value = 'decide-visit'
-    
+    lastOperation.value = 'commit-and-proceed'
+
     try {
-      // 调用API决定是否需要上门
+      // 1. 先提交决策
       const payload = {
         stepIndex: currentStepIndex.value,
-        requiresVisit
+        requiresVisit: decision.requiresVisit,
+        visitAppointmentTime: decision.visitAppointmentTime
+      }
+      const decisionResponse = await taskApi.decideSiteVisit(currentTaskId.value, payload)
+
+      if (!decisionResponse || decisionResponse.code !== 200) {
+        throw new Error(decisionResponse.message || '保存您的选择时失败')
       }
       
-      // 如果需要上门且提供了约定上门时间，则添加到请求中
-      if (requiresVisit && visitAppointmentTime) {
-        payload.visitAppointmentTime = visitAppointmentTime
+      toast.info('您的选择已保存')
+
+      // 2. 再调用下一步
+      const nextStepResponse = await taskFlowApi.nextStep(currentTaskId.value)
+      if (!nextStepResponse || nextStepResponse.code !== 200) {
+        throw new Error(nextStepResponse.message || '进入下一步时失败')
       }
-      
-      const response = await taskApi.decideSiteVisit(currentTaskId.value, payload)
-      
-      if (response && response.code === 200) {
-        console.log(`成功决定${requiresVisit ? '需要' : '不需要'}上门`)
-        
-        // 重新获取最新的流程数据，确保前后端一致
-        await fetchTaskFlow(currentTaskId.value)
-        
-        if (requiresVisit && visitAppointmentTime) {
-          toast.success(`已确认需要上门服务，约定上门时间：${new Date(visitAppointmentTime).toLocaleString()}`)
-        } else {
-        toast.success(`已确认${requiresVisit ? '需要' : '不需要'}上门服务`)
-        }
-        return true
-      } else {
-        console.error('决定是否需要上门失败:', response ? response.message : '无响应')
-        error.value = response ? (response.message || '决定是否需要上门失败') : '服务器无响应'
-        toast.error('更新上门决定失败，请重试')
-        return false
-      }
+
+      // 3. 成功后，刷新整个流程状态
+      await fetchTaskFlow(currentTaskId.value)
+      toast.success('已进入下一步')
+      return true
+
     } catch (err) {
-      console.error('决定是否需要上门错误:', err)
-      error.value = err.message || '决定是否需要上门时发生错误'
-      toast.error('更新上门决定时出现错误，请重试')
+      console.error('提交决策并进入下一步时发生错误:', err)
+      error.value = err.message || '操作失败'
+      toast.error(err.message || '操作失败，请重试')
+      // 尝试刷新数据以恢复到后端最新状态
+      await fetchTaskFlow(currentTaskId.value)
+      return false
+    } finally {
+      updating.value = false
+    }
+  }
+
+  // 重置上门决策并返回上一步
+  const resetDecisionAndGoBack = async () => {
+    if (!hasPrevStep.value || !currentTaskId.value) {
+      console.warn('无法返回上一步')
+      return false
+    }
+
+    updating.value = true
+    error.value = null
+    lastOperation.value = 'reset-and-go-back'
+
+    try {
+      // 1. 先调用API重置决策
+      const resetResponse = await taskApi.resetSiteVisitDecision(currentTaskId.value)
+      if (!resetResponse || resetResponse.code !== 200) {
+        throw new Error(resetResponse.message || '清空您的选择时失败')
+      }
+
+      toast.info('已清空您的选择')
+
+      // 2. 再调用上一步
+      const prevStepResponse = await taskFlowApi.prevStep(currentTaskId.value)
+      if (!prevStepResponse || prevStepResponse.code !== 200) {
+        throw new Error(prevStepResponse.message || '返回上一步时失败')
+      }
+
+      // 3. 成功后，刷新整个流程状态
+      await fetchTaskFlow(currentTaskId.value)
+      toast.success('已返回上一步')
+      return true
+
+    } catch (err) {
+      console.error('重置决策并返回上一步时发生错误:', err)
+      error.value = err.message || '操作失败'
+      toast.error(err.message || '操作失败，请重试')
+      // 尝试刷新数据以恢复到后端最新状态
+      await fetchTaskFlow(currentTaskId.value)
       return false
     } finally {
       updating.value = false
@@ -489,7 +533,8 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
     prevStep,
     nextStep,
     completeCurrentStep,
-    decideSiteVisit,
+    commitDecisionAndProceed,
+    resetDecisionAndGoBack,
     addStepRecord,
     setTaskPrice,
     getTaskPriceConfirmation,

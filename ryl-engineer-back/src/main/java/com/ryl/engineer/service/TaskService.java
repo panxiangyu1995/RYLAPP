@@ -125,6 +125,13 @@ public interface TaskService {
      * @return 是否成功
      */
     boolean updateTaskSiteVisitDecision(String taskId, Integer stepIndex, Boolean requiresVisit, String visitAppointmentTime);
+
+    /**
+     * 重置任务的上门决策状态
+     * @param taskId 任务ID
+     * @return 是否成功
+     */
+    boolean resetTaskSiteVisitDecision(String taskId);
     
     /**
      * 更新任务报价确认状态

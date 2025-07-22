@@ -101,19 +101,73 @@ public class TaskFlowServiceImpl implements TaskFlowService {
         }
 
         TaskStep currentStep = steps.get(currentStepIndex);
-        currentStep.setStatus("completed");
-        currentStep.setEndTime(LocalDateTime.now());
-        taskStepMapper.updateById(currentStep);
+        LocalDateTime now = LocalDateTime.now();
 
-        TaskStep nextStep = steps.get(currentStepIndex + 1);
-        nextStep.setStatus("in-progress");
-        nextStep.setStartTime(LocalDateTime.now());
-        taskStepMapper.updateById(nextStep);
+        // 检查当前步骤是否是上门决策步骤
+        if ("site-visit-decision".equals(currentStep.getStepKey())) {
+            // 是决策步骤，根据 needSiteVisit 字段决定下一步
+            log.info("处理上门决策步骤的下一步逻辑, needSiteVisit: {}", task.getNeedSiteVisit());
+            
+            // 首先将决策步骤本身标记为完成
+            currentStep.setStatus("completed");
+            currentStep.setEndTime(now);
+            taskStepMapper.updateById(currentStep);
 
-        task.setCurrentStep(currentStepIndex + 1);
-        taskMapper.updateById(task);
+            int nextStepIndex;
+            if (task.getNeedSiteVisit() != null && task.getNeedSiteVisit() == 1) {
+                // 需要上门，正常进入下一步
+                nextStepIndex = currentStepIndex + 1;
+            } else {
+                // 不需要上门（线上协助），跳到“服务评价”步骤
+                // 我们约定“服务评价”是倒数第二个步骤
+                nextStepIndex = steps.size() - 2; 
 
-        log.info("任务 {} 成功从步骤 {} 推进到步骤 {}", taskId, currentStepIndex, currentStepIndex + 1);
+                // 将中间所有步骤标记为 "skipped"
+                for (int i = currentStepIndex + 1; i < nextStepIndex; i++) {
+                    TaskStep skippedStep = steps.get(i);
+                    skippedStep.setStatus("skipped");
+                    skippedStep.setStartTime(now);
+                    skippedStep.setEndTime(now);
+                    taskStepMapper.updateById(skippedStep);
+                    log.info("任务 {}, 步骤 {} 已被跳过。", taskId, skippedStep.getTitle());
+                }
+            }
+            
+            // 确保下一步索引在有效范围内
+            if (nextStepIndex >= steps.size()) {
+                log.error("计算出的下一步索引 {} 超出范围，任务流程可能配置错误。", nextStepIndex);
+                return false;
+            }
+
+            // 更新任务的当前步骤索引
+            task.setCurrentStep(nextStepIndex);
+            taskMapper.updateById(task);
+
+            // 将计算出的下一步骤标记为进行中
+            TaskStep nextStep = steps.get(nextStepIndex);
+            nextStep.setStatus("in-progress");
+            nextStep.setStartTime(now);
+            taskStepMapper.updateById(nextStep);
+            
+            log.info("任务 {} 从决策步骤推进到步骤 {}: {}", taskId, nextStepIndex, nextStep.getTitle());
+
+        } else {
+            // 不是决策步骤，执行默认的“下一步”逻辑
+            currentStep.setStatus("completed");
+            currentStep.setEndTime(now);
+            taskStepMapper.updateById(currentStep);
+
+            TaskStep nextStep = steps.get(currentStepIndex + 1);
+            nextStep.setStatus("in-progress");
+            nextStep.setStartTime(now);
+            taskStepMapper.updateById(nextStep);
+
+            task.setCurrentStep(currentStepIndex + 1);
+            taskMapper.updateById(task);
+
+            log.info("任务 {} 成功从步骤 {} 推进到步骤 {}", taskId, currentStepIndex, currentStepIndex + 1);
+        }
+
         return true;
     }
 

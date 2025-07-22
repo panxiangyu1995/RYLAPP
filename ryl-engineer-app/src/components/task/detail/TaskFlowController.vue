@@ -118,16 +118,16 @@
                 <div class="site-visit-options">
                 <button 
                   class="site-visit-btn need-visit" 
-                    @click="showVisitTimeSelector = true"
-                  :disabled="decidingSiteVisit"
+                  @click="showVisitTimeSelector = true"
+                  :class="{ 'selected': localDecision.requiresVisit === true }"
                 >
                   <i class="fas fa-address-card"></i>
                   需要上门
                 </button>
                 <button 
                   class="site-visit-btn no-visit" 
-                  @click="decideSiteVisit(false)"
-                  :disabled="decidingSiteVisit"
+                  @click="updateLocalDecision(false, null)"
+                  :class="{ 'selected': localDecision.requiresVisit === false }"
                 >
                   <i class="fas fa-video"></i>
                   远程协助
@@ -157,16 +157,14 @@
                     <button 
                       class="cancel-btn" 
                       @click="showVisitTimeSelector = false"
-                      :disabled="decidingSiteVisit"
                     >
                       取消
                     </button>
                     <button 
                       class="confirm-btn" 
-                      @click="confirmSiteVisit"
-                      :disabled="decidingSiteVisit"
+                      @click="confirmLocalSiteVisit"
                     >
-                      <i v-if="decidingSiteVisit" class="fas fa-spinner fa-spin"></i>
+                      <i v-if="loading" class="fas fa-spinner fa-spin"></i>
                       确认
                     </button>
                   </div>
@@ -190,7 +188,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, defineExpose } from 'vue'
 import { format } from 'date-fns'
 import http from '../../../api/http'
 import { useTaskFlowStore } from '../../../stores/taskFlow'
@@ -221,7 +219,7 @@ export default {
       default: false
     }
   },
-  emits: ['prev-step', 'next-step', 'show-add-record', 'show-step-records', 'decide-site-visit'],
+  emits: ['prev-step', 'next-step', 'show-add-record', 'show-step-records'],
   setup(props, { emit }) {
     const currentStepValue = ref(0)
     const loading = ref(false)
@@ -231,6 +229,34 @@ export default {
     const showVisitTimeSelector = ref(false)
     const visitDate = ref(format(new Date(), 'yyyy-MM-dd'))
     const visitTime = ref('09:00')
+
+    // 本地决策状态
+    const localDecision = ref({
+      requiresVisit: null,       // boolean | null
+      visitAppointmentTime: null // string | null
+    })
+
+    // 监听任务属性，初始化本地决策状态
+    watch(() => props.task, (newTask) => {
+      if (newTask) {
+        // 后端 1=true, 0=false, null=未定
+        const requiresVisit = newTask.needSiteVisit === 1 ? true : (newTask.needSiteVisit === 0 ? false : null)
+        localDecision.value = {
+          requiresVisit: requiresVisit,
+          visitAppointmentTime: newTask.visitAppointmentTime || null
+        }
+        // 如果有已保存的上门时间，则预填到选择器中
+        if (newTask.visitAppointmentTime) {
+          try {
+            const d = new Date(newTask.visitAppointmentTime)
+            visitDate.value = format(d, 'yyyy-MM-dd')
+            visitTime.value = format(d, 'HH:mm')
+          } catch(e) {
+            console.error("无法解析已保存的上门时间", e)
+          }
+        }
+      }
+    }, { immediate: true, deep: true })
     
     // 任务类型映射表 - 将API返回的类型映射到我们定义的类型
     const taskTypeMapping = {
@@ -307,9 +333,6 @@ export default {
              currentStep.value.type === 'site-visit-decision'
     })
     
-    // 是否正在决定上门需求
-    const decidingSiteVisit = ref(false)
-    
     // 获取步骤图标
     const getStepIcon = (step) => {
       if (step.status === 'completed') {
@@ -370,39 +393,19 @@ export default {
       emit('show-step-records', stepIndex)
     }
     
-    // 处理是否需要上门决策
-    const decideSiteVisit = async (requiresVisit, visitAppointmentTime = null) => {
-      if (!props.canManageFlow) return
-      
-      decidingSiteVisit.value = true
-      error.value = null
-      
-      try {
-        // 使用taskFlowStore处理上门决策
-        const success = await taskFlowStore.decideSiteVisit(requiresVisit, visitAppointmentTime)
-        
-        if (success) {
-          // 关闭时间选择器
-          showVisitTimeSelector.value = false
-          
-          // 触发上门决策事件
-          emit('decide-site-visit', currentStepIndex.value, requiresVisit, visitAppointmentTime)
-        } else {
-          throw new Error('更新上门决策失败')
-        }
-      } catch (err) {
-        console.error('处理上门决策失败:', err)
-        error.value = err.message || '处理上门决策时发生错误'
-      } finally {
-        decidingSiteVisit.value = false
+    // 更新本地决策状态
+    const updateLocalDecision = (requiresVisit, visitTime = null) => {
+      localDecision.value = {
+        requiresVisit: requiresVisit,
+        visitAppointmentTime: visitTime
       }
     }
-    
-    // 确认上门访问
-    const confirmSiteVisit = () => {
-      // 构建ISO格式的日期时间字符串
+
+    // 确认上门访问并更新本地状态
+    const confirmLocalSiteVisit = () => {
       const visitAppointmentTime = `${visitDate.value}T${visitTime.value}:00`
-      decideSiteVisit(true, visitAppointmentTime)
+      updateLocalDecision(true, visitAppointmentTime)
+      showVisitTimeSelector.value = false
     }
     
     // 过滤图片附件
@@ -535,6 +538,11 @@ export default {
       emit('prev-step')
     }
     
+    // 暴露本地状态给父组件
+    defineExpose({
+      localDecision
+    })
+    
     return {
       currentStepValue,
       loading,
@@ -545,7 +553,6 @@ export default {
       currentStepRecords,
       visibleStepRecords,
       isSiteVisitStep,
-      decidingSiteVisit,
       getStepIcon,
       getStepStatusText,
       formatDate,
@@ -553,7 +560,8 @@ export default {
       truncateText,
       showAddRecordForm,
       showStepRecords,
-      decideSiteVisit,
+      updateLocalDecision,
+      confirmLocalSiteVisit,
       getImageAttachments,
       getNonImageAttachments,
       getFileTypeIcon,
@@ -569,9 +577,9 @@ export default {
       showVisitTimeSelector,
       visitDate,
       visitTime,
-      confirmSiteVisit,
       prevStep,
-      nextStep
+      nextStep,
+      localDecision
     }
   }
 }
@@ -1093,6 +1101,7 @@ export default {
   gap: 8px;
   margin-top: 8px;
   margin-bottom: 8px;
+  position: relative;
 }
 
 .site-visit-btn {
@@ -1102,9 +1111,12 @@ export default {
   padding: 4px 8px;
   font-size: 12px;
   border-radius: 4px;
-  border: none;
+  border: 1px solid #d1d5db; /* Default border */
   cursor: pointer;
   transition: all 0.2s ease;
+  /* Default unselected state */
+  background-color: #f3f4f6;
+  color: #4b5563;
 }
 
 .site-visit-btn i {
@@ -1112,22 +1124,20 @@ export default {
   font-size: 10px;
 }
 
-.need-visit {
+.site-visit-btn:not(.selected):hover {
+  background-color: #e5e7eb;
+}
+
+.site-visit-btn.selected {
+  font-weight: 600;
   background-color: #e0f2fe;
   color: #0369a1;
+  border-color: #0284c7;
+  box-shadow: 0 0 5px rgba(2, 132, 199, 0.3);
 }
 
-.need-visit:hover {
+.site-visit-btn.selected:hover {
   background-color: #bae6fd;
-}
-
-.no-visit {
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
-.no-visit:hover {
-  background-color: #e5e7eb;
 }
 
 .site-visit-options {
@@ -1137,6 +1147,11 @@ export default {
 }
 
 .visit-time-selector {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  width: 280px;
   background-color: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;

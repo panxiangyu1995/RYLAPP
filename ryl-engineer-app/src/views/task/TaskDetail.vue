@@ -73,6 +73,7 @@
     <!-- 任务流程 -->
     <task-flow-controller
       v-if="task"
+      ref="taskFlowControllerRef"
       :task="task"
       :taskType="task.taskType"
       :canManageFlow="canManageFlow"
@@ -82,7 +83,6 @@
       @next-step="nextStep"
       @show-add-record="showAddRecord"
       @show-step-records="showStepRecords"
-      @decide-site-visit="handleSiteVisitDecision"
     />
 
     <!-- 协作工程师 -->
@@ -296,6 +296,9 @@ export default {
     // 任务状态历史
     const taskStatusHistory = ref([])
     
+    // 获取对TaskFlowController子组件的引用
+    const taskFlowControllerRef = ref(null)
+    
     // 权限相关变量
     const isAdmin = computed(() => authStore.hasRole('ROLE_ADMIN'))
     const canViewLocation = ref(true)
@@ -485,66 +488,58 @@ export default {
     }
     
     // 上一步
-    const prevStep = () => {
-      if (hasPrevStep.value) {
-        showDialog(
-          '确认返回上一步',
-          '您确定要返回上一步吗？',
-          async () => {
-            try {
-              // 使用taskFlowStore处理上一步逻辑
-              const success = await taskFlowStore.prevStep()
-              
-              if (success) {
-                // 滚动到当前步骤
-                scrollToActiveStep()
-                
-                // 发布步骤变更事件
-                eventBus.emit(TaskFlowEvents.STEP_CHANGED, {
-                  taskId: taskId.value,
-                  currentStepIndex: taskFlowStore.currentStepIndex,
-                  direction: 'prev'
-                })
-              }
-            } catch (err) {
-              console.error('返回上一步失败:', err)
-            }
-          }
-        )
+    const prevStep = async () => {
+      if (!hasPrevStep.value) return
+
+      // 检查即将返回到的步骤是否是决策步骤
+      const targetStepIndex = activeStepIndex.value - 1
+      const targetStep = taskFlowStore.flowSteps[targetStepIndex]
+      const isReturningToDecisionStep = targetStep?.stepKey === 'site-visit-decision'
+
+      let action
+      if (isReturningToDecisionStep) {
+        action = () => taskFlowStore.resetDecisionAndGoBack()
+      } else {
+        action = () => taskFlowStore.prevStep()
+      }
+
+      try {
+        await action()
+        // 成功后的UI反馈和事件总线调用可以在action内部处理
+      } catch (err) {
+        console.error('处理上一步操作失败:', err)
+        // 错误提示也由action内部处理
       }
     }
     
     // 下一步
-    const nextStep = () => {
-      if (hasNextStep.value) {
-        showDialog(
-          '确认进入下一步',
-          '您确定要进入下一步吗？',
-          async () => {
-            try {
-              // 使用taskFlowStore处理下一步逻辑
-              const success = await taskFlowStore.nextStep()
-              
-              if (success) {
-                // 滚动到当前步骤
-                scrollToActiveStep()
-                
-                // 发布步骤变更事件
-                eventBus.emit(TaskFlowEvents.STEP_CHANGED, {
-                  taskId: taskId.value,
-                  currentStepIndex: taskFlowStore.currentStepIndex,
-                  direction: 'next'
-                })
-              }
-            } catch (err) {
-              console.error('进入下一步失败:', err)
-            }
-          }
-        )
+    const nextStep = async () => {
+      if (!hasNextStep.value) return
+
+      const currentStep = taskFlowStore.currentStep
+      const isDecisionStep = currentStep?.stepKey === 'site-visit-decision'
+
+      let action
+      if (isDecisionStep) {
+        // 从子组件获取本地决策
+        const localDecision = taskFlowControllerRef.value?.localDecision
+        if (!localDecision) {
+          toast.error("无法获取决策状态，请重试")
+          return
+        }
+        action = () => taskFlowStore.commitDecisionAndProceed(localDecision)
+      } else {
+        action = () => taskFlowStore.nextStep()
+      }
+      
+      try {
+        await action()
+        // 成功后的UI反馈和事件总线调用可以在action内部处理
+      } catch (err) {
+        console.error('处理下一步操作失败:', err)
+        // 错误提示也由action内部处理
       }
     }
-    
-
     
     // 滚动到当前活动步骤
     const scrollToActiveStep = () => {
@@ -1026,10 +1021,10 @@ export default {
       showImagePreview,
       closePreview,
       editDeviceInfo,
-      handleSiteVisitDecision,
       showStepRecords,
       handleTaskStatusUpdate,
-      getStatusText
+      getStatusText,
+      taskFlowControllerRef
     }
   }
 }
