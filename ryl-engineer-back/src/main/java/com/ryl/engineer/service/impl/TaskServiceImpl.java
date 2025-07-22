@@ -240,6 +240,12 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                     newStep.setTaskId(taskId);
                     newStep.setStepIndex(stepDef.getStepIndex());
                     newStep.setTitle(stepDef.getTitle());
+
+                    // 如果是决策步骤，则设置特殊的stepKey
+                    if ("判断是否需要上门".equals(stepDef.getTitle())) {
+                        newStep.setStepKey("site-visit-decision");
+                    }
+
                     // 初始状态默认为 'pending', 第一个步骤为 'in-progress'
                     newStep.setStatus(stepDef.getStepIndex() == 0 ? "in-progress" : "pending");
                     newStep.setCreateTime(LocalDateTime.now());
@@ -284,6 +290,12 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                 newStep.setTaskId(taskId);
                 newStep.setStepIndex(stepDef.getStepIndex());
                 newStep.setTitle(stepDef.getTitle());
+
+                // 如果是决策步骤，则设置特殊的stepKey
+                if ("判断是否需要上门".equals(stepDef.getTitle())) {
+                    newStep.setStepKey("site-visit-decision");
+                }
+
                 // 初始状态默认为 'pending', 第一个步骤为 'in-progress'
                 newStep.setStatus(stepDef.getStepIndex() == 0 ? "in-progress" : "pending");
                 newStep.setCreateTime(LocalDateTime.now());
@@ -549,6 +561,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         List<TaskStepDTO> stepDTOs = steps.stream().map(step -> {
             TaskStepDTO dto = new TaskStepDTO();
             dto.setId(step.getId()); // 传递步骤的数据库ID
+            dto.setStepKey(step.getStepKey()); // 传递业务标识符
             dto.setIndex(step.getStepIndex());
             dto.setName(step.getTitle());
             dto.setStatus(step.getStatus());

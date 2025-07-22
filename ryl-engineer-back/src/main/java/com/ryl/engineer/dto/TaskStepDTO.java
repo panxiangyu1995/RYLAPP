@@ -20,6 +20,11 @@ public class TaskStepDTO {
     private Long id;
 
     /**
+     * 步骤的业务标识符，用于前端识别特殊步骤
+     */
+    private String stepKey;
+
+    /**
      * 步骤索引
      */
     private Integer index;

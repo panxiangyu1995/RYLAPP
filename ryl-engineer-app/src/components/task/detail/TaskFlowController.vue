@@ -114,7 +114,7 @@
             <!-- 步骤操作按钮 -->
             <div class="step-actions-container" v-if="canManageFlow">
               <!-- 是否需要上门选择（只在"判断是否需要上门"步骤且未完成时显示） -->
-              <div class="site-visit-decision-buttons" v-if="index === 1 && step.status !== 'completed' && step.id === 'site-visit-decision'">
+              <div class="site-visit-decision-buttons" v-if="step.stepKey === 'site-visit-decision' && step.status !== 'completed'">
                 <div class="site-visit-options">
                 <button 
                   class="site-visit-btn need-visit" 

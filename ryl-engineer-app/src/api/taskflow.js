@@ -72,17 +72,6 @@ export function downloadTaskFlowAttachment(fileId) {
 }
 
 /**
- * 决定任务是否需要上门
- * @param {string} taskId - 任务ID
- * @param {Object} data - 包含stepIndex、requiresVisit和visitAppointmentTime(可选)的数据对象
- * @returns {Promise<Object>} 响应结果
- */
-export function decideSiteVisit(taskId, data) {
-  console.log(`发送上门决策请求: taskId=${taskId}, data=`, data);
-  return http.post(`${BASE_URL}/${taskId}/decide-visit`, data)
-}
-
-/**
  * 设置任务报价
  * @param {string} taskId - 任务ID
  * @param {Object} data - 包含price和stepIndex的数据对象

@@ -1,6 +1,7 @@
 package com.ryl.engineer.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -31,10 +32,17 @@ public class TaskStep {
     /**
      * 步骤标题
      */
+    @TableField("title")
     private String title;
-    
+
     /**
-     * 状态（pending/in-progress/completed/skipped）
+     * 步骤的业务标识符，用于前端识别特殊步骤，如 'site-visit-decision'
+     */
+    @TableField("step_key")
+    private String stepKey;
+
+    /**
+     * 步骤状态 (pending, in-progress, completed, skipped)
      */
     private String status;
     

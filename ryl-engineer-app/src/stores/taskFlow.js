@@ -318,7 +318,7 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
         payload.visitAppointmentTime = visitAppointmentTime
       }
       
-      const response = await taskFlowApi.decideSiteVisit(currentTaskId.value, payload)
+      const response = await taskApi.decideSiteVisit(currentTaskId.value, payload)
       
       if (response && response.code === 200) {
         console.log(`成功决定${requiresVisit ? '需要' : '不需要'}上门`)

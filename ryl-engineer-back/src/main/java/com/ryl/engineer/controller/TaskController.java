@@ -126,7 +126,7 @@ public class TaskController {
             return Result.error(500, "服务器内部错误: " + e.getMessage());
         }
     }
-
+    
     /**
      * 获取任务状态历史
      * @param taskId 任务ID
