@@ -4,6 +4,10 @@
 
 科研仪器维修工程师APP是一款为科研仪器维修公司内部工程师设计的移动端应用，用于管理维修任务、客户信息、仓库管理等功能。本项目是基于高保真原型进行的前端工程开发。
 
+
+api:
+npm run generate-api
+
 ## 技术栈
 
 - Vue 3
@@ -307,3 +311,27 @@ npm run build
    - 在任务详情页面(TaskDetail.vue)中的客户名称添加了链接，点击可跳转到客户详情页面
    - 更新了客户详情页面(CustomerInfo.vue)，使其能够通过路由参数获取客户ID
    - 添加了客户数据加载逻辑，为后续API集成做准备
+
+---
+
+**【重要】环境变量配置说明**
+
+请在 `ryl-engineer-app` 根目录下手动创建以下两个文件：
+
+1.  **文件一：`.env.development`**
+    *   **用途**: 用于 `npm run dev` 本地开发环境。
+    *   **内容**:
+        ```
+        # Vite开发环境基础URL，使用代理
+        VITE_API_BASE_URL=/api
+        ```
+
+2.  **文件二：`.env.production`**
+    *   **用途**: 用于 `npm run build` 生产打包。请将 `your_lan_ip:8089` 替换为后端服务的实际公网IP或局域网IP。
+    *   **内容**:
+        ```
+        # Vite生产环境基础URL
+        VITE_API_BASE_URL=http://your_lan_ip:8089
+        ```
+
+创建完以上文件后，AI将继续完成后续的配置步骤。

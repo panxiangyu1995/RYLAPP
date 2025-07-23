@@ -3,7 +3,7 @@
 科研仪器维修公司内部工程师使用的后端系统。
 
    ```bash
-   mvn spring-boot:run
+   mvn spring-boot:run 
    ```
    mvn clean install -DskipTests构建跳过测试
 
@@ -36,9 +36,9 @@ ryl-engineer-back
 
 ## 开发环境
 
-- JDK 1.8+
+- JDK 17
 - Maven 3.9.9+
-- MySQL 5.7+
+
 
 ## 运行方法
 

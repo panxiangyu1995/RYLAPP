@@ -36,6 +36,12 @@ public class SecurityConfig {
             .httpBasic(basic -> basic.disable())
             // 请求授权
             .authorizeRequests(auth -> auth
+                // 明确地、无条件地允许所有与API文档相关的路径通过
+                .antMatchers(
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html"
+                ).permitAll()
                 // 允许后台管理和APP接口的公开访问，以便于当前阶段的测试
                 .antMatchers("/api/admin/**", "/api/app/**").permitAll()
                 // 允许所有请求，不需要认证

@@ -264,27 +264,9 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
     
     try {
       // 调用API完成当前步骤
-      const response = await taskFlowApi.updateTaskFlowStatus({
-        taskId: currentTaskId.value,
-        currentStepIndex: currentStepIndex.value,
-        nextStepIndex: currentStepIndex.value,
-        action: 'complete'
-      })
+      // 原有API "updateTaskFlowStatus" 不存在，适配为调用 nextStep
+      return await this.nextStep()
       
-      if (response && response.code === 200) {
-        console.log('成功完成当前步骤')
-        
-        // 重新获取最新的流程数据，确保前后端一致
-        await fetchTaskFlow(currentTaskId.value)
-        
-        toast.success('已完成当前步骤')
-        return true
-      } else {
-        console.error('完成当前步骤失败:', response ? response.message : '无响应')
-        error.value = response ? (response.message || '完成当前步骤失败') : '服务器无响应'
-        toast.error('完成当前步骤失败，请重试')
-        return false
-      }
     } catch (err) {
       console.error('完成当前步骤错误:', err)
       error.value = err.message || '完成当前步骤时发生错误'

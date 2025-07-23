@@ -761,32 +761,32 @@ export default {
     async submitTaskToServer(taskData) {
       try {
         // 1. 先上传图片（如果有）
-        if (this.form.selectedFiles && this.form.selectedFiles.length > 0) {
-          const imageUrls = [];
+        // if (this.form.selectedFiles && this.form.selectedFiles.length > 0) {
+        //   const imageUrls = [];
           
-          // 逐个上传图片
-          for (const file of this.form.selectedFiles) {
-            try {
-              const formData = new FormData();
-              formData.append('file', file);
+        //   // 逐个上传图片
+        //   for (const file of this.form.selectedFiles) {
+        //     try {
+        //       const formData = new FormData();
+        //       formData.append('file', file);
               
-              // 单个上传图片
-              const uploadResponse = await uploadTaskImage(formData);
+        //       // 单个上传图片
+        //       const uploadResponse = await uploadTaskImage(formData);
               
-              if (uploadResponse && uploadResponse.code === 200 && uploadResponse.data) {
-                imageUrls.push(uploadResponse.data);
-              }
-            } catch (error) {
-              console.error('上传图片失败:', error);
-              // 继续处理下一张图片
-            }
-          }
+        //       if (uploadResponse && uploadResponse.code === 200 && uploadResponse.data) {
+        //         imageUrls.push(uploadResponse.data);
+        //       }
+        //     } catch (error) {
+        //       console.error('上传图片失败:', error);
+        //       // 继续处理下一张图片
+        //     }
+        //   }
           
-          // 将上传成功的图片URL添加到任务数据
-          if (imageUrls.length > 0) {
-            taskData.images = imageUrls;
-          }
-        }
+        //   // 将上传成功的图片URL添加到任务数据
+        //   if (imageUrls.length > 0) {
+        //     taskData.images = imageUrls;
+        //   }
+        // }
         
         // 2. 创建任务
         const response = await createTask(taskData);

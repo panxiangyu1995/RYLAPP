@@ -1,5 +1,9 @@
 {
   "appId": "com.ryl.engineer.app",
   "appName": "瑞屹林工程师",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  }
 }

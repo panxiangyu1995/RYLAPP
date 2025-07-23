@@ -164,6 +164,7 @@ import { useTaskStore } from '../../../stores/task'
 // 导入API函数
 import { 
   getTaskDetail, 
+  getTaskFlow,
   uploadTaskAttachments,
   inviteCollaborator,
   removeCollaborator,
@@ -173,8 +174,6 @@ import {
 } from '../../../api/task'
 // 导入任务流程相关API函数
 import {
-  getTaskFlow,
-  updateTaskFlowStatus,
   addTaskFlowRecord,
   deleteTaskFlowRecord,
   downloadTaskFlowAttachment,

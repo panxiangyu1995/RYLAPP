@@ -166,7 +166,7 @@
 
 <script>
 import { useRouter, useRoute } from 'vue-router'
-import { getTaskFlow } from '../../api/taskflow'
+import { getTaskFlow } from '../../api/task'
 import { ref, onMounted } from 'vue'
 
 export default {

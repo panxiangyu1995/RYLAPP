@@ -3,7 +3,7 @@ import router from '../router'
 
 // 创建axios实例
 const http = axios.create({
-  baseURL: '', // 使用相对路径，依赖Vite的代理配置
+  baseURL: 'http://192.168.0.109:8089', // 测试用本地IP地址
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -43,6 +43,16 @@ http.interceptors.response.use(
   },
   error => {
     console.error('HTTP请求错误:', error)
+    
+    // 增加详细错误日志
+    console.error('详细错误信息:', {
+      message: error.message,
+      code: error.code,
+      url: error.config?.url,
+      baseURL: error.config?.baseURL,
+      method: error.config?.method,
+      timeout: error.config?.timeout
+    })
 
     if (error.response) {
       const { status, data } = error.response

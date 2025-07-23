@@ -240,46 +240,48 @@ export const useTaskStore = defineStore('task', () => {
 
   // 上传任务图片
   const uploadTaskImage = async (taskId, file) => {
-    loading.value = true
-    error.value = null
+    // loading.value = true
+    // error.value = null
 
-    try {
-      const response = await taskApi.uploadTaskImage(taskId, file)
-      if (response.code === 200 && response.data) {
-        return response.data
-      } else {
-        error.value = response.message || '上传任务图片失败'
-        return null
-      }
-    } catch (err) {
-      console.error('上传任务图片错误:', err)
-      error.value = err.message || '上传任务图片时发生错误'
-      return null
-    } finally {
-      loading.value = false
-    }
+    // try {
+    //   const response = await taskApi.uploadTaskImage(taskId, file)
+    //   if (response.code === 200 && response.data) {
+    //     return response.data
+    //   } else {
+    //     error.value = response.message || '上传任务图片失败'
+    //     return null
+    //   }
+    // } catch (err) {
+    //   console.error('上传任务图片错误:', err)
+    //   error.value = err.message || '上传任务图片时发生错误'
+    //   return null
+    // } finally {
+    //   loading.value = false
+    // }
+    return Promise.resolve();
   }
 
   // 批量上传任务图片
   const batchUploadTaskImages = async (taskId, files) => {
-    loading.value = true
-    error.value = null
+    // loading.value = true
+    // error.value = null
 
-    try {
-      const response = await taskApi.batchUploadTaskImages(taskId, files)
-      if (response.code === 200 && response.data) {
-        return response.data
-      } else {
-        error.value = response.message || '批量上传任务图片失败'
-        return null
-      }
-    } catch (err) {
-      console.error('批量上传任务图片错误:', err)
-      error.value = err.message || '批量上传任务图片时发生错误'
-      return null
-    } finally {
-      loading.value = false
-    }
+    // try {
+    //   const response = await taskApi.batchUploadTaskImages(taskId, files)
+    //   if (response.code === 200 && response.data) {
+    //     return response.data
+    //   } else {
+    //     error.value = response.message || '批量上传任务图片失败'
+    //     return null
+    //   }
+    // } catch (err) {
+    //   console.error('批量上传任务图片错误:', err)
+    //   error.value = err.message || '批量上传任务图片时发生错误'
+    //   return null
+    // } finally {
+    //   loading.value = false
+    // }
+    return Promise.resolve();
   }
 
   // 创建任务

@@ -5,6 +5,7 @@ import { fileURLToPath, URL } from 'node:url'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
+  base: './',  // 公共基础路径
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
