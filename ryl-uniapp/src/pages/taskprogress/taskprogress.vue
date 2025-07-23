@@ -65,7 +65,6 @@ const fetchTasks = async () => {
   
   try {
     // 确保在调用前 Pinia store 已准备好
-    await userStore.init();
     tasks.value = await taskStore.fetchTaskList();
   } catch (err) {
     error.value = err.message || '获取订单列表失败';

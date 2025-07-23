@@ -454,12 +454,6 @@ const submitTask = async () => {
     saveTaskToLocal(taskData, result);
 
     uni.hideLoading();
-        isSuccess.value = true;
-        submittedTask.value = {
-      taskId: result.taskId,
-      title: taskData.title,
-      taskType: taskData.taskType
-    };
 
     // 在任务创建成功后请求订阅消息
     try {
@@ -467,6 +461,13 @@ const submitTask = async () => {
     } catch (subError) {
       console.error('订阅消息请求失败:', subError);
       // 即使用户拒绝或请求失败，也不应中断主流程
+    } finally {
+      isSuccess.value = true;
+      submittedTask.value = {
+        taskId: result.taskId,
+        title: taskData.title,
+        taskType: taskData.taskType
+      };
     }
 
   } catch (error) {
