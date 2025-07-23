@@ -332,6 +332,15 @@ npm run build
         ```
         # Vite生产环境基础URL
         VITE_API_BASE_URL=http://your_lan_ip:8089
+
+        # 1. 重新构建Web应用
+npm run build
+
+# 2. 同步到Android项目
+npx cap sync android
+
+# 3. 在Android Studio中打开并运行
+npx cap open android
         ```
 
 创建完以上文件后，AI将继续完成后续的配置步骤。
