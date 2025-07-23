@@ -140,7 +140,7 @@ public class TaskController {
         
         if (result) {
             // 创建任务流程
-            taskFlowService.createTaskFlow(String.valueOf(task.getId()), task.getTaskType());
+            taskFlowService.createTaskFlow(task.getTaskId(), task.getTaskType());
             
             // 处理设备图片上传（如果有）
             if (taskDTO.getDevice() != null) {
