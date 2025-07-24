@@ -11,6 +11,7 @@ import com.ryl.engineer.service.FileService;
 import com.ryl.engineer.service.UserService;
 import com.ryl.engineer.util.JwtUtil;
 import com.ryl.engineer.util.PasswordUtil;
+import com.ryl.engineer.util.FileUrlConverter; // 新增
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private FileService fileService; // 注入统一的文件服务
+
+    @Autowired
+    private FileUrlConverter fileUrlConverter; // 新增
 
     @Override
     public ResponseDTO<Void> setSecurityPassword(String username, String newPassword) {
@@ -161,7 +165,7 @@ public class UserServiceImpl implements UserService {
             response.setMobile(user.getMobile());
             response.setDepartment(user.getDepartment());
             response.setLocation(user.getLocation());
-            response.setAvatar(user.getAvatar());
+            response.setAvatar(fileUrlConverter.toFullUrl(user.getAvatar())); // 修改
             response.setHasSecurityPassword(user.getSecurityPassword() != null && !user.getSecurityPassword().isEmpty());
             
             List<String> roles = userMapper.selectRolesByUserId(user.getId());
@@ -306,8 +310,8 @@ public class UserServiceImpl implements UserService {
         user.setUpdateTime(new java.util.Date()); // 修正为Date类型
         userMapper.update(user); // 使用自定义的update方法
 
-        // 5. 返回完整的URL给前端
-        return storageInfo.getFullUrl();
+        // 5. 返回相对路径，保持API一致性
+        return storageInfo.getRelativePath(); // 修改
     }
 
     @Override
@@ -345,7 +349,7 @@ public class UserServiceImpl implements UserService {
                 map.put("department", user.getDepartment());
                 map.put("location", user.getLocation());
                 map.put("mobile", user.getMobile());
-                map.put("avatar", user.getAvatar());
+                map.put("avatar", fileUrlConverter.toFullUrl(user.getAvatar())); // 修改
                 // 不返回密码等敏感信息
                 
                 result.add(map);

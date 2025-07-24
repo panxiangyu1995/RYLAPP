@@ -44,6 +44,7 @@ import com.ryl.engineer.mapper.UserMapper;
 import com.ryl.common.constant.TaskStatusConstants;
 import com.ryl.engineer.service.ChatService;
 import com.ryl.engineer.service.TaskService;
+import com.ryl.engineer.util.FileUrlConverter;
 import com.ryl.engineer.vo.EngineerSimpleVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -107,6 +108,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     
     @Autowired
     private ChatService chatService;
+
+    @Autowired
+    private FileUrlConverter fileUrlConverter;
     
     /**
      * 创建任务
@@ -434,7 +438,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         // 设置图片
         if (images != null && !images.isEmpty()) {
             taskDTO.setImageUrls(images.stream()
-                    .map(TaskImage::getImageUrl)
+                    .map(image -> fileUrlConverter.toFullUrl(image.getImageUrl()))
                     .collect(Collectors.toList()));
         }
 
@@ -444,7 +448,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                 AttachmentDTO.builder()
                     .id(attachment.getId())
                     .fileName(attachment.getFileName())
-                    .fileUrl(attachment.getFileUrl())
+                    .fileUrl(fileUrlConverter.toFullUrl(attachment.getFileUrl()))
                     .fileType(attachment.getFileType())
                     .fileSize(attachment.getFileSize())
                     .build()
@@ -461,7 +465,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                 User engineerUser = userMapper.selectById(e.getEngineerId());
                 if (engineerUser != null) {
                     engineerDTO.setName(engineerUser.getName());
-                    engineerDTO.setAvatar(engineerUser.getAvatar());
+                    engineerDTO.setAvatar(fileUrlConverter.toFullUrl(engineerUser.getAvatar()));
                     engineerDTO.setDepartment(engineerUser.getDepartment());
                     engineerDTO.setMobile(engineerUser.getMobile());
                 } else {
@@ -622,7 +626,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                         .eq(RecordImage::getRecordId, lastRecord.getId())
                 );
                 if (images != null && !images.isEmpty()) {
-                    dto.setImages(images.stream().map(RecordImage::getImageUrl).collect(Collectors.toList()));
+                    dto.setImages(images.stream().map(image -> fileUrlConverter.toFullUrl(image.getImageUrl())).collect(Collectors.toList()));
                 }
 
                 // 查询非图片附件
@@ -637,7 +641,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                         .map(a -> AttachmentDTO.builder()
                                 .id(a.getId())
                                 .fileName(a.getFileName())
-                                .fileUrl(a.getFileUrl())
+                                .fileUrl(fileUrlConverter.toFullUrl(a.getFileUrl()))
                                 .fileType(a.getFileType())
                                 .fileSize(a.getFileSize())
                                 .build())
@@ -1345,7 +1349,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                                 .eq(TaskImage::getTaskId, taskId)
                 );
                 List<String> previewImageUrls = taskImages.stream()
-                                                        .map(TaskImage::getImageUrl)
+                                                        .map(image -> fileUrlConverter.toFullUrl(image.getImageUrl())) // 修正
                                                         .limit(3) // 在Java流中限制数量
                                                         .collect(Collectors.toList());
 

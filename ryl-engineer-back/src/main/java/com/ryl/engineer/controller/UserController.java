@@ -16,6 +16,7 @@ import com.ryl.engineer.mapper.UserMapper;
 import com.ryl.engineer.service.UserService;
 import com.ryl.engineer.util.JwtUtil;
 import com.ryl.engineer.util.PasswordUtil;
+import com.ryl.engineer.util.FileUrlConverter;
 import com.ryl.engineer.utils.UserContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,9 @@ public class UserController {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private FileUrlConverter fileUrlConverter;
     
     /**
      * 用户登录
@@ -184,7 +188,7 @@ public class UserController {
         response.setMobile(user.getMobile());
         response.setDepartment(user.getDepartment());
         response.setLocation(user.getLocation());
-        response.setAvatar(user.getAvatar());
+        response.setAvatar(fileUrlConverter.toFullUrl(user.getAvatar()));
         response.setTechnicalCategory(user.getTechnicalCategory());
         response.setHasSecurityPassword(user.getSecurityPassword() != null && !user.getSecurityPassword().isEmpty());
         response.setRoles(userMapper.selectRolesByUserId(userId));
@@ -225,7 +229,7 @@ public class UserController {
         response.setMobile(user.getMobile());
         response.setDepartment(user.getDepartment());
         response.setLocation(user.getLocation());
-        response.setAvatar(user.getAvatar());
+        response.setAvatar(fileUrlConverter.toFullUrl(user.getAvatar()));
         response.setTechnicalCategory(user.getTechnicalCategory());
         // 在旧接口中也补充上角色和安全密码信息
         response.setHasSecurityPassword(user.getSecurityPassword() != null && !user.getSecurityPassword().isEmpty());
@@ -314,7 +318,7 @@ public class UserController {
         response.setMobile(currentUser.getMobile());
         response.setDepartment(currentUser.getDepartment());
         response.setLocation(currentUser.getLocation());
-        response.setAvatar(currentUser.getAvatar());
+        response.setAvatar(fileUrlConverter.toFullUrl(currentUser.getAvatar()));
         response.setTechnicalCategory(currentUser.getTechnicalCategory());
 
         return Result.success(response);

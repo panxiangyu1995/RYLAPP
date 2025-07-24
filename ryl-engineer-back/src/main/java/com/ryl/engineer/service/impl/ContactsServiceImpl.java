@@ -15,6 +15,7 @@ import com.ryl.engineer.mapper.ContactsGroupRelationMapper;
 import com.ryl.engineer.mapper.ContactsRelationMapper;
 import com.ryl.engineer.service.ContactsService;
 import com.ryl.engineer.service.UserService;
+import com.ryl.engineer.util.FileUrlConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -53,6 +54,9 @@ public class ContactsServiceImpl implements ContactsService {
     
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private FileUrlConverter fileUrlConverter;
     
     @Override
     public PageResult<ContactDTO> getContactsList(Long userId, Integer pageNum, Integer pageSize,
@@ -297,7 +301,7 @@ public class ContactsServiceImpl implements ContactsService {
             // 设置用户信息
             dto.setWorkId((String) getWorkId.invoke(relation));
             dto.setName((String) getName.invoke(relation));
-            dto.setAvatar((String) getAvatar.invoke(relation));
+            dto.setAvatar(fileUrlConverter.toFullUrl((String) getAvatar.invoke(relation)));
             dto.setDepartment((String) getDepartment.invoke(relation));
             dto.setMobile((String) getMobile.invoke(relation));
             dto.setStatus((Integer) getStatus.invoke(relation));
@@ -310,7 +314,7 @@ public class ContactsServiceImpl implements ContactsService {
                     if (user != null) {
                         dto.setWorkId(user.getWorkId());
                         dto.setName(user.getName());
-                        dto.setAvatar(user.getAvatar());
+                        dto.setAvatar(fileUrlConverter.toFullUrl(user.getAvatar()));
                         dto.setDepartment(user.getDepartment());
                         dto.setMobile(user.getMobile());
                         dto.setStatus(user.getStatus());
@@ -369,7 +373,7 @@ public class ContactsServiceImpl implements ContactsService {
         dto.setId(user.getId());
         dto.setWorkId(user.getWorkId());
         dto.setName(user.getName());
-        dto.setAvatar(user.getAvatar());
+        dto.setAvatar(fileUrlConverter.toFullUrl(user.getAvatar()));
         dto.setDepartment(user.getDepartment());
         dto.setMobile(user.getMobile());
         dto.setStatus(user.getStatus());
@@ -412,7 +416,13 @@ public class ContactsServiceImpl implements ContactsService {
                 throw new ServiceException("未找到指定工程师信息");
             }
             
-            result.put("engineer", engineerInfo.get(0));
+            // 手动转换头像URL
+            Map<String, Object> engineerDetails = engineerInfo.get(0);
+            if (engineerDetails.get("avatar") instanceof String) {
+                engineerDetails.put("avatar", fileUrlConverter.toFullUrl((String) engineerDetails.get("avatar")));
+            }
+
+            result.put("engineer", engineerDetails);
             
             // 2. 获取工程师的任务列表（进行中的任务）
             StringBuilder taskSql = new StringBuilder();
@@ -614,6 +624,11 @@ public class ContactsServiceImpl implements ContactsService {
                 String location = (String) engineer.getOrDefault("location", "未知");
                 if (location == null || location.isEmpty()) {
                     location = "未知";
+                }
+
+                // 转换头像URL
+                if (engineer.get("avatar") instanceof String) {
+                    engineer.put("avatar", fileUrlConverter.toFullUrl((String) engineer.get("avatar")));
                 }
                 
                 if (!result.containsKey(location)) {

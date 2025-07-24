@@ -16,6 +16,7 @@ import com.ryl.engineer.mapper.ChatMessageMapper;
 import com.ryl.engineer.mapper.ChatMessageReadMapper;
 import com.ryl.engineer.mapper.UserMapper;
 import com.ryl.engineer.service.ChatService;
+import com.ryl.engineer.util.FileUrlConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +49,9 @@ public class ChatServiceImpl implements ChatService {
     
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private FileUrlConverter fileUrlConverter;
 
     @Override
     public PageResult<ConversationDTO> getConversationList(Long userId, String type, Boolean isTaskRelated,
@@ -452,7 +456,7 @@ public class ChatServiceImpl implements ChatService {
         dto.setConversationId(conversation.getConversationId());
         dto.setType(conversation.getConversationType());
         dto.setName(conversation.getName());
-        dto.setAvatar(conversation.getAvatar());
+        dto.setAvatar(fileUrlConverter.toFullUrl(conversation.getAvatar()));
         dto.setIsTaskRelated(conversation.getIsTaskRelated() == 1);
         dto.setRelatedTaskId(conversation.getRelatedTaskId());
         dto.setCreateTime(conversation.getCreateTime());
@@ -472,7 +476,7 @@ public class ChatServiceImpl implements ChatService {
                 ConversationDTO.MemberInfo memberInfo = new ConversationDTO.MemberInfo();
                 memberInfo.setId(user.getId());
                 memberInfo.setName(user.getName());
-                memberInfo.setAvatar(user.getAvatar());
+                memberInfo.setAvatar(fileUrlConverter.toFullUrl(user.getAvatar()));
                 memberInfo.setRole(member.getRole());
                 memberInfos.add(memberInfo);
             }
@@ -546,7 +550,7 @@ public class ChatServiceImpl implements ChatService {
             MessageDTO.SenderInfo senderInfo = new MessageDTO.SenderInfo();
             senderInfo.setId(sender.getId());
             senderInfo.setName(sender.getName());
-            senderInfo.setAvatar(sender.getAvatar());
+            senderInfo.setAvatar(fileUrlConverter.toFullUrl(sender.getAvatar()));
             dto.setSender(senderInfo);
         }
         
