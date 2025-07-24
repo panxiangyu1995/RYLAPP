@@ -315,4 +315,23 @@ public class TaskController {
         return ResultVO.success(evaluation);
     }
     
+    /**
+     * 接收来自工程师APP的报价通知
+     */
+    @PostMapping("/notify-price")
+    public ResultVO<?> notifyPrice(@RequestBody Map<String, Object> payload) {
+        log.info("接收到报价通知请求: {}", payload);
+        try {
+            Long customerId = Long.valueOf(payload.get("customerId").toString());
+            String taskId = (String) payload.get("taskId");
+            java.math.BigDecimal price = new java.math.BigDecimal(payload.get("price").toString());
+
+            taskService.notifyCustomerOfPrice(customerId, taskId, price);
+
+            return ResultVO.success(null, "通知成功");
+        } catch (Exception e) {
+            log.error("处理报价通知失败", e);
+            return ResultVO.failed("处理报价通知失败: " + e.getMessage());
+        }
+    }
 } 

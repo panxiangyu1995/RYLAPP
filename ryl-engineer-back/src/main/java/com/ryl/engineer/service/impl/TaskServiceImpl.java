@@ -53,6 +53,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -526,6 +527,11 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         // 转换布尔值
         dto.setIsExternalTask(task.getIsExternalTask() != null && task.getIsExternalTask() == 1);
         dto.setNeedSiteVisit(task.getNeedSiteVisit() != null && task.getNeedSiteVisit() == 1);
+
+        // 显式设置报价和付款相关字段
+        dto.setPrice(task.getPrice());
+        dto.setPriceConfirmed(task.getPriceConfirmed());
+        dto.setIsPaid(task.getIsPaid());
         
         return dto;
     }
@@ -1393,6 +1399,60 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
             log.error("转出任务异常: taskId={}, engineerId={}, 错误信息={}", taskId, engineerId, e.getMessage(), e);
             throw e;
         }
+    }
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Value("${miniprogram.server.url}")
+    private String miniprogramServerUrl;
+
+    @Override
+    @Transactional
+    public boolean notifyCustomerOfPrice(String taskId) {
+        Task task = taskMapper.selectOne(Wrappers.<Task>lambdaQuery().eq(Task::getTaskId, taskId));
+        if (task == null || task.getCustomerId() == null) {
+            log.error("任务或客户ID为空，无法通知客户");
+            return false;
+        }
+
+        String url = miniprogramServerUrl + "/api/task/notify-price";
+        // Create request body
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("customerId", task.getCustomerId());
+        requestBody.put("taskId", task.getTaskId());
+        requestBody.put("price", task.getPrice());
+        
+        try {
+            restTemplate.postForObject(url, requestBody, String.class);
+            return true;
+        } catch (Exception e) {
+            log.error("调用小程序API失败", e);
+            return false;
+        }
+    }
+
+    @Override
+    @Transactional
+    public boolean confirmPayment(String taskId) {
+        Task task = taskMapper.selectOne(Wrappers.<Task>lambdaQuery().eq(Task::getTaskId, taskId));
+        if (task == null) {
+            log.error("任务不存在: {}", taskId);
+            return false;
+        }
+
+        task.setIsPaid(1);
+        taskMapper.updateById(task);
+
+        // 记录活动
+        TaskActivity activity = new TaskActivity();
+        activity.setTaskId(taskId);
+        activity.setActivityType("payment_confirmed");
+        activity.setContent("已确认收款");
+        activity.setCreateTime(new Date());
+        taskActivityMapper.insert(activity);
+        
+        return true;
     }
     
     /**

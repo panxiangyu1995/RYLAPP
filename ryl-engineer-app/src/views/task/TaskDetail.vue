@@ -83,6 +83,7 @@
       @next-step="nextStep"
       @show-add-record="showAddRecord"
       @show-step-records="showStepRecords"
+      @show-quote-dialog="showQuoteDialog = true"
     />
 
     <!-- 协作工程师 -->
@@ -193,6 +194,14 @@
       @close="closeTransferDialog"
       @transfer="confirmTransferTask"
     />
+
+    <!-- 报价对话框 -->
+    <quote-dialog
+      v-if="showQuoteDialog"
+      :taskId="taskId"
+      @close="closeQuoteDialog"
+      @submit="submitQuote"
+    />
   </div>
 </template>
 
@@ -221,6 +230,7 @@ import TaskAssignDialog from '../../components/task/dialogs/TaskAssignDialog.vue
 import ConfirmDialog from '../../components/task/dialogs/ConfirmDialog.vue'
 import ImagePreviewDialog from '../../components/task/dialogs/ImagePreviewDialog.vue'
 import TaskTransferDialog from '../../components/task/dialogs/TaskTransferDialog.vue'
+import QuoteDialog from '../../components/task/dialogs/QuoteDialog.vue'
 
 // 导入状态管理
 import { useTaskStore } from '../../stores/task'
@@ -235,6 +245,9 @@ import {
   removeCollaborator,
   transferTask,
   assignEngineers,
+  setTaskPrice,
+  notifyCustomer,
+  confirmPayment,
   BASE_URL
 } from '../../api/task'
 
@@ -270,7 +283,8 @@ export default {
     ConfirmDialog,
     ImagePreviewDialog,
     TaskSalesInfoCard,
-    TaskTransferDialog
+    TaskTransferDialog,
+    QuoteDialog
   },
   props: {
     id: {
@@ -292,6 +306,7 @@ export default {
     const error = ref(null)
     const showOptions = ref(false) // 任务选项菜单是否显示
     const toast = useToast()
+    const showQuoteDialog = ref(false)
 
     // 任务状态历史
     const taskStatusHistory = ref([])
@@ -952,6 +967,43 @@ export default {
         default: return '未知状态'
       }
     }
+
+    const closeQuoteDialog = () => {
+      showQuoteDialog.value = false;
+    };
+
+    const submitQuote = async (price) => {
+      console.log(`[TaskDetail] submitQuote called with price: ${price}`);
+      if (!taskId.value) {
+        toast.error('任务ID不存在，无法提交报价');
+        console.error('[TaskDetail] Missing taskId in submitQuote');
+        return;
+      }
+
+      try {
+        console.log(`[TaskDetail] Calling setTaskPrice API for taskId: ${taskId.value}`);
+        await setTaskPrice(taskId.value, {
+          price: price,
+          stepIndex: activeStepIndex.value,
+        });
+        toast.success('报价已提交');
+        
+        // 手动更新本地任务对象的报价，以便UI立即响应
+        if (task.value) {
+          task.value.price = price;
+          // 报价后，通常需要客户确认，所以重置确认状态
+          task.value.priceConfirmed = 0; 
+          console.log('[TaskDetail] Local task price updated to:', task.value.price);
+        }
+        
+        showQuoteDialog.value = false;
+        // 可以在后台异步加载详情，但UI已更新
+        loadTaskDetail();
+      } catch (err) {
+        console.error('提交报价失败:', err);
+        toast.error(err.response?.data?.message || '提交报价失败，请重试');
+      }
+    };
     
     return {
       task,
@@ -1024,7 +1076,10 @@ export default {
       showStepRecords,
       handleTaskStatusUpdate,
       getStatusText,
-      taskFlowControllerRef
+      taskFlowControllerRef,
+      showQuoteDialog,
+      closeQuoteDialog,
+      submitQuote,
     }
   }
 }

@@ -60,9 +60,9 @@ jwt:
 ryl:
   file:
     upload-path: D:/servers/ryl-engineer/uploads # 上传文件存储物理根路径
-    url-prefix: http://47.98.196.112:8089 # 对外访问的URL前缀, 注意这里不包含 /api/v1
+    url-prefix: http://localhost:8089 # 对外访问的URL前缀, 注意这里不包含 /api/v1http://localhost:8089
 
-# SpringDoc OpenAPI配置
+# SpringDoc OpenAPI配置http://47.98.196.112:8089
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -75,4 +75,15 @@ springdoc:
   default-produces-media-type: application/json
   paths-to-match:
     - /api/**
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.ryl.engineer.entity
+  global-config:
+    db-config:
+      id-type: auto
+
+miniprogram:
+  server:
+    url: http://localhost:8085
 

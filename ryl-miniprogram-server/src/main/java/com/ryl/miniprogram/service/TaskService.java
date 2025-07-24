@@ -68,4 +68,12 @@ public interface TaskService {
      * @param taskId 任务ID
      */
     void confirmPrice(String taskId);
+
+    /**
+     * 通知客户报价
+     * @param customerId 客户ID
+     * @param taskId 任务ID
+     * @param price 报价
+     */
+    void notifyCustomerOfPrice(Long customerId, String taskId, java.math.BigDecimal price);
 } 

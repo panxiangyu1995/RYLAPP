@@ -208,4 +208,9 @@ public class Task {
      * 客户是否已确认报价（0-未确认，1-已确认）
      */
     private Integer priceConfirmed;
+
+    /**
+     * 是否已付款（0-未付款，1-已付款）
+     */
+    private Integer isPaid;
 } 

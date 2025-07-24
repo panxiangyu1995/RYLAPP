@@ -366,6 +366,44 @@ public class TaskController {
     }
     
     /**
+     * 通知客户报价
+     * @param taskId 任务ID
+     * @return 是否成功
+     */
+    @PostMapping("/{taskId}/notify-customer")
+    public Result<Boolean> notifyCustomer(@PathVariable("taskId") String taskId) {
+        try {
+            boolean success = taskService.notifyCustomerOfPrice(taskId);
+            if (!success) {
+                return Result.error(400, "通知客户失败");
+            }
+            return Result.success("通知客户成功", true);
+        } catch (Exception e) {
+            log.error("通知客户异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
+            return Result.error(500, "通知客户异常: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 确认收款
+     * @param taskId 任务ID
+     * @return 是否成功
+     */
+    @PostMapping("/{taskId}/confirm-payment")
+    public Result<Boolean> confirmPayment(@PathVariable("taskId") String taskId) {
+        try {
+            boolean success = taskService.confirmPayment(taskId);
+            if (!success) {
+                return Result.error(400, "确认收款失败");
+            }
+            return Result.success("确认收款成功", true);
+        } catch (Exception e) {
+            log.error("确认收款异常: taskId={}, 错误信息={}", taskId, e.getMessage(), e);
+            return Result.error(500, "确认收款异常: " + e.getMessage());
+        }
+    }
+    
+    /**
      * 转出任务
      * @param taskId 任务ID
      * @param data 包含engineerId和note的数据

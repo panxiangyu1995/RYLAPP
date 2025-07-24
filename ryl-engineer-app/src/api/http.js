@@ -13,6 +13,7 @@ const http = axios.create({
 // 请求拦截器
 http.interceptors.request.use(
   config => {
+    console.log('%c[HTTP Request Interceptor] - Request Initiated', 'color: blue; font-weight: bold;', config.url);
     const token = localStorage.getItem('token')
     if (token) {
       // 修改认证头格式，确保与后端期望的格式一致

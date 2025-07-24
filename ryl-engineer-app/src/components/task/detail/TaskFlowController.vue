@@ -171,6 +171,49 @@
                 </div>
               </div>
               
+              <!-- 报价部分 -->
+              <div class="quote-section" v-if="isQuoteStep(step)">
+                <div class="quote-status">
+                  <span>报价金额：</span>
+                  <span v-if="task.price > 0" class="price-value">¥{{ task.price }}</span>
+                  <span v-else class="no-price">未设置报价</span>
+                  
+                  <span v-if="task.price > 0" :class="['status-tag', task.priceConfirmed ? 'confirmed' : 'unconfirmed']">
+                    {{ task.priceConfirmed ? '客户已确认' : '待确认' }}
+                  </span>
+                </div>
+
+                <div class="site-visit-options">
+                  <button class="site-visit-btn" @click="openQuoteDialog">
+                    <i class="fas fa-edit"></i>
+                    填写报价
+                  </button>
+                  <button class="site-visit-btn" @click="activeConfirmDialogIndex = index" :disabled="!task.price">
+                    <i class="fas fa-paper-plane"></i>
+                    发送给客户
+                  </button>
+                </div>
+              </div>
+
+              <!-- 内联发送报价确认对话框 -->
+              <div v-if="activeConfirmDialogIndex === index" class="send-quote-dialog-overlay" @click="activeConfirmDialogIndex = null">
+                <div class="send-quote-dialog" @click.stop>
+                  <div class="dialog-header">
+                    <h3 class="dialog-title">确认发送报价</h3>
+                  </div>
+                  <div class="dialog-content">
+                    <p class="dialog-message">您确定要将此报价发送给客户吗？此操作将通过小程序通知客户。</p>
+                  </div>
+                  <div class="dialog-actions">
+                    <button class="cancel-btn" @click="activeConfirmDialogIndex = null" :disabled="sendingQuote">取消</button>
+                    <button class="confirm-btn" @click="confirmAndSendQuote" :disabled="sendingQuote">
+                      <span v-if="sendingQuote" class="spinner"></span>
+                      <span v-else>确认</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <!-- 编辑记录按钮 -->
               <button 
                 class="step-record-btn" 
@@ -190,10 +233,12 @@
 <script>
 import { ref, computed, onMounted, watch, defineExpose } from 'vue'
 import { format } from 'date-fns'
+import { useToast } from 'vue-toastification'
 import http from '../../../api/http'
 import { useTaskFlowStore } from '../../../stores/taskFlow'
 import eventBus, { TaskFlowEvents } from '../../../utils/eventBus'
 import { TASK_TYPE_FLOW_STEPS } from '../../../constants/taskFlowTemplates'
+import { notifyCustomer } from '../../../api/task' 
 
 export default {
   name: 'TaskFlowController',
@@ -219,7 +264,7 @@ export default {
       default: false
     }
   },
-  emits: ['prev-step', 'next-step', 'show-add-record', 'show-step-records'],
+  emits: ['prev-step', 'next-step', 'show-add-record', 'show-step-records', 'show-quote-dialog', 'reload-task', 'send-quote'],
   setup(props, { emit }) {
     const currentStepValue = ref(0)
     const loading = ref(false)
@@ -257,6 +302,11 @@ export default {
         }
       }
     }, { immediate: true, deep: true })
+
+    // 诊断用的watch，监控task.price的变化
+    watch(() => props.task.price, (newPrice, oldPrice) => {
+      console.log(`%c[TaskFlowController] Detected price change: ${oldPrice} -> ${newPrice}`, 'color: green; font-weight: bold;');
+    });
     
     // 任务类型映射表 - 将API返回的类型映射到我们定义的类型
     const taskTypeMapping = {
@@ -383,6 +433,77 @@ export default {
       return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
     }
     
+    // 判断是否是报价步骤
+    const isQuoteStep = (step) => {
+      return step && step.title && step.title.includes('报价');
+    };
+
+    // 打开报价对话框
+    const openQuoteDialog = () => {
+      emit('show-quote-dialog');
+    }
+
+    // 发送报价给客户
+    const sendQuoteToCustomer = () => {
+      console.log('sendQuoteToCustomer in TaskFlowController called');
+      emit('send-quote');
+    };
+
+    // 调试用的发送报价函数
+    const debugSendQuote = () => {
+      console.log('Debug: Button clicked!');
+      alert('按钮已被点击，即将触发事件');
+      sendQuoteToCustomer();
+    };
+    
+    // 用于直接在组件内处理报价发送的状态和方法
+    const activeConfirmDialogIndex = ref(null); // <--- Changed from showSendQuoteConfirm
+    const sendingQuote = ref(false);
+    const sendError = ref('');
+    
+    // 确认并发送报价
+    const confirmAndSendQuote = async () => {
+      if (!props.task || !props.task.taskId) {
+        alert('无法获取任务ID，请刷新页面后重试');
+        return;
+      }
+      
+      try {
+        sendingQuote.value = true;
+        sendError.value = '';
+        
+        console.log('直接调用notifyCustomer API，taskId:', props.task.taskId);
+        const response = await notifyCustomer(props.task.taskId);
+        console.log('API响应:', response);
+        
+        if (response && response.code === 200) {
+          alert('报价已成功发送给客户');
+          activeConfirmDialogIndex.value = null; // <--- Changed
+          // 通知父组件刷新任务数据
+          emit('reload-task');
+        } else {
+          throw new Error(response?.message || '发送失败，请重试');
+        }
+      } catch (err) {
+        console.error('发送报价通知失败:', err);
+        sendError.value = err.message || '发送失败，请检查网络连接或联系管理员';
+        alert(sendError.value);
+      } finally {
+        sendingQuote.value = false;
+      }
+    };
+    
+    // 处理发送报价按钮点击
+    const handleSendQuoteClick = () => {
+      console.log('发送报价按钮被点击');
+      if (!props.task.price) {
+        console.log('任务没有报价，按钮应该被禁用');
+        return;
+      }
+      alert('发送报价按钮已点击，将显示确认对话框');
+      activeConfirmDialogIndex.value = currentStepIndex.value; // Use the correct index
+    };
+
     // 显示添加记录表单
     const showAddRecordForm = (stepIndex) => {
       emit('show-add-record', stepIndex)
@@ -518,11 +639,6 @@ export default {
       emit('prev-step')
     }
     
-    // 暴露本地状态给父组件
-    defineExpose({
-      localDecision
-    })
-    
     return {
       currentStepValue,
       loading,
@@ -559,10 +675,16 @@ export default {
       visitTime,
       prevStep,
       nextStep,
-      localDecision
+      localDecision,
+      isQuoteStep,
+      openQuoteDialog,
+      activeConfirmDialogIndex, // <--- Changed
+      sendingQuote,
+      confirmAndSendQuote,
+      handleSendQuoteClick
     }
-  }
-}
+  },
+};
 </script>
 
 <style scoped>
@@ -1197,15 +1319,154 @@ export default {
   color: white;
 }
 
-.cancel-btn:hover {
+.quote-section {
+  margin-top: 10px;
+}
+
+.quote-status {
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+.price-value {
+  font-weight: 600;
+  color: #10b981;
+}
+
+.no-price {
+  color: #f59e0b;
+}
+
+.status-tag {
+  margin-left: 10px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: white;
+}
+
+.confirmed {
+  background-color: #10b981;
+}
+
+.unconfirmed {
+  background-color: #f59e0b;
+}
+
+/* 发送报价确认对话框 */
+.send-quote-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+}
+
+.send-quote-dialog {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+}
+
+.send-quote-dialog h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.send-quote-dialog p {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.dialog-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #2563eb;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.dialog-error {
+  color: #dc3545;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: space-around;
+  gap: 10px;
+}
+
+.dialog-actions .cancel-btn {
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #4b5563;
+  padding: 8px 15px;
+}
+
+.dialog-actions .confirm-btn {
+  background-color: #2563eb;
+  border: 1px solid #1d4ed8;
+  color: white;
+  padding: 8px 15px;
+}
+
+/* 新的报价按钮样式 */
+.new-quote-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  transition: all 0.2s ease;
+}
+
+.new-quote-btn i {
+  margin-right: 4px;
+  font-size: 10px;
+}
+
+.new-quote-btn:hover:not(.disabled) {
   background-color: #e5e7eb;
 }
 
-.confirm-btn:hover {
-  background-color: #1d4ed8;
-}
-
-.cancel-btn:disabled, .confirm-btn:disabled {
+.new-quote-btn.disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

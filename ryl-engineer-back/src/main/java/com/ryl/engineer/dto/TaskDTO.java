@@ -179,4 +179,19 @@ public class TaskDTO {
      * 工程师列表
      */
     private List<EngineerDTO> engineers;
+
+    /**
+     * 报价
+     */
+    private BigDecimal price;
+
+    /**
+     * 客户是否确认报价
+     */
+    private Integer priceConfirmed;
+
+    /**
+     * 是否已付款
+     */
+    private Integer isPaid;
 } 

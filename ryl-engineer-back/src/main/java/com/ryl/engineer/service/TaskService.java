@@ -169,6 +169,20 @@ public interface TaskService {
     boolean transferTask(String taskId, Long engineerId, String note, Long operatorId, Boolean isOperatorAdmin);
     
     /**
+     * 通知客户报价
+     * @param taskId 任务ID
+     * @return 是否成功
+     */
+    boolean notifyCustomerOfPrice(String taskId);
+
+    /**
+     * 确认收款
+     * @param taskId 任务ID
+     * @return 是否成功
+     */
+    boolean confirmPayment(String taskId);
+
+    /**
      * 更新任务状态
      * @param taskId 任务ID
      * @param status 新状态

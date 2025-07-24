@@ -18,9 +18,14 @@
         <h2 class="task-title">{{ task.title || '无标题任务' }}</h2>
         <p class="task-id">任务编号：{{ task.taskId || '未分配' }}</p>
       </div>
-      <span :class="['task-status', getStatusClass(task.status)]" v-if="showStatus">
-        {{ getStatusText(task.status) }}
-      </span>
+      <div>
+        <span :class="['task-status', getStatusClass(task.status)]" v-if="showStatus">
+          {{ getStatusText(task.status) }}
+        </span>
+        <span :class="['payment-status', isPaid ? 'paid' : 'unpaid']" v-if="task.price > 0">
+          {{ isPaid ? '已付款' : '未付款' }}
+        </span>
+      </div>
     </div>
     
     <div class="task-details">
@@ -97,6 +102,9 @@ export default {
   computed: {
     hasEngineer() {
       return Array.isArray(this.task.engineers) && this.task.engineers.length > 0;
+    },
+    isPaid() {
+      return this.task.isPaid === 1;
     }
   },
   methods: {
@@ -278,6 +286,23 @@ export default {
 .status-completed {
   background-color: #d1fae5;
   color: #059669;
+}
+
+.payment-status {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 14px;
+  margin-left: 8px;
+}
+
+.paid {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.unpaid {
+  background-color: #fee2e2;
+  color: #ef4444;
 }
 
 .task-status.status-progress {

@@ -174,4 +174,20 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
             throw new BusinessException("价格确认失败");
         }
     }
+
+    @Override
+    @Transactional
+    public void notifyCustomerOfPrice(Long customerId, String taskId, java.math.BigDecimal price) {
+        Task task = taskMapper.selectByTaskId(taskId);
+        if (task == null) {
+            throw new BusinessException("任务不存在");
+        }
+
+        task.setPrice(price);
+        task.setPriceConfirmed(0); // 重置确认状态
+        task.setUpdateTime(new Date());
+        taskMapper.updateById(task);
+        
+        weChatNotificationService.sendQuoteReminderNotification(task);
+    }
 } 

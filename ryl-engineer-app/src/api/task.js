@@ -222,3 +222,31 @@ export function resetSiteVisitDecision(taskId) {
   console.log(`发送重置上门决策请求: taskId=${taskId}`);
   return http.post(`${BASE_URL}/${taskId}/reset-decision`);
 } 
+
+/**
+ * 设置任务报价
+ * @param {string} taskId - 任务ID
+ * @param {Object} data - 包含 price 和 stepIndex 的数据对象
+ * @returns {Promise<Object>} 响应结果
+ */
+export function setTaskPrice(taskId, data) {
+  return http.post(`${BASE_URL}/${taskId}/set-price`, data);
+}
+
+/**
+ * 通知客户报价
+ * @param {string} taskId - 任务ID
+ * @returns {Promise<Object>} 响应结果
+ */
+export function notifyCustomer(taskId) {
+  return http.post(`${BASE_URL}/${taskId}/notify-customer`);
+}
+
+/**
+ * 确认任务已付款
+ * @param {string} taskId - 任务ID
+ * @returns {Promise<Object>} 响应结果
+ */
+export function confirmPayment(taskId) {
+  return http.post(`${BASE_URL}/${taskId}/confirm-payment`);
+}
