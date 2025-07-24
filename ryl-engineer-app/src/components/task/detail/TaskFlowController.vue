@@ -53,25 +53,25 @@
                 <p class="record-text">{{ truncateText(record.content, 100) }}</p>
                 
                 <!-- 图片预览缩略图 -->
-                <div class="record-images-preview" v-if="record.attachments && getImageAttachments(record.attachments).length > 0">
+                <div class="record-images-preview" v-if="record.images && record.images.length > 0">
                   <div class="images-grid">
                     <div 
-                      v-for="(image, imgIndex) in getImageAttachments(record.attachments).slice(0, 3)"
+                      v-for="(imageUrl, imgIndex) in record.images.slice(0, 3)"
                       :key="imgIndex"
                       class="image-thumbnail-container"
                     >
-                      <img :src="image.url" :alt="image.name" class="image-thumbnail" />
+                      <img :src="imageUrl" alt="记录图片" class="image-thumbnail" />
                     </div>
-                    <div v-if="getImageAttachments(record.attachments).length > 3" class="more-images">
-                      +{{ getImageAttachments(record.attachments).length - 3 }}
+                    <div v-if="record.images.length > 3" class="more-images">
+                      +{{ record.images.length - 3 }}
                     </div>
                   </div>
                 </div>
                 
                 <!-- 附件信息 -->
-                <div class="record-attachments" v-if="record.attachments && record.attachments.length > 0">
+                <div class="record-attachments" v-if="(record.images && record.images.length > 0) || (record.attachments && record.attachments.length > 0)">
                   <i class="fas fa-paperclip"></i>
-                  <span>{{ record.attachments.length }}个附件</span>
+                  <span>{{ (record.images ? record.images.length : 0) + (record.attachments ? record.attachments.length : 0) }}个附件</span>
                 </div>
               </div>
             </div>
@@ -408,26 +408,6 @@ export default {
       showVisitTimeSelector.value = false
     }
     
-    // 过滤图片附件
-    const getImageAttachments = (attachments) => {
-      if (!attachments || !attachments.length) return []
-      
-      return attachments.filter(attachment => 
-        (attachment.type && attachment.type.startsWith('image/')) || 
-        (attachment.name && attachment.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
-      )
-    }
-    
-    // 过滤非图片附件
-    const getNonImageAttachments = (attachments) => {
-      if (!attachments || !attachments.length) return []
-      
-      return attachments.filter(attachment => 
-        !(attachment.type && attachment.type.startsWith('image/')) && 
-        !(attachment.name && attachment.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
-      )
-    }
-    
     // 获取文件类型图标
     const getFileTypeIcon = (type) => {
       if (!type) return 'fas fa-file'
@@ -562,8 +542,8 @@ export default {
       showStepRecords,
       updateLocalDecision,
       confirmLocalSiteVisit,
-      getImageAttachments,
-      getNonImageAttachments,
+      // getImageAttachments, // 移除
+      // getNonImageAttachments, // 移除
       getFileTypeIcon,
       formatFileSize,
       previewRecord,

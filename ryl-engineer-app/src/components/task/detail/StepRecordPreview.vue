@@ -41,38 +41,38 @@
         </div>
         
         <!-- 图片预览 -->
-        <div class="record-images" v-if="hasImages">
+        <div class="record-images" v-if="record.images && record.images.length > 0">
           <h4 class="section-title">图片</h4>
           <div class="image-grid">
             <div 
-              v-for="(image, index) in images" 
+              v-for="(imageUrl, index) in record.images" 
               :key="index"
               class="image-item"
-              @click="previewImage(image.url)"
+              @click="previewImage(imageUrl)"
             >
-              <img :src="image.url" :alt="image.name" class="thumbnail">
+              <img :src="imageUrl" alt="步骤图片" class="thumbnail">
             </div>
           </div>
         </div>
         
         <!-- 附件列表 -->
-        <div class="record-attachments" v-if="hasAttachments">
+        <div class="record-attachments" v-if="record.attachments && record.attachments.length > 0">
           <h4 class="section-title">附件</h4>
           <div class="attachment-list">
             <div 
-              v-for="(file, index) in nonImageAttachments" 
+              v-for="(file, index) in record.attachments" 
               :key="index"
               class="attachment-item"
             >
               <div class="attachment-icon">
-                <i :class="getFileTypeIcon(file.type)"></i>
+                <i :class="getFileTypeIcon(file.fileType)"></i>
               </div>
               <div class="attachment-info">
-                <div class="attachment-name">{{ file.name }}</div>
-                <div class="attachment-size">{{ formatFileSize(file.size) }}</div>
+                <div class="attachment-name">{{ file.fileName }}</div>
+                <div class="attachment-size">{{ formatFileSize(file.fileSize) }}</div>
               </div>
               <a 
-                :href="file.url" 
+                :href="file.fileUrl" 
                 download 
                 class="download-btn"
                 @click.stop
@@ -121,32 +121,6 @@ export default {
   setup(props, { emit }) {
     // 图片预览URL
     const previewImageUrl = ref(null)
-    
-    // 过滤出图片附件
-    const images = computed(() => {
-      if (!props.record.attachments || !props.record.attachments.length) return []
-      
-      return props.record.attachments.filter(attachment => 
-        attachment.type.startsWith('image/') || 
-        attachment.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)
-      )
-    })
-    
-    // 过滤出非图片附件
-    const nonImageAttachments = computed(() => {
-      if (!props.record.attachments || !props.record.attachments.length) return []
-      
-      return props.record.attachments.filter(attachment => 
-        !attachment.type.startsWith('image/') && 
-        !attachment.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)
-      )
-    })
-    
-    // 是否有图片
-    const hasImages = computed(() => images.value.length > 0)
-    
-    // 是否有附件
-    const hasAttachments = computed(() => nonImageAttachments.value.length > 0)
     
     // 获取状态文本
     const getStatusText = (status) => {
@@ -246,10 +220,6 @@ export default {
     
     return {
       previewImageUrl,
-      images,
-      nonImageAttachments,
-      hasImages,
-      hasAttachments,
       getStatusText,
       formatDateTime,
       formatTime,

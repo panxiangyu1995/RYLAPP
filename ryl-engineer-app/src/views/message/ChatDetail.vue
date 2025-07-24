@@ -60,6 +60,12 @@
                 </button>
               </div>
             </div>
+            <!-- 任务卡片消息 -->
+            <message-task-card 
+              v-else-if="getParsedContent(message).isTaskCard"
+              :content="getParsedContent(message).content"
+              @preview-image="previewImage"
+            />
             <!-- 文本消息 -->
             <div v-else-if="message.contentType === 'text'" class="text-message">
               {{ message.content }}
@@ -145,13 +151,15 @@ import { getMessageList, sendMessage, markMessageRead, uploadMessageImage } from
 import { acceptTask, rejectTask } from '@/api/task'
 import RejectReasonDialog from '@/components/task/dialogs/RejectReasonDialog.vue'
 import TaskAssignDialog from '@/components/task/dialogs/TaskAssignDialog.vue'
+import MessageTaskCard from '@/components/chat/MessageTaskCard.vue'
 
 
 export default {
   name: 'ChatDetailPage',
   components: {
     RejectReasonDialog,
-    TaskAssignDialog
+    TaskAssignDialog,
+    MessageTaskCard
   },
   data() {
     return {
@@ -456,17 +464,22 @@ export default {
     },
 
     getParsedContent(message) {
-      if (message.contentType === 'text') {
+      if (message.contentType === 'text' || message.contentType === null) { // Handle system messages where contentType might be null
         try {
           const content = JSON.parse(message.content);
-          if (content && typeof content === 'object' && content.actions) {
-            return { ...content, isInteractive: true };
+          if (content && typeof content === 'object') {
+            if (content.type === 'task_card') {
+              return { content, isTaskCard: true, isInteractive: false };
+            }
+            if (content.actions) {
+              return { ...content, isInteractive: true, isTaskCard: false };
+            }
           }
         } catch (e) {
           // 不是JSON，是普通文本
         }
       }
-      return { text: message.content, isInteractive: false };
+      return { text: message.content, isInteractive: false, isTaskCard: false };
     },
     async handleAction(action) {
         if (!action || !action.type) return;

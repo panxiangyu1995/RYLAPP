@@ -68,6 +68,11 @@ public class TaskStepDTO {
      * 步骤相关图片URL数组
      */
     private List<String> images;
+
+    /**
+     * 步骤相关非图片附件列表
+     */
+    private List<AttachmentDTO> attachments;
     
     /**
      * 步骤表单数据

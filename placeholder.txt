@@ -1,0 +1,71 @@
+[MODE: PLAN]
+
+好的，所有必要的验证工作都已完成，我们对系统的当前状态和您的期望之间的差距有了清晰且经过代码证实的认识。现在，我将为您制定一份详尽的技术实施计划，以将系统架构调整到您期望的状态。
+
+**核心目标：** 在工程师APP后端（`ryl-engineer-back`）中，实现任务流程工作记录的图片和附件按类型分离存储到 `record_image` 和 `record_file` 表中。
+
+---
+
+**实施清单：**
+
+**第一部分：后端 (`ryl-engineer-back`) 数据库与实体层修改**
+
+1.  **创建 `record_image` 表的Flyway迁移脚本**
+    *   **文件路径**: `ryl-engineer-back/src/main/resources/db/migration/V1.4__Create_record_image_table.sql`
+    *   **操作**: 新建一个SQL文件。
+    *   **内容**: 编写`CREATE TABLE`语句来创建`record_image`表。字段将包括`id` (主键,自增), `record_id` (关联`step_record`表的ID), `image_url`, `file_name`, `file_size`, `create_time`等，确保与小程序后端的`RecordImage`实体兼容。
+
+2.  **创建 `RecordImage.java` 实体类**
+    *   **文件路径**: `ryl-engineer-back/src/main/java/com/ryl/engineer/entity/RecordImage.java`
+    *   **操作**: 新建一个Java文件。
+    *   **内容**: 创建该实体类，使用`@TableName("record_image")`注解，并定义与新表`record_image`完全匹配的字段。
+
+3.  **创建 `RecordImageMapper.java` 接口**
+    *   **文件路径**: `ryl-engineer-back/src/main/java/com/ryl/engineer/mapper/RecordImageMapper.java`
+    *   **操作**: 新建一个Java接口。
+    *   **内容**: 创建该Mapper接口，并使其继承`BaseMapper<RecordImage>`，以获得对`record_image`表的CRUD能力。
+
+**第二部分：后端 (`ryl-engineer-back`) 服务层逻辑修改**
+
+4.  **改造 `TaskFlowServiceImpl` 的写入逻辑**
+    *   **文件路径**: `ryl-engineer-back/src/main/java/com/ryl/engineer/service/impl/TaskFlowServiceImpl.java`
+    *   **操作**: 修改现有文件。
+    *   **核心改动**:
+        *   在该Service中注入新创建的 `RecordImageMapper`。
+        *   定位到 `addTaskFlowRecord` 方法中处理 `MultipartFile[] files` 的循环。
+        *   在循环内部，增加文件类型判断逻辑：
+            *   **如果** `file.getContentType()` 以 `"image/"` 开头，则创建一个`RecordImage`实体，填充数据，并调用 `recordImageMapper.insert()` 将其存入`record_image`表。
+            *   **否则**，保持现有逻辑，创建一个`TaskStepAttachment`实体，并调用`taskStepAttachmentMapper.insert()`将其存入`record_file`表。
+
+5.  **改造 `TaskServiceImpl` 的读取逻辑**
+    *   **文件路径**: `ryl-engineer-back/src/main/java/com/ryl/engineer/service/impl/TaskServiceImpl.java`
+    *   **操作**: 修改现有文件。
+    *   **核心改动**:
+        *   在该Service中注入 `RecordImageMapper`。
+        *   定位到 `getTaskFlow` 方法中查询并构建每个步骤DTO的逻辑部分。
+        *   在查询到每条工作记录（`TaskStepRecord`）的`lastRecord`后，**修改其附件查询逻辑**：
+            *   **保留**对 `taskStepAttachmentMapper.selectList(...)` 的调用，以获取所有非图片附件，并将它们放入一个`files`列表中。
+            *   **新增**对 `recordImageMapper.selectList(...)` 的调用，根据`lastRecord.getId()`查询`record_image`表，获取所有图片附件，并将它们的URL放入`images`列表中。
+        *   确保返回给前端的`TaskStepDTO`中的`images`字段（图片URL列表）和另一个新字段（例如`attachments`，用于存放非图片附件）被正确填充。
+
+6.  **调整 `TaskStepDTO.java` 数据结构**
+    *   **文件路径**: `ryl-engineer-back/src/main/java/com/ryl/engineer/dto/TaskStepDTO.java`
+    *   **操作**: 修改现有文件。
+    *   **核心改动**:
+        *   保留现有的 `private List<String> images;` 字段，专门用于存放图片URL。
+        *   新增一个字段 `private List<AttachmentDTO> attachments;`，用于存放非图片附件的详细信息（文件名、URL、大小等）。这将使前端能清晰地区分和处理两类文件。
+
+**第三部分：前端 (`ryl-engineer-app`) 逻辑调整**
+
+7.  **调整 `TaskFlowController.vue` 和 `StepRecordPreview.vue`**
+    *   **文件路径**: 
+        *   `ryl-engineer-app/src/components/task/detail/TaskFlowController.vue`
+        *   `ryl-engineer-app/src/components/task/detail/StepRecordPreview.vue`
+    *   **操作**: 修改现有文件。
+    *   **核心改动**:
+        *   由于后端现在会返回分离好的`images`（图片URL列表）和`attachments`（非图片附件对象列表），前端不再需要自己进行文件类型过滤。
+        *   修改组件的模板，使其直接绑定到从后端获取的 `record.images` 和 `record.attachments` 字段上进行渲染，移除或简化 `getImageAttachments`、`images`（计算属性）、`nonImageAttachments`（计算属性）等多余的前端过滤逻辑。
+
+---
+
+这个计划将从数据库层面开始，逐层向上修改，直至前端展示，以确保数据流的每一步都符合您期望的“图片与附件分离”的架构原则。 

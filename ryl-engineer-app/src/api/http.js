@@ -3,7 +3,7 @@ import router from '../router'
 
 // 创建axios实例
 const http = axios.create({
-  baseURL: 'http://47.98.196.112:8089', // 测试用本地IP地址
+  baseURL: 'http://localhost:8089', // 测试用本地IP地址47.98.196.112:8089
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'

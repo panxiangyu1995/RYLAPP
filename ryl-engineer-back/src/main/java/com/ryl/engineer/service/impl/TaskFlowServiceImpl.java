@@ -6,10 +6,12 @@ import com.ryl.engineer.entity.Task;
 import com.ryl.engineer.entity.TaskStep;
 import com.ryl.engineer.entity.TaskStepAttachment;
 import com.ryl.engineer.entity.TaskStepRecord;
+import com.ryl.engineer.entity.RecordImage;
 import com.ryl.engineer.mapper.TaskMapper;
 import com.ryl.engineer.mapper.TaskStepAttachmentMapper;
 import com.ryl.engineer.mapper.TaskStepMapper;
 import com.ryl.engineer.mapper.TaskStepRecordMapper;
+import com.ryl.engineer.mapper.RecordImageMapper;
 import com.ryl.engineer.service.FileService;
 import com.ryl.engineer.service.TaskFlowService;
 import com.ryl.engineer.utils.UserContextHolder;
@@ -31,17 +33,20 @@ public class TaskFlowServiceImpl implements TaskFlowService {
     private final FileService fileService;
     private final TaskStepRecordMapper taskStepRecordMapper;
     private final TaskStepAttachmentMapper taskStepAttachmentMapper;
+    private final RecordImageMapper recordImageMapper; // 新增
     private final TaskMapper taskMapper;
     private final TaskStepMapper taskStepMapper;
 
     public TaskFlowServiceImpl(FileService fileService,
                                TaskStepRecordMapper taskStepRecordMapper,
                                TaskStepAttachmentMapper taskStepAttachmentMapper,
+                               RecordImageMapper recordImageMapper, // 新增
                                TaskMapper taskMapper,
                                TaskStepMapper taskStepMapper) {
         this.fileService = fileService;
         this.taskStepRecordMapper = taskStepRecordMapper;
         this.taskStepAttachmentMapper = taskStepAttachmentMapper;
+        this.recordImageMapper = recordImageMapper; // 新增
         this.taskMapper = taskMapper;
         this.taskStepMapper = taskStepMapper;
     }
@@ -70,15 +75,29 @@ public class TaskFlowServiceImpl implements TaskFlowService {
                 // 3. 调用统一文件服务上传文件
                 FileStorageInfo storageInfo = fileService.uploadFile(file, "task-attachments");
 
-                // 4. 创建并保存附件记录
-                TaskStepAttachment attachment = new TaskStepAttachment();
-                attachment.setRecordId(recordId);
-                attachment.setFileName(storageInfo.getOriginalFileName());
-                attachment.setFileUrl(storageInfo.getRelativePath()); // 存储相对路径
-                attachment.setFileType(storageInfo.getFileType());
-                attachment.setFileSize(storageInfo.getFileSize());
-                attachment.setCreateTime(LocalDateTime.now());
-                taskStepAttachmentMapper.insert(attachment);
+                // 4. 根据文件类型分离存储
+                String contentType = file.getContentType();
+                if (contentType != null && contentType.startsWith("image/")) {
+                    // 如果是图片，存入 record_image 表
+                    RecordImage image = new RecordImage();
+                    image.setRecordId(recordId);
+                    image.setTaskId(taskId);
+                    image.setImageUrl(storageInfo.getRelativePath());
+                    image.setCreateTime(LocalDateTime.now());
+                    recordImageMapper.insert(image);
+                    log.info("工作记录图片已保存到record_image表, Record ID: {}", recordId);
+                } else {
+                    // 如果是其他文件，存入 record_file 表
+                    TaskStepAttachment attachment = new TaskStepAttachment();
+                    attachment.setRecordId(recordId);
+                    attachment.setFileName(storageInfo.getOriginalFileName());
+                    attachment.setFileUrl(storageInfo.getRelativePath()); // 存储相对路径
+                    attachment.setFileType(storageInfo.getFileType());
+                    attachment.setFileSize(storageInfo.getFileSize());
+                    attachment.setCreateTime(LocalDateTime.now());
+                    taskStepAttachmentMapper.insert(attachment);
+                    log.info("工作记录附件已保存到record_file表, Record ID: {}", recordId);
+                }
             }
         }
     }

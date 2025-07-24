@@ -136,9 +136,9 @@ public class TaskDTO {
     private Integer quantity;
     
     /**
-     * 附件信息
+     * 附件信息(旧字段，将由attachments列表替代)
      */
-    private String attachments;
+    // private String attachments;
     
     /**
      * 验证类别
@@ -168,7 +168,12 @@ public class TaskDTO {
     /**
      * 任务图片URL列表
      */
-    private List<String> images;
+    private List<String> imageUrls;
+    
+    /**
+     * 任务附件列表
+     */
+    private List<AttachmentDTO> attachments;
     
     /**
      * 工程师列表

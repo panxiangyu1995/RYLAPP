@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.dto.TaskDetailDTO;
+import com.ryl.engineer.dto.AttachmentDTO;
 import com.ryl.engineer.dto.EngineerDTO;
 import com.ryl.engineer.dto.TaskDTO;
 import com.ryl.engineer.dto.TaskFlowDTO;
@@ -18,19 +20,23 @@ import com.ryl.engineer.dto.request.TaskStepUpdateRequest;
 import com.ryl.engineer.entity.Task;
 import com.ryl.engineer.entity.TaskEngineer;
 import com.ryl.engineer.entity.TaskImage;
+import com.ryl.engineer.entity.TaskAttachment;
 import com.ryl.engineer.entity.TaskStep;
 import com.ryl.engineer.entity.TaskActivity;
 import com.ryl.engineer.entity.TaskStepAttachment;
 import com.ryl.engineer.entity.TaskStepRecord;
+import com.ryl.engineer.entity.RecordImage;
 import com.ryl.engineer.entity.TaskTransferHistory;
 import com.ryl.engineer.entity.TaskStatusHistory;
 import com.ryl.engineer.entity.User;
 import com.ryl.engineer.mapper.TaskEngineerMapper;
 import com.ryl.engineer.mapper.TaskImageMapper;
 import com.ryl.engineer.mapper.TaskMapper;
+import com.ryl.engineer.mapper.TaskAttachmentMapper;
 import com.ryl.engineer.mapper.TaskStepAttachmentMapper;
 import com.ryl.engineer.mapper.TaskStepMapper;
 import com.ryl.engineer.mapper.TaskStepRecordMapper;
+import com.ryl.engineer.mapper.RecordImageMapper;
 import com.ryl.engineer.mapper.TaskActivityMapper;
 import com.ryl.engineer.mapper.TaskTransferHistoryMapper;
 import com.ryl.engineer.mapper.TaskStatusHistoryMapper;
@@ -67,6 +73,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     private TaskMapper taskMapper;
     
     @Autowired
+    private TaskAttachmentMapper taskAttachmentMapper;
+
+    @Autowired
     private TaskStepMapper taskStepMapper;
 
     @Autowired
@@ -74,6 +83,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
 
     @Autowired
     private TaskStepAttachmentMapper taskStepAttachmentMapper;
+
+    @Autowired
+    private RecordImageMapper recordImageMapper;
     
     @Autowired
     private TaskImageMapper taskImageMapper;
@@ -186,7 +198,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
             task.setDeviceBrand(request.getDeviceBrand());
             task.setDescription(request.getDescription());
             task.setQuantity(request.getQuantity());
-            task.setAttachments(request.getAttachments());
+            // task.setAttachments(request.getAttachments()); // 旧字段，不再使用
             
             // 7. 设置任务类型特定字段
             if ("verification".equals(taskType)) {
@@ -407,6 +419,11 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         
         // 查询任务图片
         List<TaskImage> images = taskImageMapper.findByTaskId(taskId);
+
+        // 查询任务附件
+        List<TaskAttachment> attachments = taskAttachmentMapper.selectList(
+                Wrappers.<TaskAttachment>lambdaQuery().eq(TaskAttachment::getTaskId, taskId)
+        );
         
         // 查询任务工程师
         List<TaskEngineer> engineers = taskEngineerMapper.findByTaskId(taskId);
@@ -416,9 +433,22 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         
         // 设置图片
         if (images != null && !images.isEmpty()) {
-            taskDTO.setImages(images.stream()
+            taskDTO.setImageUrls(images.stream()
                     .map(TaskImage::getImageUrl)
                     .collect(Collectors.toList()));
+        }
+
+        // 设置附件
+        if (attachments != null && !attachments.isEmpty()) {
+            taskDTO.setAttachments(attachments.stream().map(attachment ->
+                AttachmentDTO.builder()
+                    .id(attachment.getId())
+                    .fileName(attachment.getFileName())
+                    .fileUrl(attachment.getFileUrl())
+                    .fileType(attachment.getFileType())
+                    .fileSize(attachment.getFileSize())
+                    .build()
+            ).collect(Collectors.toList()));
         }
         
         // 设置工程师信息
@@ -585,26 +615,34 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
             if (lastRecord != null) {
                 dto.setRecordContent(lastRecord.getContent());
                 
-                // 7. 查询与该记录关联的所有附件
+                // 7. 分别查询与该记录关联的图片和附件
+                // 查询图片
+                List<RecordImage> images = recordImageMapper.selectList(
+                    Wrappers.<RecordImage>lambdaQuery()
+                        .eq(RecordImage::getRecordId, lastRecord.getId())
+                );
+                if (images != null && !images.isEmpty()) {
+                    dto.setImages(images.stream().map(RecordImage::getImageUrl).collect(Collectors.toList()));
+                }
+
+                // 查询非图片附件
                 List<TaskStepAttachment> attachments = taskStepAttachmentMapper.selectList(
                     Wrappers.<TaskStepAttachment>lambdaQuery()
                             .eq(TaskStepAttachment::getRecordId, lastRecord.getId())
                 );
                 
                 if (attachments != null && !attachments.isEmpty()) {
-                    // 根据文件类型区分图片和其他文件
-                    List<String> imageUrls = attachments.stream()
-                        .filter(a -> isImage(a.getFileType()))
-                        .map(TaskStepAttachment::getFileUrl)
-                        .collect(Collectors.toList());
-                    dto.setImages(imageUrls);
-
                     // (如果TaskStepDTO需要)可以同样方式填充其他文件
-                    // List<AttachmentDTO> fileDTOs = attachments.stream()
-                    //     .filter(a -> !isImage(a.getFileType()))
-                    //     .map(a -> new AttachmentDTO(a.getFileName(), a.getFileUrl()))
-                    //     .collect(Collectors.toList());
-                    // dto.setFiles(fileDTOs);
+                    List<AttachmentDTO> fileDTOs = attachments.stream()
+                        .map(a -> AttachmentDTO.builder()
+                                .id(a.getId())
+                                .fileName(a.getFileName())
+                                .fileUrl(a.getFileUrl())
+                                .fileType(a.getFileType())
+                                .fileSize(a.getFileSize())
+                                .build())
+                        .collect(Collectors.toList());
+                    dto.setAttachments(fileDTOs);
                 }
             }
             
@@ -652,6 +690,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         return flowDTO;
     }
 
+    /* isImage方法不再需要，因为后端已经分离了数据
     private boolean isImage(String fileType) {
         if (fileType == null || fileType.isEmpty()) {
             return false;
@@ -661,6 +700,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                lowerCaseType.equals("png") || lowerCaseType.equals("gif") ||
                lowerCaseType.equals("bmp");
     }
+    */
     
     /**
      * 获取任务状态历史
@@ -804,9 +844,10 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         if (taskDTO.getQuantity() != null) {
             task.setQuantity(taskDTO.getQuantity());
         }
-        if (taskDTO.getAttachments() != null) {
-            task.setAttachments(taskDTO.getAttachments());
-        }
+        // 旧的 attachments 字段不再更新
+        // if (taskDTO.getAttachments() != null) {
+        //     task.setAttachments(taskDTO.getAttachments());
+        // }
         if (taskDTO.getNeedSiteVisit() != null) {
             task.setNeedSiteVisit(taskDTO.getNeedSiteVisit() ? 1 : 0);
         }
@@ -815,14 +856,14 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         taskMapper.updateById(task);
         
         // 4. 如果有图片更新，则更新图片
-        if (taskDTO.getImages() != null && !taskDTO.getImages().isEmpty()) {
+        if (taskDTO.getImageUrls() != null && !taskDTO.getImageUrls().isEmpty()) {
             // 删除原有图片
             taskImageMapper.delete(
                     Wrappers.lambdaQuery(TaskImage.class).eq(TaskImage::getTaskId, taskId)
             );
             
             // 添加新图片
-            List<TaskImage> images = taskDTO.getImages().stream().map(url -> {
+            List<TaskImage> images = taskDTO.getImageUrls().stream().map(url -> {
                 TaskImage image = new TaskImage();
                 image.setTaskId(taskId);
                 image.setImageUrl(url);
@@ -1297,8 +1338,40 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
 
             // 7. 发送通知
             // 通知新负责人
-            String newEngineerMessage = String.format("您被指派了一个新的任务：%s (%s)", task.getTitle(), task.getTaskId());
-            chatService.sendSystemMessage(engineerId, newEngineerMessage);
+            try {
+                // 查询任务图片作为预览
+                List<TaskImage> taskImages = taskImageMapper.selectList(
+                        Wrappers.<TaskImage>lambdaQuery()
+                                .eq(TaskImage::getTaskId, taskId)
+                );
+                List<String> previewImageUrls = taskImages.stream()
+                                                        .map(TaskImage::getImageUrl)
+                                                        .limit(3) // 在Java流中限制数量
+                                                        .collect(Collectors.toList());
+
+                // 构建结构化的任务卡片消息
+                Map<String, Object> messageCard = new HashMap<>();
+                messageCard.put("type", "task_card");
+                messageCard.put("taskId", task.getTaskId());
+                messageCard.put("title", "您有一个新指派的任务");
+                messageCard.put("taskTitle", task.getTitle());
+                messageCard.put("customerName", task.getCustomer());
+                messageCard.put("deviceName", task.getDeviceName());
+                messageCard.put("description", task.getDescription());
+                messageCard.put("previewImages", previewImageUrls);
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                String messageContent = objectMapper.writeValueAsString(messageCard);
+                
+                chatService.sendSystemMessage(engineerId, messageContent);
+
+            } catch (Exception e) {
+                log.error("构建并发送任务卡片消息失败, taskId: {}. 回退到发送纯文本消息。", taskId, e);
+                // Fallback to plain text message
+                String newEngineerMessage = String.format("您被指派了一个新的任务：%s (%s)", task.getTitle(), task.getTaskId());
+                chatService.sendSystemMessage(engineerId, newEngineerMessage);
+            }
+
 
             // 如果是管理员操作，且原负责人存在且不是自己，则通知原负责人
             if (Boolean.TRUE.equals(isOperatorAdmin) && originalEngineerId != null && !originalEngineerId.equals(operatorId)) {
