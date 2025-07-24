@@ -60,7 +60,7 @@ jwt:
 ryl:
   file:
     upload-path: D:/servers/ryl-engineer/uploads # 上传文件存储物理根路径
-    url-prefix: http://192.168.0.109:8089 # 对外访问的URL前缀, 注意这里不包含 /api/v1
+    url-prefix: http://47.98.196.112:8089 # 对外访问的URL前缀, 注意这里不包含 /api/v1
 
 # SpringDoc OpenAPI配置
 springdoc:
