@@ -56,6 +56,11 @@ public class User implements Serializable {
     private String avatar;
 
     /**
+     * 安全密码（二级密码）
+     */
+    private String securityPassword;
+
+    /**
      * 技术分类
      */
     private String technicalCategory;

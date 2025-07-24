@@ -245,14 +245,14 @@ END
 GO
 
 -- 插入初始角色数据
-IF NOT EXISTS (SELECT * FROM [role] WHERE code = 'ADMIN')
+IF NOT EXISTS (SELECT * FROM [role] WHERE code = 'ROLE_ADMIN')
 BEGIN
     SET IDENTITY_INSERT [role] ON;
     INSERT INTO [role] (id, code, name, description) VALUES
-    (1, 'ADMIN', '系统管理员', '系统管理员，拥有所有权限'),
-    (2, 'ENGINEER', '工程师', '负责执行维修、安装等任务'),
-    (3, 'SALES', '销售', '负责客户关系和销售管理'),
-    (4, 'WAREHOUSE', '仓库管理员', '负责仓库和物料管理');
+    (1, 'ROLE_ADMIN', '系统管理员', '系统管理员，拥有所有权限'),
+    (2, 'ROLE_ENGINEER', '工程师', '负责执行维修、安装等任务'),
+    (3, 'ROLE_SALES', '销售', '负责客户关系和销售管理'),
+    (4, 'ROLE_WAREHOUSE', '仓库管理员', '负责仓库和物料管理');
     SET IDENTITY_INSERT [role] OFF;
 END
 GO

@@ -91,6 +91,18 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/profile/security-settings',
+    name: 'SecuritySettings',
+    component: () => import('../views/profile/SecuritySettings.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/profile/set-security-password',
+    name: 'SetSecurityPassword',
+    component: () => import('../views/profile/SetSecurityPassword.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/profile-info',
     redirect: '/profile/info'
   },

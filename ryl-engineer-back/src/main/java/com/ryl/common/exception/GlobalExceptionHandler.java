@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.ryl.engineer.common.exception.PermissionDeniedException;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
@@ -23,6 +24,16 @@ import java.util.Set;
 public class GlobalExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    /**
+     * 处理权限不足异常
+     */
+    @ExceptionHandler(PermissionDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public Result<Object> handlePermissionDeniedException(PermissionDeniedException e) {
+        LOGGER.warn("权限不足: {}", e.getMessage());
+        return Result.failed(403, e.getMessage());
+    }
 
     /**
      * 处理自定义业务异常

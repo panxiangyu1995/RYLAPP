@@ -127,4 +127,11 @@ public interface UserMapper {
      * @return 工程师简要信息列表
      */
     List<EngineerSimpleVO> findEngineersByTaskIds(@Param("list") List<String> taskIds);
+
+    /**
+     * 根据用户ID查询角色编码列表
+     * @param userId 用户ID
+     * @return 角色编码列表
+     */
+    List<String> selectRolesByUserId(@Param("userId") Long userId);
 } 

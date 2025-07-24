@@ -8,6 +8,7 @@ import com.ryl.engineer.mapper.CustomerEngineerRelationMapper;
 import com.ryl.engineer.mapper.CustomerMapper;
 import com.ryl.engineer.service.CustomerService;
 import com.ryl.engineer.service.UserService;
+import com.ryl.engineer.service.PermissionService;
 import com.ryl.engineer.utils.CustomPasswordEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.ryl.engineer.common.exception.PermissionDeniedException;
 
 /**
  * 客户服务实现类
@@ -33,6 +35,9 @@ public class CustomerServiceImpl implements CustomerService {
     
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private PermissionService permissionService;
     
     @Autowired
     private CustomPasswordEncoder passwordEncoder;
@@ -96,7 +101,12 @@ public class CustomerServiceImpl implements CustomerService {
     }
     
     @Override
-    public Map<String, Object> createCustomer(Map<String, Object> customer) {
+    public Map<String, Object> createCustomer(Map<String, Object> customer, Long creatorId) {
+        // 后端强制设置创建者ID
+        customer.put("sales_id", creatorId);
+        customer.put("creator_id", creatorId); // 也可以增加一个通用的创建者ID
+        customer.put("create_time", new java.util.Date());
+        
         customerMapper.insertCustomer(customer);
         Long id = (Long) customer.get("id");
         return customerMapper.selectCustomerById(id);
@@ -115,43 +125,33 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public boolean deleteCustomerWithConfirm(Long customerId, Long userId, String password) {
-        try {
-            // 验证密码
+        // 1. 验证安全密码
             User user = userService.getUserById(userId);
             if (user == null) {
-                logger.error("用户不存在: {}", userId);
-                return false;
-            }
-            
-            // 获取存储的密码哈希
-            String storedPasswordHash = user.getPassword();
-            
-            // 验证密码是否正确
-            if (!passwordEncoder.matches(password, storedPasswordHash)) {
-                logger.error("密码不正确，用户: {}", userId);
-                return false;
-            }
-            
-            // 验证客户是否存在
+            throw new RuntimeException("操作用户不存在");
+        }
+        if (!userService.verifySecurityPassword(user.getWorkId(), password)) {
+            throw new PermissionDeniedException("安全密码错误。");
+        }
+
+        // 2. 验证操作权限
+        permissionService.checkCustomerDeletePermission(customerId);
+        
+        // 3. 执行删除业务逻辑
+        try {
+            // 验证客户是否存在 (虽然权限层已检查，但业务层再检查一次更健壮)
             Map<String, Object> customer = customerMapper.selectCustomerById(customerId);
             if (customer == null) {
                 logger.error("客户不存在: {}", customerId);
                 return false;
             }
             
-            // 验证权限（作为额外安全措施）
-            // 只有客户关联的销售和系统管理员可以删除客户
-            // 系统管理员权限检查省略，实际项目中应当通过userService进行角色检查
-            
-            // 删除客户与工程师的关联关系
             customerEngineerRelationMapper.deleteByCustomerId(customerId);
-            
-            // 执行删除操作
             int result = customerMapper.deleteCustomer(customerId);
             return result > 0;
         } catch (Exception e) {
             logger.error("删除客户时发生错误", e);
-            throw e;
+            throw e; // 抛出以便事务回滚
         }
     }
 } 

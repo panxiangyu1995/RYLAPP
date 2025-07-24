@@ -404,7 +404,7 @@ public class ContactsServiceImpl implements ContactsService {
             sql.append("FROM [user] u ");
             sql.append("JOIN user_role ur ON u.id = ur.user_id ");
             sql.append("JOIN role r ON ur.role_id = r.id ");
-            sql.append("WHERE u.id = ? AND r.code = 'ENGINEER'");
+            sql.append("WHERE u.id = ? AND r.code = 'ROLE_ENGINEER'");
             
             List<Map<String, Object>> engineerInfo = jdbcTemplate.queryForList(sql.toString(), engineerId);
             
@@ -552,7 +552,7 @@ public class ContactsServiceImpl implements ContactsService {
             sql.append("FROM [user] u ");
             sql.append("JOIN user_role ur ON u.id = ur.user_id ");
             sql.append("JOIN role r ON ur.role_id = r.id ");
-            sql.append("WHERE r.code = 'ENGINEER' AND u.status = 1 ");
+            sql.append("WHERE r.code = 'ROLE_ENGINEER' AND u.status = 1 ");
             
             List<Object> params = new ArrayList<>();
             

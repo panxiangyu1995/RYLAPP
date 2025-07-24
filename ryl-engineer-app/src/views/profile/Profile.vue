@@ -54,6 +54,12 @@
         <div class="icon-chevron-right"></div>
       </div>
 
+      <div class="menu-item" @click="navigateTo('/profile/security-settings')">
+        <div class="menu-icon shield-icon"></div>
+        <div class="menu-text">安全设置</div>
+        <div class="icon-chevron-right"></div>
+      </div>
+
       <div class="menu-item" @click="checkForUpdate">
         <div class="menu-icon update-icon"></div>
         <div class="menu-text">检查更新</div>
@@ -341,6 +347,13 @@ async function logout() {
 
 .lock-icon::before {
   content: '\f023';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: #60a5fa;
+}
+
+.shield-icon::before {
+  content: '\f3ed'; /* shield-alt icon */
   font-family: 'Font Awesome 6 Free';
   font-weight: 900;
   color: #60a5fa;

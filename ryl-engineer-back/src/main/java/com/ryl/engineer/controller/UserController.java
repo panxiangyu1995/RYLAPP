@@ -9,7 +9,10 @@ import com.ryl.engineer.dto.RegisterRequest;
 import com.ryl.engineer.dto.RegisterResponse;
 import com.ryl.engineer.dto.UserInfoRequest;
 import com.ryl.engineer.dto.UserInfoResponse;
+import com.ryl.engineer.dto.request.SetSecurityPasswordRequest;
+import com.ryl.engineer.dto.request.ChangeSecurityPasswordRequest;
 import com.ryl.engineer.entity.User;
+import com.ryl.engineer.mapper.UserMapper;
 import com.ryl.engineer.service.UserService;
 import com.ryl.engineer.util.JwtUtil;
 import com.ryl.engineer.util.PasswordUtil;
@@ -44,6 +47,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserMapper userMapper;
     
     /**
      * 用户登录
@@ -180,6 +186,8 @@ public class UserController {
         response.setLocation(user.getLocation());
         response.setAvatar(user.getAvatar());
         response.setTechnicalCategory(user.getTechnicalCategory());
+        response.setHasSecurityPassword(user.getSecurityPassword() != null && !user.getSecurityPassword().isEmpty());
+        response.setRoles(userMapper.selectRolesByUserId(userId));
 
         // 添加任务统计信息（如果需要的话）
         Map<String, Object> taskStats = new HashMap<>();
@@ -219,6 +227,9 @@ public class UserController {
         response.setLocation(user.getLocation());
         response.setAvatar(user.getAvatar());
         response.setTechnicalCategory(user.getTechnicalCategory());
+        // 在旧接口中也补充上角色和安全密码信息
+        response.setHasSecurityPassword(user.getSecurityPassword() != null && !user.getSecurityPassword().isEmpty());
+        response.setRoles(userMapper.selectRolesByUserId(userId));
         
         return Result.success(response);
     }
@@ -385,6 +396,52 @@ public class UserController {
         response.put("updated", true);
         
         return Result.success(response);
+    }
+    
+    /**
+     * 设置安全密码
+     * @param request 请求体
+     * @return Result
+     */
+    @PostMapping("/security-password/set")
+    public Result<Void> setSecurityPassword(@RequestBody @Validated SetSecurityPasswordRequest request) {
+        Long userId = UserContextHolder.getUserId();
+        if (userId == null) {
+            return Result.error(401, "无效的凭证，请重新登录");
+        }
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+        
+        var response = userService.setSecurityPassword(user.getWorkId(), request.getNewPassword());
+        if (response.getCode() != 200) {
+            return Result.error(response.getCode(), response.getMessage());
+        }
+        return Result.success();
+    }
+
+    /**
+     * 修改安全密码
+     * @param request 请求体
+     * @return Result
+     */
+    @PutMapping("/security-password/change")
+    public Result<Void> changeSecurityPassword(@RequestBody @Validated ChangeSecurityPasswordRequest request) {
+        Long userId = UserContextHolder.getUserId();
+        if (userId == null) {
+            return Result.error(401, "无效的凭证，请重新登录");
+        }
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        var response = userService.changeSecurityPassword(user.getWorkId(), request.getOldPassword(), request.getNewPassword());
+        if (response.getCode() != 200) {
+            return Result.error(response.getCode(), response.getMessage());
+        }
+        return Result.success();
     }
     
     /**

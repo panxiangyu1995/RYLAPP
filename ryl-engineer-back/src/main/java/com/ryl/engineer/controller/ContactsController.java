@@ -82,7 +82,7 @@ public class ContactsController {
                     "FROM [user] u " +
                     "JOIN user_role ur ON u.id = ur.user_id " +
                     "JOIN role r ON ur.role_id = r.id " +
-                    "WHERE r.code != 'ENGINEER'";
+                    "WHERE r.code != 'ROLE_ENGINEER'";
             
             // 添加关键字搜索条件
             if (keyword != null && !keyword.isEmpty()) {

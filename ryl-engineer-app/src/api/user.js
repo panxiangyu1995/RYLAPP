@@ -1,4 +1,25 @@
-import http from './http'
+import http from './http';
+
+const BASE_URL = '/api/v1/user';
+
+/**
+ * 设置安全密码
+ * @param {string} password 新密码
+ * @returns Promise
+ */
+export function setSecurityPassword(password) {
+  return http.post(`${BASE_URL}/security-password/set`, { newPassword: password });
+}
+
+/**
+ * 修改安全密码
+ * @param {string} oldPassword 旧密码
+ * @param {string} newPassword 新密码
+ * @returns Promise
+ */
+export function changeSecurityPassword(oldPassword, newPassword) {
+  return http.put(`${BASE_URL}/security-password/change`, { oldPassword, newPassword });
+}
 
 /**
  * 获取用户个人信息

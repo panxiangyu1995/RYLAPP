@@ -28,7 +28,9 @@ export const useAuthStore = defineStore('auth', () => {
           mobile: userData.mobile,
           avatar: userData.avatar,
           department: userData.department,
-          location: userData.location
+          location: userData.location,
+          hasSecurityPassword: userData.hasSecurityPassword,
+          roles: userData.roles || []
         }
         
         token.value = userData.token
@@ -82,7 +84,9 @@ export const useAuthStore = defineStore('auth', () => {
           department: userData.department,
           location: userData.location,
           status: userData.status,
-          lastLoginTime: userData.lastLoginTime
+          lastLoginTime: userData.lastLoginTime,
+          hasSecurityPassword: userData.hasSecurityPassword,
+          roles: userData.roles || []
         }
         
         // 更新本地存储
@@ -271,28 +275,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   // 检查用户是否拥有指定角色
   function hasRole(roleName) {
-    // 如果用户未登录，返回false
-    if (!user.value) return false;
-    
-    try {
-      // 从本地存储获取用户信息（可能包含更多数据）
-      const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
-      console.log('检查角色权限:', { roleName, userInfo });
-      
-      // 检查用户角色
-      const roles = userInfo.roles || [];
-      
-      // 为了开发测试，临时返回true
-      // TODO: 实际部署时移除此行，使用下面的真实角色检查
-      return true;
-      
-      // 实际角色检查逻辑
-      // return roles.includes(roleName);
-    } catch (err) {
-      console.error('角色检查错误:', err);
-      // 发生错误时默认返回false
-      return false;
-    }
+    if (!user.value || !user.value.roles) return false;
+    return user.value.roles.includes(roleName);
   }
 
   // 修改密码

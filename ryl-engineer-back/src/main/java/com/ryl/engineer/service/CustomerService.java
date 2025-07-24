@@ -42,9 +42,10 @@ public interface CustomerService {
     /**
      * 创建客户
      * @param customer 客户信息
+     * @param creatorId 创建者ID
      * @return 创建后的客户信息
      */
-    Map<String, Object> createCustomer(Map<String, Object> customer);
+    Map<String, Object> createCustomer(Map<String, Object> customer, Long creatorId);
     
     /**
      * 获取客户详情

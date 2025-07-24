@@ -302,7 +302,7 @@
               {{ isSubmitting ? (isAddMode ? '添加中...' : '保存中...') : (isAddMode ? '添加' : '保存') }}
             </button>
           </div>
-          <button v-if="!isAddMode" type="button" class="btn-delete" @click="openDeleteModal">删除物品</button>
+          <button v-if="!isAddMode && canDelete" type="button" class="btn-delete" @click="openDeleteModal">删除物品</button>
         </div>
       </form>
       
@@ -410,6 +410,10 @@ export default {
     
     // 是否有编辑权限（系统管理员或仓库管理员）
     const hasEditPermission = computed(() => 
+      authStore.hasRole('ROLE_ADMIN') || authStore.hasRole('ROLE_WAREHOUSE')
+    )
+
+    const canDelete = computed(() => 
       authStore.hasRole('ROLE_ADMIN') || authStore.hasRole('ROLE_WAREHOUSE')
     )
     
@@ -677,6 +681,7 @@ export default {
       formData,
       errors,
       hasEditPermission,
+      canDelete,
       categoryName,
       formattedCost,
       isCategoryInstruments,

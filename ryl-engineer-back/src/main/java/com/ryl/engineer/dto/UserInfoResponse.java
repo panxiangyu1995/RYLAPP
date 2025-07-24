@@ -53,6 +53,16 @@ public class UserInfoResponse implements Serializable {
     private String technicalCategory;
 
     /**
+     * 是否设置了安全密码
+     */
+    private boolean hasSecurityPassword;
+
+    /**
+     * 角色列表
+     */
+    private java.util.List<String> roles;
+
+    /**
      * 任务统计信息
      */
     private Map<String, Object> taskStats;

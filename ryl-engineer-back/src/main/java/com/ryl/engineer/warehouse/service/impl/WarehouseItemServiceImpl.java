@@ -13,7 +13,11 @@ import com.ryl.engineer.warehouse.dto.request.*;
 import com.ryl.engineer.warehouse.entity.*;
 import com.ryl.engineer.warehouse.mapper.*;
 import com.ryl.engineer.warehouse.service.WarehouseItemService;
+import com.ryl.engineer.service.UserService;
+import com.ryl.engineer.service.PermissionService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.ryl.engineer.common.exception.PermissionDeniedException;
 
 /**
  * 仓库物品服务实现类
@@ -35,6 +40,12 @@ public class WarehouseItemServiceImpl implements WarehouseItemService {
 
     @Resource
     private WarehouseItemMapper warehouseItemMapper;
+
+    @Autowired
+    private PermissionService permissionService;
+    
+    @Autowired
+    private UserService userService;
 
     @Resource
     private ItemCategoryMapper itemCategoryMapper;
@@ -274,25 +285,29 @@ public class WarehouseItemServiceImpl implements WarehouseItemService {
     @Override
     @Transactional
     public ResponseDTO<Void> deleteItem(DeleteRequest request) {
-        // 参数验证
+        // 1. 权限检查
+        permissionService.checkWarehouseDeletePermission();
+
+        // 2. 验证安全密码
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!userService.verifySecurityPassword(username, request.getPassword())) {
+            throw new PermissionDeniedException("安全密码错误。");
+        }
+
+        // 3. 参数验证
         if (request == null || request.getId() == null) {
             return ResponseDTO.paramError("物品ID不能为空");
         }
         
-        // 检查物品是否存在
+        // 4. 业务逻辑
         WarehouseItem item = warehouseItemMapper.selectById(request.getId());
         if (item == null) {
             return ResponseDTO.error(404, "物品不存在");
         }
         
-        // 删除物品
         warehouseItemMapper.deleteById(request.getId());
-        
-        // 删除详细信息
         deleteItemDetails(request.getId(), item.getCategoryId());
         
-        // 删除出入库记录（或者标记为已删除）
-        // 这里只是示例，实际可能需要保留历史记录
         LambdaQueryWrapper<StockRecord> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(StockRecord::getItemId, request.getId());
         stockRecordMapper.delete(queryWrapper);

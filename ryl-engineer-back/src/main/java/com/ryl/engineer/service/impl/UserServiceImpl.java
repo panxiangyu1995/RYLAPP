@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ryl.engineer.common.dto.ResponseDTO;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -43,6 +44,63 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private FileService fileService; // 注入统一的文件服务
+
+    @Override
+    public ResponseDTO<Void> setSecurityPassword(String username, String newPassword) {
+        try {
+            User user = userMapper.selectByWorkId(username);
+            if (user == null) {
+                return ResponseDTO.error(404, "用户不存在");
+            }
+            if (user.getSecurityPassword() != null && !user.getSecurityPassword().isEmpty()) {
+                return ResponseDTO.error(400, "安全密码已设置，请使用修改密码功能");
+            }
+            user.setSecurityPassword(PasswordUtil.encode(newPassword));
+            user.setUpdateTime(new Date());
+            userMapper.update(user);
+            return ResponseDTO.success(null);
+        } catch (Exception e) {
+            logger.error("设置安全密码时出错", e);
+            return ResponseDTO.error(500, "服务器内部错误");
+        }
+    }
+
+    @Override
+    public ResponseDTO<Void> changeSecurityPassword(String username, String oldPassword, String newPassword) {
+        try {
+            User user = userMapper.selectByWorkId(username);
+            if (user == null) {
+                return ResponseDTO.error(404, "用户不存在");
+            }
+            if (user.getSecurityPassword() == null || user.getSecurityPassword().isEmpty()) {
+                return ResponseDTO.error(400, "尚未设置安全密码，请先设置");
+            }
+            if (!PasswordUtil.verify(oldPassword, user.getSecurityPassword())) {
+                return ResponseDTO.error(401, "旧密码错误");
+            }
+            user.setSecurityPassword(PasswordUtil.encode(newPassword));
+            user.setUpdateTime(new Date());
+            userMapper.update(user);
+            return ResponseDTO.success(null);
+        } catch (Exception e) {
+            logger.error("修改安全密码时出错", e);
+            return ResponseDTO.error(500, "服务器内部错误");
+        }
+    }
+
+    @Override
+    public boolean verifySecurityPassword(String username, String password) {
+        User user = userMapper.selectByWorkId(username);
+        if (user == null) {
+            // 或者抛出自定义异常
+            throw new RuntimeException("用户不存在");
+        }
+        if (user.getSecurityPassword() == null || user.getSecurityPassword().isEmpty()) {
+            // 或者抛出自定义异常
+            throw new RuntimeException("尚未设置安全密码");
+        }
+        return PasswordUtil.verify(password, user.getSecurityPassword());
+    }
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -104,6 +162,11 @@ public class UserServiceImpl implements UserService {
             response.setDepartment(user.getDepartment());
             response.setLocation(user.getLocation());
             response.setAvatar(user.getAvatar());
+            response.setHasSecurityPassword(user.getSecurityPassword() != null && !user.getSecurityPassword().isEmpty());
+            
+            List<String> roles = userMapper.selectRolesByUserId(user.getId());
+            response.setRoles(roles);
+            logger.info("为用户 {} 查询到角色: {}", user.getWorkId(), roles);
             
             logger.info("登录成功，用户：{}", user.getWorkId());
             return response;

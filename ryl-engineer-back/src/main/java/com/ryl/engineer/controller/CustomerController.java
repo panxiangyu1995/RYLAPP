@@ -151,7 +151,11 @@ public class CustomerController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SALES')")
     public Result<Map<String, Object>> createCustomer(@RequestBody Map<String, Object> customer) {
         try {
-            Map<String, Object> createdCustomer = customerService.createCustomer(customer);
+            Long creatorId = UserContextHolder.getUserId();
+            if (creatorId == null) {
+                return Result.error(401, "无法获取用户信息，请重新登录。");
+            }
+            Map<String, Object> createdCustomer = customerService.createCustomer(customer, creatorId);
             logger.info("创建客户成功: {}", createdCustomer);
             return Result.success(createdCustomer);
         } catch (Exception e) {

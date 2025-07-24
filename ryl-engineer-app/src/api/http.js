@@ -69,6 +69,7 @@ http.interceptors.response.use(
           break
         case 403:
           // 权限不足
+          alert(data.message || '您没有执行此操作的权限');
           console.error('权限不足')
           break
         case 404:
