@@ -9,6 +9,8 @@ import com.ryl.engineer.common.PageResult;
 import com.ryl.engineer.dto.TaskDetailDTO;
 import com.ryl.engineer.dto.AttachmentDTO;
 import com.ryl.engineer.dto.EngineerDTO;
+import com.ryl.engineer.dto.FileDTO;
+import com.ryl.engineer.dto.StepRecordDTO;
 import com.ryl.engineer.dto.TaskDTO;
 import com.ryl.engineer.dto.TaskFlowDTO;
 import com.ryl.engineer.dto.TaskStepDTO;
@@ -17,6 +19,7 @@ import com.ryl.engineer.dto.request.CreateTaskRequest;
 import com.ryl.engineer.dto.request.TaskFlowStatusRequest;
 import com.ryl.engineer.dto.request.TaskQueryRequest;
 import com.ryl.engineer.dto.request.TaskStepUpdateRequest;
+import com.ryl.engineer.dto.FileStorageInfo;
 import com.ryl.engineer.entity.Task;
 import com.ryl.engineer.entity.TaskEngineer;
 import com.ryl.engineer.entity.TaskImage;
@@ -43,6 +46,7 @@ import com.ryl.engineer.mapper.TaskStatusHistoryMapper;
 import com.ryl.engineer.mapper.UserMapper;
 import com.ryl.common.constant.TaskStatusConstants;
 import com.ryl.engineer.service.ChatService;
+import com.ryl.engineer.service.FileService;
 import com.ryl.engineer.service.TaskService;
 import com.ryl.engineer.util.FileUrlConverter;
 import com.ryl.engineer.vo.EngineerSimpleVO;
@@ -109,6 +113,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
     
     @Autowired
     private ChatService chatService;
+
+    @Autowired
+    private FileService fileService;
 
     @Autowired
     private FileUrlConverter fileUrlConverter;
@@ -596,65 +603,87 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
             flowDTO.setSteps(new ArrayList<>());
             return flowDTO;
         }
+
+        // 4. 获取所有步骤的ID
+        List<Long> stepIds = steps.stream().map(TaskStep::getId).collect(Collectors.toList());
+
+        // 5. 一次性查询所有步骤的所有记录
+        final List<TaskStepRecord> allRecords;
+        if (!stepIds.isEmpty()) {
+            allRecords = taskStepRecordMapper.selectList(
+                Wrappers.<TaskStepRecord>lambdaQuery()
+                       .in(TaskStepRecord::getStepId, stepIds)
+                       .orderByAsc(TaskStepRecord::getCreateTime)
+            );
+        } else {
+            allRecords = new ArrayList<>();
+        }
+
+        // 6. 如果有记录，则一次性查询所有记录的图片和附件
+        List<RecordImage> allImages = new ArrayList<>();
+        List<TaskStepAttachment> allAttachments = new ArrayList<>();
+        if (!allRecords.isEmpty()) {
+            List<Long> recordIds = allRecords.stream().map(TaskStepRecord::getId).collect(Collectors.toList());
+            allImages = recordImageMapper.selectList(
+                Wrappers.<RecordImage>lambdaQuery().in(RecordImage::getRecordId, recordIds)
+            );
+            allAttachments = taskStepAttachmentMapper.selectList(
+                Wrappers.<TaskStepAttachment>lambdaQuery().in(TaskStepAttachment::getRecordId, recordIds)
+            );
+        }
+
+        // 7. 将图片和附件按记录ID分组，便于查找
+        Map<Long, List<RecordImage>> imagesByRecordId = allImages.stream()
+                .collect(Collectors.groupingBy(RecordImage::getRecordId));
+        Map<Long, List<TaskStepAttachment>> attachmentsByRecordId = allAttachments.stream()
+                .collect(Collectors.groupingBy(TaskStepAttachment::getRecordId));
         
-        // 4. 构建并聚合每个步骤的DTO
+        // 8. 构建并聚合每个步骤的DTO
         List<TaskStepDTO> stepDTOs = steps.stream().map(step -> {
             TaskStepDTO dto = new TaskStepDTO();
-            dto.setId(step.getId()); // 传递步骤的数据库ID
-            dto.setStepKey(step.getStepKey()); // 传递业务标识符
+            dto.setId(step.getId());
+            dto.setStepKey(step.getStepKey());
             dto.setIndex(step.getStepIndex());
             dto.setName(step.getTitle());
             dto.setStatus(step.getStatus());
             dto.setStartTime(step.getStartTime());
             dto.setEndTime(step.getEndTime());
 
-            // 5. 查询该步骤最新的一个记录（使用分页，兼容SQL Server）
-            Page<TaskStepRecord> page = new Page<>(1, 1); // 查询第一页，每页一条
-            LambdaQueryWrapper<TaskStepRecord> recordQuery = Wrappers.<TaskStepRecord>lambdaQuery()
-                    .eq(TaskStepRecord::getStepId, step.getId())
-                    .orderByDesc(TaskStepRecord::getCreateTime);
-            
-            Page<TaskStepRecord> resultPage = taskStepRecordMapper.selectPage(page, recordQuery);
-            
-            TaskStepRecord lastRecord = null;
-            if (resultPage != null && !resultPage.getRecords().isEmpty()) {
-                lastRecord = resultPage.getRecords().get(0);
-            }
+            // 9. 从预查询的记录中筛选出当前步骤的记录
+            List<StepRecordDTO> recordDTOs = allRecords.stream()
+                .filter(record -> record.getStepId().equals(step.getId()))
+                .map(record -> {
+                    StepRecordDTO recordDTO = new StepRecordDTO();
+                    recordDTO.setId(record.getId());
+                    recordDTO.setContent(record.getContent());
+                    recordDTO.setSpentTime(record.getSpentTime());
+                    recordDTO.setCreatorName(record.getCreatorName());
+                    recordDTO.setCreateTime(record.getCreateTime() != null ?
+                            record.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : null);
 
-            // 6. 如果有记录，则填充描述、图片和文件
-            if (lastRecord != null) {
-                dto.setRecordContent(lastRecord.getContent());
-                
-                // 7. 分别查询与该记录关联的图片和附件
-                // 查询图片
-                List<RecordImage> images = recordImageMapper.selectList(
-                    Wrappers.<RecordImage>lambdaQuery()
-                        .eq(RecordImage::getRecordId, lastRecord.getId())
-                );
-                if (images != null && !images.isEmpty()) {
-                    dto.setImages(images.stream().map(image -> fileUrlConverter.toFullUrl(image.getImageUrl())).collect(Collectors.toList()));
-                }
+                    // 10. 从分组的Map中获取图片和附件
+                    List<FileDTO> imageDTOs = imagesByRecordId.getOrDefault(record.getId(), Collections.emptyList())
+                        .stream().map(image -> {
+                            FileDTO fileDTO = new FileDTO();
+                            fileDTO.setName(extractFileName(image.getImageUrl()));
+                            fileDTO.setUrl(fileUrlConverter.toFullUrl(image.getImageUrl()));
+                            return fileDTO;
+                        }).collect(Collectors.toList());
+                    recordDTO.setImages(imageDTOs);
 
-                // 查询非图片附件
-                List<TaskStepAttachment> attachments = taskStepAttachmentMapper.selectList(
-                    Wrappers.<TaskStepAttachment>lambdaQuery()
-                            .eq(TaskStepAttachment::getRecordId, lastRecord.getId())
-                );
-                
-                if (attachments != null && !attachments.isEmpty()) {
-                    // (如果TaskStepDTO需要)可以同样方式填充其他文件
-                    List<AttachmentDTO> fileDTOs = attachments.stream()
-                        .map(a -> AttachmentDTO.builder()
-                                .id(a.getId())
-                                .fileName(a.getFileName())
-                                .fileUrl(fileUrlConverter.toFullUrl(a.getFileUrl()))
-                                .fileType(a.getFileType())
-                                .fileSize(a.getFileSize())
-                                .build())
-                        .collect(Collectors.toList());
-                    dto.setAttachments(fileDTOs);
-                }
-            }
+                    List<FileDTO> attachmentDTOs = attachmentsByRecordId.getOrDefault(record.getId(), Collections.emptyList())
+                        .stream().map(attachment -> {
+                            FileDTO fileDTO = new FileDTO();
+                            fileDTO.setName(attachment.getFileName());
+                            fileDTO.setUrl(fileUrlConverter.toFullUrl(attachment.getFileUrl()));
+                            return fileDTO;
+                        }).collect(Collectors.toList());
+                    recordDTO.setAttachments(attachmentDTOs);
+
+                    return recordDTO;
+                }).collect(Collectors.toList());
+
+            dto.setRecords(recordDTOs);
             
             // 设置步骤状态文本
             String statusText;
@@ -698,6 +727,22 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         flowDTO.setSteps(stepDTOs);
         
         return flowDTO;
+    }
+
+    private String extractFileName(String url) {
+        if (url == null || url.isEmpty()) {
+            return "unknown_file";
+        }
+        try {
+            return new File(url).getName();
+        } catch (Exception e) {
+            log.warn("无法从URL中提取文件名: {}", url, e);
+            int lastSlash = url.lastIndexOf('/');
+            if (lastSlash != -1) {
+                return url.substring(lastSlash + 1);
+            }
+            return url;
+        }
     }
 
     /* isImage方法不再需要，因为后端已经分离了数据
@@ -1722,6 +1767,67 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
 
         // 可选：记录状态变更历史
         log.info("工程师已接受任务 #{}", task.getTaskId());
+    }
+
+    @Override
+    public void addStepRecord(String taskId, Long stepId, String content, Integer duration, List<MultipartFile> images, List<MultipartFile> attachments, Long operatorId) {
+        // 1. 查找用户
+        User operator = userMapper.selectById(operatorId);
+        if (operator == null) {
+            throw new IllegalArgumentException("操作员不存在: " + operatorId);
+        }
+
+        // 1.5 查询TaskStep以获取stepIndex
+        TaskStep taskStep = taskStepMapper.selectById(stepId);
+        if (taskStep == null) {
+            throw new IllegalArgumentException("指定的任务步骤ID不存在: " + stepId);
+        }
+
+        // 2. 创建并保存记录
+        TaskStepRecord record = new TaskStepRecord();
+        record.setTaskId(taskId);
+        record.setStepId(stepId);
+        record.setStepIndex(taskStep.getStepIndex());
+        record.setContent(content);
+        record.setSpentTime(duration);
+        record.setOperatorId(operatorId);
+        record.setCreatorName(operator.getName());
+        record.setCreateTime(LocalDateTime.now());
+        record.setUpdateTime(LocalDateTime.now());
+        taskStepRecordMapper.insert(record); // 插入后，record对象会获得ID
+
+        // 3. 处理图片
+        try {
+            if (images != null && !images.isEmpty()) {
+                for (MultipartFile imageFile : images) {
+                    FileStorageInfo storageInfo = fileService.uploadFile(imageFile, "records/images");
+                    RecordImage recordImage = new RecordImage();
+                    recordImage.setRecordId(record.getId());
+                    recordImage.setTaskId(taskId);
+                    recordImage.setImageUrl(storageInfo.getRelativePath());
+                    recordImage.setCreateTime(LocalDateTime.now());
+                    recordImageMapper.insert(recordImage);
+                }
+            }
+
+            // 4. 处理附件
+            if (attachments != null && !attachments.isEmpty()) {
+                for (MultipartFile attachmentFile : attachments) {
+                    FileStorageInfo storageInfo = fileService.uploadFile(attachmentFile, "records/attachments");
+                    TaskStepAttachment attachment = new TaskStepAttachment();
+                    attachment.setRecordId(record.getId());
+                    attachment.setFileName(storageInfo.getOriginalFileName());
+                    attachment.setFileUrl(storageInfo.getRelativePath());
+                    attachment.setFileType(storageInfo.getFileType());
+                    attachment.setFileSize(storageInfo.getFileSize()); // KB
+                    attachment.setCreateTime(LocalDateTime.now());
+                    taskStepAttachmentMapper.insert(attachment);
+                }
+            }
+        } catch (IOException e) {
+            log.error("上传步骤记录文件失败: taskId={}, stepId={}", taskId, stepId, e);
+            throw new RuntimeException("上传文件失败", e);
+        }
     }
 
     @Override

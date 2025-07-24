@@ -311,35 +311,39 @@ export default {
       isSubmitting.value = true
       
       try {
-        // 准备提交数据
-        const recordData = {
-          taskId: props.taskId,
-          stepId: props.stepId,
-          content: content.value.trim(),
-          spentTime: hours.value * 60 + minutes.value, // 转换为分钟
-          attachments: attachments.value.map(attachment => ({
-            name: attachment.name,
-            type: attachment.type,
-            size: attachment.size,
-            file: attachment.file
-          }))
-        }
+        const formData = new FormData();
+        
+        // 1. 添加文本数据
+        formData.append('content', content.value.trim());
+        const totalMinutes = (hours.value || 0) * 60 + (minutes.value || 0);
+        formData.append('spentTime', totalMinutes.toString());
+
+        // 2. 分离并添加文件
+        attachments.value.forEach(attachment => {
+          if (attachment.type.startsWith('image/')) {
+            formData.append('images', attachment.file, attachment.name);
+          } else {
+            formData.append('attachments', attachment.file, attachment.name);
+          }
+        });
         
         // 如果显示约定上门时间，则添加到数据中
         if (showVisitAppointmentTime.value) {
-          recordData.visitAppointmentTime = getVisitAppointmentTime()
+          const appointmentTime = getVisitAppointmentTime();
+          if (appointmentTime) {
+            formData.append('visitAppointmentTime', appointmentTime);
+          }
         }
         
-        // 触发提交事件
-        emit('submit', recordData)
+        // 3. 触发提交事件，传递FormData
+        emit('submit', formData)
         
-        // 重置表单
-        resetForm()
+        // 成功提交后，父组件会负责关闭此模态框和重置
+        // resetForm(); 
       } catch (error) {
-        console.error('提交记录时出错:', error)
+        console.error('构建FormData时出错:', error)
         alert('提交记录失败，请重试！')
-      } finally {
-        isSubmitting.value = false
+        isSubmitting.value = false; // 发生错误时需要重置状态
       }
     }
     

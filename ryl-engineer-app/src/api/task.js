@@ -8,6 +8,15 @@ import http from './http'
 export const BASE_URL = '/api/v1/tasks'
 
 /**
+ * 获取任务的完整流程，包含所有步骤和记录
+ * @param {string} taskId 任务ID
+ * @returns {Promise<Object>} 响应结果，包含任务流程数据
+ */
+export function getTaskFlow(taskId) {
+  return http.get(`${BASE_URL}/${taskId}/flow`)
+}
+
+/**
  * 创建任务
  * @param {Object} taskData 任务数据
  * @returns {Promise<Object>} 响应结果
@@ -57,15 +66,6 @@ export function getTaskList(params) {
  */
 export function getTaskDetail(taskId) {
   return http.get(`${BASE_URL}/${taskId}`)
-}
-
-/**
- * 获取任务流程
- * @param {string} taskId 任务ID
- * @returns {Promise<Object>} 任务流程
- */
-export function getTaskFlow(taskId) {
-  return http.get(`${BASE_URL}/${taskId}/flow`)
 }
 
 /**
@@ -249,4 +249,19 @@ export function notifyCustomer(taskId) {
  */
 export function confirmPayment(taskId) {
   return http.post(`${BASE_URL}/${taskId}/confirm-payment`);
+}
+
+/**
+ * 添加任务步骤记录
+ * @param {string} taskId - 任务ID
+ * @param {number} stepId - 步骤ID
+ * @param {FormData} formData - 包含记录内容和文件的表单数据
+ * @returns {Promise<Object>} 响应结果
+ */
+export function addStepRecord(taskId, stepId, formData) {
+  return http.post(`${BASE_URL}/${taskId}/steps/${stepId}/records`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 }

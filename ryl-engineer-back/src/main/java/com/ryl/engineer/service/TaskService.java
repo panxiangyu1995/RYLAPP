@@ -203,4 +203,16 @@ public interface TaskService {
      * @param request 拒绝任务的请求体，包含原因和转派目标
      */
     void rejectTask(Long taskId, RejectTaskRequest request);
+
+    /**
+     * 添加步骤记录
+     * @param taskId 任务ID
+     * @param stepId 步骤ID
+     * @param content 记录内容
+     * @param duration 花费时间（分钟）
+     * @param images 图片列表
+     * @param attachments 附件列表
+     * @param operatorId 操作员ID
+     */
+    void addStepRecord(String taskId, Long stepId, String content, Integer duration, List<MultipartFile> images, List<MultipartFile> attachments, Long operatorId);
 } 

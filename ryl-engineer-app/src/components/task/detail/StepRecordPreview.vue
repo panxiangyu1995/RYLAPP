@@ -45,12 +45,12 @@
           <h4 class="section-title">图片</h4>
           <div class="image-grid">
             <div 
-              v-for="(imageUrl, index) in record.images" 
-              :key="index"
+              v-for="image in record.images" 
+              :key="image.url"
               class="image-item"
-              @click="previewImage(imageUrl)"
+              @click="previewImage(image.url)"
             >
-              <img :src="imageUrl" alt="步骤图片" class="thumbnail">
+              <img :src="image.url" alt="步骤图片" class="thumbnail">
             </div>
           </div>
         </div>
@@ -60,19 +60,18 @@
           <h4 class="section-title">附件</h4>
           <div class="attachment-list">
             <div 
-              v-for="(file, index) in record.attachments" 
-              :key="index"
+              v-for="file in record.attachments" 
+              :key="file.url"
               class="attachment-item"
             >
               <div class="attachment-icon">
-                <i :class="getFileTypeIcon(file.fileType)"></i>
+                <i class="fas fa-file-alt"></i>
               </div>
               <div class="attachment-info">
-                <div class="attachment-name">{{ file.fileName }}</div>
-                <div class="attachment-size">{{ formatFileSize(file.fileSize) }}</div>
+                <div class="attachment-name">{{ file.name }}</div>
               </div>
               <a 
-                :href="file.fileUrl" 
+                :href="file.url" 
                 download 
                 class="download-btn"
                 @click.stop

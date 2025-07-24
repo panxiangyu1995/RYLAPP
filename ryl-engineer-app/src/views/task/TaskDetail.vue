@@ -82,7 +82,7 @@
       @prev-step="prevStep"
       @next-step="nextStep"
       @show-add-record="showAddRecord"
-      @show-step-records="showStepRecords"
+      @show-record-preview="handlePreviewRecord"
       @show-quote-dialog="showQuoteDialog = true"
     />
 
@@ -136,8 +136,8 @@
     <task-step-record-form
       v-if="showRecordForm"
       :taskId="taskId"
-      :stepId="task && task.steps && activeRecordStep >= 0 ? task.steps[activeRecordStep].stepId : ''"
-      :stepName="task && task.steps && activeRecordStep >= 0 ? task.steps[activeRecordStep].title : '未知步骤'"
+      :stepId="activeStepId"
+      :stepName="activeStepName"
       @cancel="cancelAddRecord"
       @submit="submitRecord"
     />
@@ -202,6 +202,13 @@
       @close="closeQuoteDialog"
       @submit="submitQuote"
     />
+
+    <!-- 步骤记录预览模态框 -->
+    <step-record-preview
+      :visible="showRecordPreview"
+      :record="previewingRecord"
+      @close="closeRecordPreview"
+    />
   </div>
 </template>
 
@@ -222,6 +229,7 @@ import TaskFlowController from '../../components/task/detail/TaskFlowController.
 import CollaboratorsPanel from '../../components/task/detail/CollaboratorsPanel.vue'
 import TaskTransferPanel from '../../components/task/detail/TaskTransferPanel.vue'
 import TaskSalesInfoCard from '../../components/task/detail/TaskSalesInfoCard.vue'
+import StepRecordPreview from '../../components/task/detail/StepRecordPreview.vue';
 
 // 导入对话框组件
 import TaskStatusChangeDialog from '../../components/task/dialogs/TaskStatusChangeDialog.vue'
@@ -248,6 +256,7 @@ import {
   setTaskPrice,
   notifyCustomer,
   confirmPayment,
+  addStepRecord,
   BASE_URL
 } from '../../api/task'
 
@@ -259,9 +268,6 @@ import eventBus, { TaskFlowEvents } from '../../utils/eventBus'
 
 // 导入日期格式化函数
 import { format } from 'date-fns'
-
-// 导入 addTaskFlowRecord 函数
-import { addTaskFlowRecord } from '@/api/taskflow'
 
 export default {
   name: 'TaskDetailPage',
@@ -284,7 +290,8 @@ export default {
     ImagePreviewDialog,
     TaskSalesInfoCard,
     TaskTransferDialog,
-    QuoteDialog
+    QuoteDialog,
+    StepRecordPreview
   },
   props: {
     id: {
@@ -332,11 +339,33 @@ export default {
     const hasPrevStep = computed(() => taskFlowStore.hasPrevStep)
     const hasNextStep = computed(() => taskFlowStore.hasNextStep)
 
+    const activeStepId = computed(() => {
+      const steps = taskFlowStore.flowSteps;
+      const index = activeRecordStep.value;
+      if (steps && index >= 0 && index < steps.length) {
+        return steps[index].id;
+      }
+      return null;
+    });
+
+    const activeStepName = computed(() => {
+      const steps = taskFlowStore.flowSteps;
+      const index = activeRecordStep.value;
+      if (steps && index >= 0 && index < steps.length) {
+        return steps[index].name || steps[index].title;
+      }
+      return '未知步骤';
+    });
+
     // 记录相关状态
     const showRecordForm = ref(false)
     const activeRecordStep = ref(-1)
     const editingRecordIndex = ref(-1)
     const editingRecord = ref(null)
+
+    // 记录预览相关状态
+    const previewingRecord = ref(null);
+    const showRecordPreview = ref(false);
     
     // 对话框相关状态
     const showStatusDialog = ref(false)
@@ -585,39 +614,24 @@ export default {
     }
     
     // 提交记录
-    const submitRecord = async (recordData) => {
+    const submitRecord = async (formData) => {
+      if (!activeStepId.value) {
+        toast.error('无法获取步骤ID，请重试');
+        return;
+      }
       try {
-        // 分离文件和文本数据
-        const files = recordData.attachments.map(att => att.file);
-        const textData = {
-          stepId: recordData.stepId,
-          content: recordData.content,
-          spentTime: recordData.spentTime,
-          taskId: taskId.value // 确保taskId在文本数据中
-        };
-
-        // 如果包含上门时间，也加入文本数据
-        if (recordData.visitAppointmentTime) {
-          textData.visitAppointmentTime = recordData.visitAppointmentTime;
-        }
-        
-        // 调用新的API函数
-        const response = await addTaskFlowRecord(textData, files);
+        const response = await addStepRecord(taskId.value, activeStepId.value, formData);
         
         if (response && response.code === 200) {
           toast.success('工作记录已提交');
-          
-          // 重新加载任务流程
-          await loadTaskFlow()
-          
-          // 关闭记录表单
-          cancelAddRecord()
+          await loadTaskFlow(); // 重新加载流程以显示新记录
+          cancelAddRecord();
         } else {
-          throw new Error(response?.message || '提交工作记录失败')
+          throw new Error(response?.message || '提交工作记录失败');
         }
       } catch (err) {
-        console.error('提交工作记录失败:', err)
-        toast.error('提交工作记录失败，请重试')
+        console.error('提交工作记录失败:', err);
+        toast.error('提交工作记录失败，请重试');
       }
     }
     
@@ -928,10 +942,21 @@ export default {
       taskFlowStore.resetState()
     })
     
+    // 显示步骤记录预览
+    const handlePreviewRecord = (record) => {
+      previewingRecord.value = record;
+      showRecordPreview.value = true;
+    };
+
+    const closeRecordPreview = () => {
+      showRecordPreview.value = false;
+      previewingRecord.value = null;
+    };
+    
     // 显示步骤记录
     const showStepRecords = (stepIndex) => {
       console.log('显示步骤记录:', stepIndex)
-      // 实现显示步骤记录的逻辑
+      // 这个方法现在可以被 handlePreviewRecord 替代，或者用于不同的功能，例如显示一个包含所有记录的列表页
     }
 
     // 处理自动任务状态更新
@@ -1038,6 +1063,8 @@ export default {
       transferLoading,
       transferError,
       taskStatusHistory,
+      previewingRecord,
+      showRecordPreview,
       
       // 方法
       goBack,
@@ -1080,6 +1107,10 @@ export default {
       showQuoteDialog,
       closeQuoteDialog,
       submitQuote,
+      handlePreviewRecord,
+      closeRecordPreview,
+      activeStepId,
+      activeStepName
     }
   }
 }

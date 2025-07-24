@@ -471,6 +471,38 @@ public class TaskController {
     }
 
     /**
+     * 添加步骤记录，支持文件上传
+     *
+     * @param taskId      任务ID
+     * @param stepId      步骤ID
+     * @param content     记录内容
+     * @param spentTime   花费时间（分钟）
+     * @param images      图片文件列表
+     * @param attachments 附件文件列表
+     * @return Result
+     */
+    @PostMapping("/{taskId}/steps/{stepId}/records")
+    public Result<?> addStepRecord(
+            @PathVariable("taskId") String taskId,
+            @PathVariable("stepId") Long stepId,
+            @RequestParam("content") String content,
+            @RequestParam("spentTime") Integer spentTime,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @RequestParam(value = "attachments", required = false) List<MultipartFile> attachments) {
+        
+        // todo: 实际项目中应从SecurityContext中获取当前用户ID
+        Long operatorId = 1L; 
+
+        try {
+            taskService.addStepRecord(taskId, stepId, content, spentTime, images, attachments, operatorId);
+            return Result.success("记录添加成功");
+        } catch (Exception e) {
+            log.error("添加步骤记录失败, taskId: {}, stepId: {}", taskId, stepId, e);
+            return Result.error(500, "添加记录失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 工程师接受任务
      * @param id 任务ID
      * @return Result

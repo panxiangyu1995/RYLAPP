@@ -8,83 +8,6 @@
     </div>
     
     <div class="task-flow-content">
-      <!-- 当前步骤详情 -->
-      <div class="current-step" v-if="currentStep">
-        <div class="step-header">
-          <h4 class="step-title">{{ currentStep.name || currentStep.title }}</h4>
-          <span class="step-status" :class="`status-${currentStep.status}`">
-            {{ getStepStatusText(currentStep.status) }}
-          </span>
-        </div>
-        
-        <div class="step-meta">
-          <div class="meta-item" v-if="currentStep.startDate">
-            <i class="fas fa-calendar"></i>
-            <span>开始日期: {{ formatDate(currentStep.startDate) }}</span>
-          </div>
-          <div class="meta-item" v-if="currentStep.dueDate">
-            <i class="fas fa-clock"></i>
-            <span>预计完成: {{ formatDate(currentStep.dueDate) }}</span>
-          </div>
-          <div class="meta-item" v-if="currentStep.completedDate">
-            <i class="fas fa-check-circle"></i>
-            <span>完成日期: {{ formatDate(currentStep.completedDate) }}</span>
-          </div>
-        </div>
-        
-        <!-- 步骤记录概览 -->
-        <div class="step-records" v-if="currentStepRecords && currentStepRecords.length > 0">
-          <div class="records-header">
-            <h5>工作记录</h5>
-            <button @click="showStepRecords(currentStepIndex)" class="view-all-btn">
-              查看全部
-            </button>
-          </div>
-          
-          <div class="records-preview">
-            <div 
-              v-for="(record, recordIndex) in visibleStepRecords"
-              :key="recordIndex"
-              class="record-item"
-              @click="previewRecord(record)"
-            >
-              <div class="record-content">
-                <div class="record-date">{{ formatDateTime(record.createdAt) }}</div>
-                <p class="record-text">{{ truncateText(record.content, 100) }}</p>
-                
-                <!-- 图片预览缩略图 -->
-                <div class="record-images-preview" v-if="record.images && record.images.length > 0">
-                  <div class="images-grid">
-                    <div 
-                      v-for="(imageUrl, imgIndex) in record.images.slice(0, 3)"
-                      :key="imgIndex"
-                      class="image-thumbnail-container"
-                    >
-                      <img :src="imageUrl" alt="记录图片" class="image-thumbnail" />
-                    </div>
-                    <div v-if="record.images.length > 3" class="more-images">
-                      +{{ record.images.length - 3 }}
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- 附件信息 -->
-                <div class="record-attachments" v-if="(record.images && record.images.length > 0) || (record.attachments && record.attachments.length > 0)">
-                  <i class="fas fa-paperclip"></i>
-                  <span>{{ (record.images ? record.images.length : 0) + (record.attachments ? record.attachments.length : 0) }}个附件</span>
-                </div>
-              </div>
-            </div>
-            
-            <div v-if="currentStepRecords.length > 2" class="records-more">
-              <button @click="showStepRecords(currentStepIndex)" class="more-btn">
-                查看更多记录 ({{ currentStepRecords.length - 2 }})
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
       <!-- 流程进度 -->
       <div class="flow-steps">
         <div 
@@ -110,6 +33,19 @@
           <div class="step-info">
             <div class="step-name">{{ step.name || step.title }}</div>
             <div class="step-status-text">{{ getStepStatusText(step.status) }}</div>
+
+            <!-- 记录展示区 -->
+            <div class="records-display-area" v-if="step.records && step.records.length > 0">
+              <div
+                v-for="record in step.records"
+                :key="record.id"
+                class="record-summary"
+                @click="emitPreviewRecord(record)"
+              >
+                <span class="record-creator"><i class="fas fa-user-edit"></i> {{ record.creatorName }}</span>
+                <span class="record-time">{{ record.createTime }}</span>
+              </div>
+            </div>
             
             <!-- 步骤操作按钮 -->
             <div class="step-actions-container" v-if="canManageFlow">
@@ -264,7 +200,7 @@ export default {
       default: false
     }
   },
-  emits: ['prev-step', 'next-step', 'show-add-record', 'show-step-records', 'show-quote-dialog', 'reload-task', 'send-quote'],
+  emits: ['prev-step', 'next-step', 'show-add-record', 'show-record-preview', 'show-quote-dialog', 'reload-task', 'send-quote'],
   setup(props, { emit }) {
     const currentStepValue = ref(0)
     const loading = ref(false)
@@ -435,7 +371,10 @@ export default {
     
     // 判断是否是报价步骤
     const isQuoteStep = (step) => {
-      return step && step.title && step.title.includes('报价');
+      if (!step) return false;
+      // 同时检查 step.name 和 step.title，并提供一个空字符串作为备用，防止其中一个为null或undefined
+      const stepName = step.name || step.title || '';
+      return stepName.includes('报价');
     };
 
     // 打开报价对话框
@@ -508,10 +447,15 @@ export default {
     const showAddRecordForm = (stepIndex) => {
       emit('show-add-record', stepIndex)
     }
+
+    const emitPreviewRecord = (record) => {
+      emit('show-record-preview', record);
+    };
     
     // 显示步骤记录
     const showStepRecords = (stepIndex) => {
-      emit('show-step-records', stepIndex)
+      // 此方法已废弃，由 emitPreviewRecord 替代
+      console.warn("showStepRecords is deprecated.");
     }
     
     // 更新本地决策状态
@@ -681,7 +625,8 @@ export default {
       activeConfirmDialogIndex, // <--- Changed
       sendingQuote,
       confirmAndSendQuote,
-      handleSendQuoteClick
+      handleSendQuoteClick,
+      emitPreviewRecord
     }
   },
 };
@@ -952,6 +897,41 @@ export default {
 
 .flow-step.in-progress .step-status-text {
   color: #f59e0b;
+}
+
+.records-display-area {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.record-summary {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.record-summary:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.record-creator i {
+  margin-right: 6px;
+  color: #9ca3af;
+}
+
+.record-time {
+  color: #6b7280;
 }
 
 /* 图片预览缩略图 */

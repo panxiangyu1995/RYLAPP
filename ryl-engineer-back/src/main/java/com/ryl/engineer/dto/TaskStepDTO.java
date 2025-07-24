@@ -53,6 +53,11 @@ public class TaskStepDTO {
      * 操作人信息
      */
     private OperatorDTO operator;
+
+    /**
+     * 关联到此步骤的所有工作记录
+     */
+    private List<StepRecordDTO> records;
     
     /**
      * 步骤记录内容

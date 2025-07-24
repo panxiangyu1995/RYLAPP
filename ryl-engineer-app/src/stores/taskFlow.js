@@ -50,6 +50,7 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
     
     try {
       console.log(`开始获取任务流程, 任务ID: ${taskId}, 是否重试: ${isRetry}`)
+      // 从正确的 taskApi 中调用 getTaskFlow
       const response = await taskApi.getTaskFlow(taskId)
       console.log('任务流程API响应:', response)
       
@@ -104,14 +105,10 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
         } else {
           console.log('获取到任务步骤数据:', response.data.steps)
           
-          // 确保每个步骤都有title字段（兼容后端返回的name字段）
-          flowSteps.value = response.data.steps.map(step => {
-            if (!step.title && step.name) {
-              console.log(`步骤 ${step.index || '未知'} 使用name字段 "${step.name}" 作为title`)
-              return { ...step, title: step.name }
-            }
-            return step
-          })
+          // 更新整个步骤数组，确保响应性
+          // 后端已经统一返回 title, 无需兼容 name
+          // 后端同时返回了 records, 无需手动处理
+          flowSteps.value = response.data.steps
           
           // 查找当前活动步骤
           const inProgressIndex = flowSteps.value.findIndex(step => step.status === 'in-progress')
@@ -385,15 +382,30 @@ export const useTaskFlowStore = defineStore('taskFlow', () => {
     error.value = null
     
     try {
-      // 确保记录数据包含任务ID和步骤索引
-      const record = {
-        ...recordData,
-        taskId: currentTaskId.value,
-        stepIndex: currentStepIndex.value
+      // API需要 FormData
+      const formData = new FormData()
+      formData.append('content', recordData.content)
+      formData.append('spentTime', recordData.spentTime)
+      formData.append('taskId', currentTaskId.value)
+      // BUGFIX: 后端需要 stepId 而不是 stepIndex
+      formData.append('stepId', currentStep.value.id)
+
+      // 添加图片文件
+      if (recordData.images && recordData.images.length > 0) {
+        recordData.images.forEach(file => {
+          formData.append('images', file)
+        })
       }
-      
-      // 调用API添加记录
-      const response = await taskFlowApi.addTaskFlowRecord(record)
+
+      // 添加附件文件
+      if (recordData.attachments && recordData.attachments.length > 0) {
+        recordData.attachments.forEach(file => {
+          formData.append('attachments', file)
+        })
+      }
+
+      // 调用API添加记录 - API在task.js中
+      const response = await taskApi.addTaskStepRecord(formData)
       
       if (response && response.code === 200) {
         console.log('成功添加步骤记录')
