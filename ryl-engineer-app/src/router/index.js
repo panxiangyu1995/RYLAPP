@@ -200,7 +200,7 @@ const routes = [
   {
     path: '/task/:id/flow',
     name: 'TaskFlowDetail',
-    component: () => import('../views/task/TaskFlowDetail.vue'),
+    component: () => import('../views/contacts/TaskFlowDetail.vue'),
     props: true,
     meta: { requiresAuth: true }
   },

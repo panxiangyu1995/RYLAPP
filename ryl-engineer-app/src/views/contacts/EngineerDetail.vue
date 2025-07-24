@@ -213,8 +213,8 @@ export default {
     
     // 查看任务流程
     const viewTaskFlow = (taskId) => {
-      console.log('查看任务流程:', taskId)
-      router.push(`/task-flow/${taskId}`)
+      console.log('查看任务流程:', taskId);
+      router.push({ name: 'TaskFlowDetail', params: { id: taskId } });
     }
     
     // 请求协助
